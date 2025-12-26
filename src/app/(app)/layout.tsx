@@ -1,7 +1,12 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { BottomNav } from '@/components/bottom-nav'
 
-export default async function Home() {
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -16,9 +21,14 @@ export default async function Home() {
     .eq('id', user.id)
     .single()
 
-  if (profile?.family_id) {
-    redirect('/feed')
-  } else {
+  if (!profile?.family_id) {
     redirect('/create-family')
   }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {children}
+      <BottomNav />
+    </div>
+  )
 }

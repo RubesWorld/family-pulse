@@ -1,0 +1,15 @@
+{
+  "allowedTools": ["Read", "StrReplace", "Write", "Bash", "Grep"],
+  "autoAccept": {
+    "Read": ["*"]
+  },
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".next/**",
+    "__pycache__/**",
+    "*.pyc",
+    ".git/**"
+  ]
+}
