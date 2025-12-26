@@ -37,13 +37,15 @@ function groupActivitiesByDate(activities: ActivityWithUser[]) {
 }
 
 function formatDateHeader(date: Date): string {
+  const fullDate = format(date, 'EEEE, MMMM d, yyyy')
+
   if (isToday(date)) {
-    return 'Today'
+    return `Today, ${format(date, 'MMMM d, yyyy')}`
   }
   if (isYesterday(date)) {
-    return 'Yesterday'
+    return `Yesterday, ${format(date, 'MMMM d, yyyy')}`
   }
-  return format(date, 'EEEE, MMMM d, yyyy')
+  return fullDate
 }
 
 export function FeedContent({ familyName, inviteCode, activities }: FeedContentProps) {
