@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Share2, Check } from 'lucide-react'
+import { Share2, Check, List, Calendar } from 'lucide-react'
 
 interface FeedHeaderProps {
   familyName: string
   inviteCode: string
+  view: 'feed' | 'calendar'
+  onViewChange: (view: 'feed' | 'calendar') => void
 }
 
-export function FeedHeader({ familyName, inviteCode }: FeedHeaderProps) {
+export function FeedHeader({ familyName, inviteCode, view, onViewChange }: FeedHeaderProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -51,7 +53,7 @@ export function FeedHeader({ familyName, inviteCode }: FeedHeaderProps) {
 
   return (
     <header className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{familyName}</h1>
           <p className="text-sm text-gray-500">Family Pulse</p>
@@ -73,6 +75,28 @@ export function FeedHeader({ familyName, inviteCode }: FeedHeaderProps) {
               Invite
             </>
           )}
+        </Button>
+      </div>
+
+      {/* View Toggle */}
+      <div className="flex gap-2">
+        <Button
+          variant={view === 'feed' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onViewChange('feed')}
+          className="flex-1 gap-2"
+        >
+          <List className="w-4 h-4" />
+          Feed
+        </Button>
+        <Button
+          variant={view === 'calendar' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onViewChange('calendar')}
+          className="flex-1 gap-2"
+        >
+          <Calendar className="w-4 h-4" />
+          Calendar
         </Button>
       </div>
     </header>

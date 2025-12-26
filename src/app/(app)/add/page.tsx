@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,9 +10,12 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function AddActivityPage() {
+  const searchParams = useSearchParams()
+  const dateParam = searchParams.get('date')
+
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [startsAt, setStartsAt] = useState('')
+  const [startsAt, setStartsAt] = useState(dateParam ? `${dateParam}T12:00` : '')
   const [locationName, setLocationName] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
