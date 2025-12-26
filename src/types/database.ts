@@ -208,7 +208,7 @@ export type Family = Database['public']['Tables']['families']['Row']
 export type User = Database['public']['Tables']['users']['Row']
 export type Activity = Database['public']['Tables']['activities']['Row']
 export type InterestCard = Database['public']['Tables']['interest_cards']['Row']
-export type Pick = Database['public']['Tables']['picks']['Row']
+export type UserPick = Database['public']['Tables']['picks']['Row']
 
 export type ActivityWithUser = Activity & {
   users: Pick<User, 'name' | 'avatar_url'>
@@ -218,6 +218,6 @@ export type InterestCardWithUser = InterestCard & {
   users: Pick<User, 'name' | 'avatar_url'>
 }
 
-export type PickWithUser = Pick & {
+export type PickWithUser = UserPick & {
   users: Pick<User, 'name' | 'avatar_url'>
 }
