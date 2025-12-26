@@ -112,6 +112,82 @@ export type Database = {
           }
         ]
       }
+      interest_cards: {
+        Row: {
+          id: string
+          user_id: string
+          category: string
+          is_custom: boolean
+          description: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category: string
+          is_custom?: boolean
+          description: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          category?: string
+          is_custom?: boolean
+          description?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interest_cards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      picks: {
+        Row: {
+          id: string
+          user_id: string
+          category: string
+          value: string
+          interest_tag: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category: string
+          value: string
+          interest_tag?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          category?: string
+          value?: string
+          interest_tag?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "picks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -131,7 +207,17 @@ export type Database = {
 export type Family = Database['public']['Tables']['families']['Row']
 export type User = Database['public']['Tables']['users']['Row']
 export type Activity = Database['public']['Tables']['activities']['Row']
+export type InterestCard = Database['public']['Tables']['interest_cards']['Row']
+export type Pick = Database['public']['Tables']['picks']['Row']
 
 export type ActivityWithUser = Activity & {
+  users: Pick<User, 'name' | 'avatar_url'>
+}
+
+export type InterestCardWithUser = InterestCard & {
+  users: Pick<User, 'name' | 'avatar_url'>
+}
+
+export type PickWithUser = Pick & {
   users: Pick<User, 'name' | 'avatar_url'>
 }
