@@ -36,6 +36,7 @@ export type Database = {
           name: string
           avatar_url: string | null
           family_id: string | null
+          interests: string[]
           created_at: string
         }
         Insert: {
@@ -43,6 +44,7 @@ export type Database = {
           name: string
           avatar_url?: string | null
           family_id?: string | null
+          interests?: string[]
           created_at?: string
         }
         Update: {
@@ -50,6 +52,7 @@ export type Database = {
           name?: string
           avatar_url?: string | null
           family_id?: string | null
+          interests?: string[]
           created_at?: string
         }
         Relationships: [
