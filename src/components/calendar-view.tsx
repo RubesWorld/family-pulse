@@ -9,13 +9,15 @@ import {
   format,
   isToday,
   isSameMonth,
+  isSameDay,
   addMonths,
   subMonths,
   startOfWeek,
   endOfWeek,
 } from 'date-fns'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ActivityCard } from '@/components/activity-card'
 import type { ActivityWithUser } from '@/types/database'
 
 interface CalendarViewProps {
@@ -39,6 +41,7 @@ function groupActivitiesByDate(activities: ActivityWithUser[]) {
 
 export function CalendarView({ activities }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const router = useRouter()
 
   const activitiesByDate = useMemo(
@@ -64,8 +67,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
   }
 
   const handleDayClick = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd')
-    router.push(`/add?date=${dateStr}`)
+    setSelectedDate(date)
   }
 
   const scheduledCount = activities.filter((a) => a.starts_at).length
@@ -125,6 +127,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
             const dayActivities = activitiesByDate.get(dateKey) || []
             const isCurrentMonth = isSameMonth(day, currentMonth)
             const isCurrentDay = isToday(day)
+            const isSelected = selectedDate && isSameDay(day, selectedDate)
 
             return (
               <button
@@ -135,6 +138,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
                   hover:bg-blue-50 transition-colors
                   ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'text-gray-900'}
                   ${isCurrentDay ? 'bg-blue-50 font-semibold' : ''}
+                  ${isSelected ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
                   ${index % 7 === 6 ? 'border-r-0' : ''}
                 `}
               >
@@ -164,12 +168,52 @@ export function CalendarView({ activities }: CalendarViewProps) {
         </div>
       </div>
 
+      {/* Selected Day Activities */}
+      {selectedDate && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-3">
+            {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+          </h3>
+          {(() => {
+            const dateKey = format(selectedDate, 'yyyy-MM-dd')
+            const selectedDayActivities = activitiesByDate.get(dateKey) || []
+
+            if (selectedDayActivities.length === 0) {
+              return (
+                <p className="text-center text-gray-500 text-sm py-8">
+                  No activities scheduled for this day
+                </p>
+              )
+            }
+
+            return (
+              <div className="space-y-4">
+                {selectedDayActivities.map((activity) => (
+                  <ActivityCard key={activity.id} activity={activity} />
+                ))}
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
       {/* Empty State */}
-      {scheduledCount === 0 && (
+      {scheduledCount === 0 && !selectedDate && (
         <p className="text-center text-gray-500 text-sm mt-6">
-          No activities scheduled. Click a day to add one!
+          No activities scheduled. Click a day to view or add activities!
         </p>
       )}
+
+      {/* Fixed Add Button */}
+      <div className="fixed bottom-6 right-6">
+        <Button
+          size="lg"
+          className="rounded-full shadow-lg h-14 w-14 p-0"
+          onClick={() => router.push('/add')}
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      </div>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { X } from 'lucide-react'
 
 export default function AddActivityPage() {
   const searchParams = useSearchParams()
@@ -56,6 +57,17 @@ export default function AddActivityPage() {
 
   return (
     <div className="max-w-lg mx-auto p-4">
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
+          <X className="w-4 h-4" />
+          Cancel
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Share What You&apos;re Up To</CardTitle>
