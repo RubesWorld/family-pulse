@@ -4,15 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { InterestSelector } from '@/components/interest-selector'
-import { FloatingElements } from '@/components/floating-elements'
-import { LogOut, Copy, Check, Edit2, Save, X } from 'lucide-react'
-import { getInterestById } from '@/lib/interests'
+import { InterestCardEditor } from '@/components/interest-card-editor'
+import { PickEditor } from '@/components/pick-editor'
+import { LogOut, Copy, Check, Edit2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import type { Activity } from '@/types/database'
+import type { Activity, InterestCard, UserPick } from '@/types/database'
 
 interface ProfileContentProps {
   user: {
@@ -24,6 +22,8 @@ interface ProfileContentProps {
     inviteCode: string
   }
   recentActivities: Activity[]
+  interestCards: InterestCard[]
+  picks: UserPick[]
 }
 
 function getInitials(name: string): string {
@@ -35,12 +35,11 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-export function ProfileContent({ user, recentActivities }: ProfileContentProps) {
+export function ProfileContent({ user, recentActivities, interestCards, picks }: ProfileContentProps) {
   const [copied, setCopied] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [isEditingInterests, setIsEditingInterests] = useState(false)
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(user.interests)
-  const [isSaving, setIsSaving] = useState(false)
+  const [isEditingPicks, setIsEditingPicks] = useState(false)
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -69,38 +68,10 @@ export function ProfileContent({ user, recentActivities }: ProfileContentProps) 
     }
   }
 
-  const handleToggleInterest = (interestId: string) => {
-    setSelectedInterests(prev =>
-      prev.includes(interestId)
-        ? prev.filter(id => id !== interestId)
-        : [...prev, interestId]
-    )
-  }
-
-  const handleSaveInterests = async () => {
-    setIsSaving(true)
-    const supabase = createClient()
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ interests: selectedInterests })
-        .eq('id', user.id)
-
-      if (error) throw error
-
-      setIsEditingInterests(false)
-      router.refresh()
-    } catch (error) {
-      console.error('Failed to save interests:', error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleCancelEdit = () => {
-    setSelectedInterests(user.interests)
+  const handleSaveComplete = () => {
     setIsEditingInterests(false)
+    setIsEditingPicks(false)
+    router.refresh()
   }
 
   return (
@@ -126,15 +97,14 @@ export function ProfileContent({ user, recentActivities }: ProfileContentProps) 
       </Card>
 
       {/* Interests Card */}
-      <Card className="relative overflow-hidden">
-        <FloatingElements interests={user.interests} />
-        <CardHeader className="relative z-10">
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Interests</CardTitle>
               <CardDescription>What you love to do</CardDescription>
             </div>
-            {!isEditingInterests && (
+            {!isEditingInterests && interestCards.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -147,57 +117,77 @@ export function ProfileContent({ user, recentActivities }: ProfileContentProps) 
             )}
           </div>
         </CardHeader>
-        <CardContent className="relative z-10">
-          {isEditingInterests ? (
-            <div className="space-y-4">
-              <InterestSelector
-                selectedInterests={selectedInterests}
-                onToggle={handleToggleInterest}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSaveInterests}
-                  disabled={isSaving}
-                  className="flex-1 gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                  className="gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </Button>
-              </div>
-            </div>
+        <CardContent>
+          {isEditingInterests || interestCards.length === 0 ? (
+            <InterestCardEditor
+              userId={user.id}
+              existingCards={interestCards.map(card => ({
+                category: card.category,
+                description: card.description,
+                is_custom: card.is_custom
+              }))}
+              onSave={handleSaveComplete}
+            />
           ) : (
-            <div>
-              {user.interests.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  Add interests to personalize your profile
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {user.interests.map((interestId) => {
-                    const interest = getInterestById(interestId)
-                    if (!interest) return null
-                    return (
-                      <Badge
-                        key={interest.id}
-                        variant="secondary"
-                        className="text-sm px-3 py-1.5 gap-1.5"
-                      >
-                        <span>{interest.emoji}</span>
-                        <span>{interest.label}</span>
-                      </Badge>
-                    )
-                  })}
+            <div className="space-y-2">
+              {interestCards.map(card => (
+                <div key={card.id} className="border-l-4 border-blue-500 pl-3 py-2">
+                  <p className="font-medium">{card.category}</p>
+                  <p className="text-sm text-gray-600">{card.description}</p>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Picks Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>My Picks</CardTitle>
+              <CardDescription>Your current favorites</CardDescription>
+            </div>
+            {!isEditingPicks && picks.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingPicks(true)}
+                className="gap-1"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isEditingPicks || picks.length === 0 ? (
+            <PickEditor
+              userId={user.id}
+              existingPicks={picks.map(pick => ({
+                category: pick.category,
+                value: pick.value,
+                interest_tag: pick.interest_tag
+              }))}
+              userInterests={interestCards.map(card => ({
+                category: card.category,
+                is_custom: card.is_custom
+              }))}
+              onSave={handleSaveComplete}
+            />
+          ) : (
+            <div className="space-y-2">
+              {picks.map(pick => (
+                <div key={pick.id} className="border-l-4 border-purple-500 pl-3 py-2">
+                  <p className="text-sm text-gray-500">{pick.category}</p>
+                  <p className="font-medium">{pick.value}</p>
+                  {pick.interest_tag && (
+                    <p className="text-xs text-gray-400 mt-1">→ {pick.interest_tag}</p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

@@ -25,6 +25,18 @@ export default async function ProfilePage() {
     .order('created_at', { ascending: false })
     .limit(5)
 
+  // Fetch interest cards
+  const { data: interestCards } = await supabase
+    .from('interest_cards')
+    .select('*')
+    .eq('user_id', user.id)
+
+  // Fetch picks
+  const { data: picks } = await supabase
+    .from('picks')
+    .select('*')
+    .eq('user_id', user.id)
+
   return (
     <ProfileContent
       user={{
@@ -36,6 +48,8 @@ export default async function ProfilePage() {
         inviteCode: (profile?.families as { invite_code: string } | null)?.invite_code || '',
       }}
       recentActivities={(recentActivities || []) as Activity[]}
+      interestCards={interestCards || []}
+      picks={picks || []}
     />
   )
 }
