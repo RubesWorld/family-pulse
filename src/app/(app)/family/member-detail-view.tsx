@@ -72,7 +72,33 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading...</div>
+        <div className="space-y-6 animate-pulse">
+          {/* User header skeleton */}
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-gray-200" />
+            <div className="h-8 w-32 bg-gray-200 rounded" />
+          </div>
+
+          {/* Interests skeleton */}
+          <div className="space-y-3">
+            <div className="h-6 w-24 bg-gray-200 rounded" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded-lg" />
+              ))}
+            </div>
+          </div>
+
+          {/* Picks skeleton */}
+          <div className="space-y-3">
+            <div className="h-6 w-20 bg-gray-200 rounded" />
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-40 bg-gray-200 rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
       ) : (
         <>
           {/* Interests Section */}

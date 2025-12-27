@@ -23,6 +23,8 @@ interface PickEditorProps {
 
 export function PickEditor({ userId, existingPicks, userInterests, onSave }: PickEditorProps) {
   const [picks, setPicks] = useState<Record<string, { value: string; interest_tag: string | null }>>({})
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Initialize picks from existing data
@@ -77,31 +79,44 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
   }
 
   const handleSave = async () => {
-    const supabase = (await import('@/lib/supabase/client')).createClient()
+    setSaving(true)
+    setError(null)
 
-    // Delete existing picks
-    await supabase
-      .from('picks')
-      .delete()
-      .eq('user_id', userId)
+    try {
+      const supabase = (await import('@/lib/supabase/client')).createClient()
 
-    // Insert new picks (only those with values)
-    const picksToInsert = Object.entries(picks)
-      .filter(([, pick]) => pick.value.trim())
-      .map(([category, pick]) => ({
-        user_id: userId,
-        category,
-        value: pick.value,
-        interest_tag: pick.interest_tag
-      }))
-
-    if (picksToInsert.length > 0) {
-      await supabase
+      // Delete existing picks
+      const { error: deleteError } = await supabase
         .from('picks')
-        .insert(picksToInsert)
-    }
+        .delete()
+        .eq('user_id', userId)
 
-    onSave()
+      if (deleteError) throw deleteError
+
+      // Insert new picks (only those with values)
+      const picksToInsert = Object.entries(picks)
+        .filter(([, pick]) => pick.value.trim())
+        .map(([category, pick]) => ({
+          user_id: userId,
+          category,
+          value: pick.value,
+          interest_tag: pick.interest_tag
+        }))
+
+      if (picksToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('picks')
+          .insert(picksToInsert)
+
+        if (insertError) throw insertError
+      }
+
+      onSave()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save picks')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -157,8 +172,15 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
         )
       })}
 
-      <Button onClick={handleSave} className="w-full" size="lg">
-        Save Picks
+      {/* Error message */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
+        {saving ? 'Saving...' : 'Save Picks'}
       </Button>
     </div>
   )

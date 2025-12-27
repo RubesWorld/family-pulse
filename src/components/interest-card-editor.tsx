@@ -24,6 +24,8 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
   const [showAddPreset, setShowAddPreset] = useState(false)
   const [showAddCustom, setShowAddCustom] = useState(false)
   const [customName, setCustomName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Get preset interests not yet added
   const availablePresets = PRESET_INTERESTS.filter(
@@ -65,29 +67,42 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
   }
 
   const handleSave = async () => {
-    const supabase = (await import('@/lib/supabase/client')).createClient()
+    setSaving(true)
+    setError(null)
 
-    // Delete existing cards
-    await supabase
-      .from('interest_cards')
-      .delete()
-      .eq('user_id', userId)
+    try {
+      const supabase = (await import('@/lib/supabase/client')).createClient()
 
-    // Insert new cards
-    if (cards.length > 0) {
-      await supabase
+      // Delete existing cards
+      const { error: deleteError } = await supabase
         .from('interest_cards')
-        .insert(
-          cards.map(card => ({
-            user_id: userId,
-            category: card.category,
-            is_custom: card.is_custom,
-            description: card.description
-          }))
-        )
-    }
+        .delete()
+        .eq('user_id', userId)
 
-    onSave()
+      if (deleteError) throw deleteError
+
+      // Insert new cards
+      if (cards.length > 0) {
+        const { error: insertError } = await supabase
+          .from('interest_cards')
+          .insert(
+            cards.map(card => ({
+              user_id: userId,
+              category: card.category,
+              is_custom: card.is_custom,
+              description: card.description
+            }))
+          )
+
+        if (insertError) throw insertError
+      }
+
+      onSave()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save interests')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -194,9 +209,16 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
         </Card>
       )}
 
+      {/* Error message */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
       {/* Save button */}
-      <Button onClick={handleSave} className="w-full" size="lg">
-        Save Interests
+      <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
+        {saving ? 'Saving...' : 'Save Interests'}
       </Button>
     </div>
   )

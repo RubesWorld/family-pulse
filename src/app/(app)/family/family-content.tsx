@@ -29,16 +29,23 @@ export function FamilyContent({ familyName, members, recentPicks }: FamilyConten
       <h1 className="text-2xl font-bold mb-6">{familyName}</h1>
 
       {/* Recent Picks Section */}
-      {recentPicks.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-3">Recent Picks</h2>
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold mb-3">Recent Picks</h2>
+        {recentPicks.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
             {recentPicks.map(pick => (
               <PickCard key={pick.id} pick={pick} showUser />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="text-center py-8 px-4 bg-gray-50 rounded-lg">
+            <p className="text-gray-500">No recent picks from the last 24 hours</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Share your favorites in your profile!
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* Family Members Grid */}
       <section>
