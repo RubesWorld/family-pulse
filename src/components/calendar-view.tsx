@@ -171,9 +171,22 @@ export function CalendarView({ activities }: CalendarViewProps) {
       {/* Selected Day Activities */}
       {selectedDate && (
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">
-            {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">
+              {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+            </h3>
+            <Button
+              size="sm"
+              onClick={() => {
+                const dateStr = format(selectedDate, 'yyyy-MM-dd')
+                router.push(`/add?date=${dateStr}`)
+              }}
+              className="gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              Add Activity
+            </Button>
+          </div>
           {(() => {
             const dateKey = format(selectedDate, 'yyyy-MM-dd')
             const selectedDayActivities = activitiesByDate.get(dateKey) || []
