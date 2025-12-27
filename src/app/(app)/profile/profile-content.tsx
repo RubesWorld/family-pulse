@@ -10,6 +10,8 @@ import { InterestCardEditor } from '@/components/interest-card-editor'
 import { PickEditor } from '@/components/pick-editor'
 import { LogOut, Copy, Check, Edit2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { PRESET_INTERESTS } from '@/lib/interests'
+import { PICK_CATEGORIES } from '@/lib/pick-categories'
 import type { Activity, InterestCard, UserPick } from '@/types/database'
 
 interface ProfileContentProps {
@@ -129,13 +131,28 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               onSave={handleSaveComplete}
             />
           ) : (
-            <div className="space-y-2">
-              {interestCards.map(card => (
-                <div key={card.id} className="border-l-4 border-blue-500 pl-3 py-2">
-                  <p className="font-medium">{card.category}</p>
-                  <p className="text-sm text-gray-600">{card.description}</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 gap-3">
+              {interestCards.map(card => {
+                const preset = PRESET_INTERESTS.find((p) => p.id === card.category)
+                const emoji = preset?.emoji || '⭐'
+                const label = preset?.label || card.category
+
+                return (
+                  <div
+                    key={card.id}
+                    className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-blue-200 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-bl-full" />
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-sm">
+                        <span className="text-2xl">{emoji}</span>
+                      </div>
+                      <p className="font-bold text-gray-900 text-lg">{label}</p>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed pl-15">{card.description}</p>
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardContent>
@@ -178,16 +195,39 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               onSave={handleSaveComplete}
             />
           ) : (
-            <div className="space-y-2">
-              {picks.map(pick => (
-                <div key={pick.id} className="border-l-4 border-purple-500 pl-3 py-2">
-                  <p className="text-sm text-gray-500">{pick.category}</p>
-                  <p className="font-medium">{pick.value}</p>
-                  {pick.interest_tag && (
-                    <p className="text-xs text-gray-400 mt-1">→ {pick.interest_tag}</p>
-                  )}
-                </div>
-              ))}
+            <div className="grid grid-cols-1 gap-3">
+              {picks.map(pick => {
+                const category = PICK_CATEGORIES.find((c) => c.id === pick.category)
+                const Icon = category?.icon
+                const label = category?.label || pick.category
+
+                return (
+                  <div
+                    key={pick.id}
+                    className={`relative overflow-hidden rounded-lg p-4 border-2 shadow-sm hover:shadow-md transition-all bg-gradient-to-br ${category?.color || 'from-gray-400 to-gray-500'}`}
+                  >
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-white rounded-full blur-2xl" />
+                    </div>
+                    <div className="relative flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        {Icon && (
+                          <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <Icon className="w-6 h-6 text-white" />
+                          </div>
+                        )}
+                        <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">{label}</span>
+                      </div>
+                    </div>
+                    <p className="font-bold text-white text-lg mb-2 relative">{pick.value}</p>
+                    {pick.interest_tag && (
+                      <div className="inline-block px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                        → {pick.interest_tag}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardContent>
