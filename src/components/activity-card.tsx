@@ -3,8 +3,10 @@
 import { formatDistanceToNow, format, isToday, isTomorrow, isYesterday } from 'date-fns'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-import { MapPin, Calendar } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { MapPin, Calendar, MessageCircle } from 'lucide-react'
 import { ActivityWithUser } from '@/types/database'
+import { openSMS } from '@/lib/sms'
 
 interface ActivityCardProps {
   activity: ActivityWithUser
@@ -40,6 +42,13 @@ function formatActivityTime(date: string | null): string | null {
 export function ActivityCard({ activity }: ActivityCardProps) {
   const timeAgo = formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })
   const activityTime = formatActivityTime(activity.starts_at)
+
+  const handleTextClick = () => {
+    if (!activity.users?.phone_number) return
+
+    const message = `Hey ${activity.users.name}, about "${activity.title}"...`
+    openSMS(activity.users.phone_number, message)
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -85,6 +94,19 @@ export function ActivityCard({ activity }: ActivityCardProps) {
               <p className="text-sm text-gray-500 mt-2 italic border-l-2 border-gray-200 pl-2">
                 {activity.notes}
               </p>
+            )}
+            {activity.users?.phone_number && (
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTextClick}
+                  className="gap-1.5"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Text {activity.users.name.split(' ')[0]}
+                </Button>
+              </div>
             )}
           </div>
         </div>

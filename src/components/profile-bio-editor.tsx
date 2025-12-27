@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
+import { MapPin, Briefcase, Calendar, FileText, Phone } from 'lucide-react'
 
 interface ProfileBioEditorProps {
   userId: string
@@ -13,6 +13,7 @@ interface ProfileBioEditorProps {
     occupation: string | null
     birthday: string | null
     bio: string | null
+    phone_number: string | null
   }
   onSave: () => void
 }
@@ -22,6 +23,7 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
   const [occupation, setOccupation] = useState(initialData.occupation || '')
   const [birthday, setBirthday] = useState(initialData.birthday || '')
   const [bio, setBio] = useState(initialData.bio || '')
+  const [phoneNumber, setPhoneNumber] = useState(initialData.phone_number || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,6 +41,7 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
           occupation: occupation.trim() || null,
           birthday: birthday || null,
           bio: bio.trim() || null,
+          phone_number: phoneNumber.trim() || null,
         })
         .eq('id', userId)
 
@@ -91,6 +94,23 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
           value={birthday}
           onChange={(e) => setBirthday(e.target.value)}
         />
+      </div>
+
+      {/* Phone Number */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <Phone className="w-4 h-4" />
+          Phone Number
+        </label>
+        <Input
+          type="tel"
+          placeholder="e.g., (555) 123-4567"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+        />
+        <p className="text-xs text-gray-500">
+          Family members can use this to text you from the app
+        </p>
       </div>
 
       {/* Bio */}

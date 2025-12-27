@@ -41,6 +41,7 @@ export type Database = {
           occupation: string | null
           birthday: string | null
           bio: string | null
+          phone_number: string | null
           created_at: string
         }
         Insert: {
@@ -53,6 +54,7 @@ export type Database = {
           occupation?: string | null
           birthday?: string | null
           bio?: string | null
+          phone_number?: string | null
           created_at?: string
         }
         Update: {
@@ -65,6 +67,7 @@ export type Database = {
           occupation?: string | null
           birthday?: string | null
           bio?: string | null
+          phone_number?: string | null
           created_at?: string
         }
         Relationships: [
@@ -223,7 +226,7 @@ export type InterestCard = Database['public']['Tables']['interest_cards']['Row']
 export type UserPick = Database['public']['Tables']['picks']['Row']
 
 export type ActivityWithUser = Activity & {
-  users: Pick<User, 'name' | 'avatar_url'>
+  users: Pick<User, 'name' | 'avatar_url' | 'phone_number'>
 }
 
 export type InterestCardWithUser = InterestCard & {

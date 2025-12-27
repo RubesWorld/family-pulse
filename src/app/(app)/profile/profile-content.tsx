@@ -27,6 +27,7 @@ interface ProfileContentProps {
     occupation: string | null
     birthday: string | null
     bio: string | null
+    phone_number: string | null
   }
   recentActivities: Activity[]
   interestCards: InterestCard[]
@@ -137,6 +138,7 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
                 occupation: user.occupation,
                 birthday: user.birthday,
                 bio: user.bio,
+                phone_number: user.phone_number,
               }}
               onSave={handleSaveComplete}
             />

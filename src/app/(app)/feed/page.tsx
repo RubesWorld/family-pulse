@@ -27,7 +27,7 @@ export default async function FeedPage() {
     .from('activities')
     .select(`
       *,
-      users (name, avatar_url)
+      users (name, avatar_url, phone_number)
     `)
     .order('created_at', { ascending: false })
 

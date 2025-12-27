@@ -50,6 +50,7 @@ export default async function ProfilePage() {
         occupation: profile?.occupation || null,
         birthday: profile?.birthday || null,
         bio: profile?.bio || null,
+        phone_number: profile?.phone_number || null,
       }}
       recentActivities={(recentActivities || []) as Activity[]}
       interestCards={interestCards || []}

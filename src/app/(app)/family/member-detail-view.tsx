@@ -7,7 +7,8 @@ import { InterestCard as InterestCardComponent } from '@/components/interest-car
 import { PickCard } from '@/components/pick-card'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
+import { ArrowLeft, MapPin, Briefcase, Calendar, FileText, MessageCircle } from 'lucide-react'
+import { openSMS } from '@/lib/sms'
 
 interface MemberDetailViewProps {
   member: User
@@ -50,6 +51,12 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
 
   const hasBioInfo = member.location || member.occupation || member.birthday || member.bio
 
+  const handleTextClick = () => {
+    if (!member.phone_number) return
+    const message = `Hey ${member.name}!`
+    openSMS(member.phone_number, message)
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-4 pb-24">
       <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -57,21 +64,34 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
         Back to Family
       </Button>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden shadow-md">
-          {member.avatar_url ? (
-            <img
-              src={member.avatar_url}
-              alt={member.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-2xl font-bold text-white">
-              {member.name[0]}
-            </span>
-          )}
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden shadow-md">
+            {member.avatar_url ? (
+              <img
+                src={member.avatar_url}
+                alt={member.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl font-bold text-white">
+                {member.name[0]}
+              </span>
+            )}
+          </div>
+          <h1 className="text-2xl font-bold">{member.name}</h1>
         </div>
-        <h1 className="text-2xl font-bold">{member.name}</h1>
+        {member.phone_number && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTextClick}
+            className="gap-1.5"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Text
+          </Button>
+        )}
       </div>
 
       {loading ? (
