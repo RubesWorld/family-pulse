@@ -6,7 +6,7 @@ import { format, isToday, isYesterday } from 'date-fns'
 import { ActivityCard } from '@/components/activity-card'
 import { PickActivityCard } from '@/components/pick-activity-card'
 import { CalendarView } from '@/components/calendar-view'
-import { FeedHeader } from './feed-header'
+import { FeedHeader, FeedFilter } from './feed-header'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import type { ActivityWithUser, PickWithUser } from '@/types/database'
@@ -75,6 +75,7 @@ function formatDateHeader(date: Date): string {
 
 export function FeedContent({ familyName, inviteCode, activities, recentPicks }: FeedContentProps) {
   const [view, setView] = useState<'feed' | 'calendar'>('feed')
+  const [filter, setFilter] = useState<FeedFilter>('all')
   const router = useRouter()
 
   const groupedItems = useMemo(
@@ -82,7 +83,49 @@ export function FeedContent({ familyName, inviteCode, activities, recentPicks }:
     [activities, recentPicks]
   )
 
+  // Filter grouped items based on selected filter
+  const filteredGroupedItems = useMemo(() => {
+    if (filter === 'all') return groupedItems
+
+    return groupedItems
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => {
+          if (filter === 'activities') return item.type === 'activity'
+          if (filter === 'picks') return item.type === 'pick'
+          return true
+        })
+      }))
+      .filter(group => group.items.length > 0) // Remove empty date groups
+  }, [groupedItems, filter])
+
   const hasContent = activities.length > 0 || recentPicks.length > 0
+  const hasFilteredContent = filteredGroupedItems.length > 0
+
+  const getEmptyMessage = () => {
+    if (!hasContent) {
+      return {
+        title: 'No activities yet',
+        subtitle: "Be the first to share what you're up to!"
+      }
+    }
+    if (filter === 'activities') {
+      return {
+        title: 'No activities',
+        subtitle: 'No activities to show. Try switching to "All" or add an activity!'
+      }
+    }
+    if (filter === 'picks') {
+      return {
+        title: 'No picks',
+        subtitle: 'No picks to show. Try switching to "All" or add your picks in your profile!'
+      }
+    }
+    return {
+      title: 'Nothing to show',
+      subtitle: 'Try switching filters or add some content!'
+    }
+  }
 
   return (
     <div className="max-w-lg mx-auto">
@@ -91,20 +134,22 @@ export function FeedContent({ familyName, inviteCode, activities, recentPicks }:
         inviteCode={inviteCode}
         view={view}
         onViewChange={setView}
+        filter={filter}
+        onFilterChange={setFilter}
       />
 
       {view === 'feed' ? (
         <>
           <div className="p-4 space-y-6">
-            {!hasContent ? (
+            {!hasFilteredContent ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No activities yet</p>
+                <p className="text-gray-500 text-lg">{getEmptyMessage().title}</p>
                 <p className="text-gray-400 mt-1">
-                  Be the first to share what you&apos;re up to!
+                  {getEmptyMessage().subtitle}
                 </p>
               </div>
             ) : (
-              groupedItems.map((group) => (
+              filteredGroupedItems.map((group) => (
                 <div key={group.dateKey} className="space-y-3">
                   <h2 className="text-lg font-bold text-gray-900 px-1">
                     {formatDateHeader(group.date)}

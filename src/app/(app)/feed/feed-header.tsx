@@ -2,16 +2,20 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Share2, Check, List, Calendar } from 'lucide-react'
+import { Share2, Check, List, Calendar, Activity, Heart } from 'lucide-react'
+
+export type FeedFilter = 'all' | 'activities' | 'picks'
 
 interface FeedHeaderProps {
   familyName: string
   inviteCode: string
   view: 'feed' | 'calendar'
   onViewChange: (view: 'feed' | 'calendar') => void
+  filter: FeedFilter
+  onFilterChange: (filter: FeedFilter) => void
 }
 
-export function FeedHeader({ familyName, inviteCode, view, onViewChange }: FeedHeaderProps) {
+export function FeedHeader({ familyName, inviteCode, view, onViewChange, filter, onFilterChange }: FeedHeaderProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -99,6 +103,38 @@ export function FeedHeader({ familyName, inviteCode, view, onViewChange }: FeedH
           Calendar
         </Button>
       </div>
+
+      {/* Feed Filter (only show when in feed view) */}
+      {view === 'feed' && (
+        <div className="flex gap-2 mt-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onFilterChange('all')}
+            className="flex-1"
+          >
+            All
+          </Button>
+          <Button
+            variant={filter === 'activities' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onFilterChange('activities')}
+            className="flex-1 gap-1.5"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            Activities
+          </Button>
+          <Button
+            variant={filter === 'picks' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onFilterChange('picks')}
+            className="flex-1 gap-1.5"
+          >
+            <Heart className="w-3.5 h-3.5" />
+            Picks
+          </Button>
+        </div>
+      )}
     </header>
   )
 }
