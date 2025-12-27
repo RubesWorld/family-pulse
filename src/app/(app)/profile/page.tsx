@@ -31,11 +31,13 @@ export default async function ProfilePage() {
     .select('*')
     .eq('user_id', user.id)
 
-  // Fetch picks
+  // Fetch picks (only non-empty ones)
   const { data: picks } = await supabase
     .from('picks')
     .select('*')
     .eq('user_id', user.id)
+    .neq('value', '')
+    .not('value', 'is', null)
 
   return (
     <ProfileContent

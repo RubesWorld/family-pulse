@@ -15,6 +15,7 @@ interface InterestCardEditorProps {
     category: string
     description: string
     is_custom: boolean
+    tags: string[]
   }>
   onSave: () => void
 }
@@ -24,6 +25,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
   const [showAddPreset, setShowAddPreset] = useState(false)
   const [showAddCustom, setShowAddCustom] = useState(false)
   const [customName, setCustomName] = useState('')
+  const [tagInputs, setTagInputs] = useState<Record<string, string>>({}) // Track tag input for each card
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,6 +40,26 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
     ))
   }
 
+  const handleAddTag = (category: string) => {
+    const tagInput = tagInputs[category]?.trim()
+    if (!tagInput) return
+
+    setCards(prev => prev.map(card =>
+      card.category === category
+        ? { ...card, tags: [...card.tags, tagInput] }
+        : card
+    ))
+    setTagInputs(prev => ({ ...prev, [category]: '' }))
+  }
+
+  const handleRemoveTag = (category: string, tagToRemove: string) => {
+    setCards(prev => prev.map(card =>
+      card.category === category
+        ? { ...card, tags: card.tags.filter(tag => tag !== tagToRemove) }
+        : card
+    ))
+  }
+
   const handleAddPreset = (presetId: string) => {
     const preset = PRESET_INTERESTS.find(p => p.id === presetId)
     if (!preset) return
@@ -45,7 +67,8 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
     setCards(prev => [...prev, {
       category: presetId,
       description: '',
-      is_custom: false
+      is_custom: false,
+      tags: []
     }])
     setShowAddPreset(false)
   }
@@ -56,7 +79,8 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
     setCards(prev => [...prev, {
       category: customName.trim(),
       description: '',
-      is_custom: true
+      is_custom: true,
+      tags: []
     }])
     setCustomName('')
     setShowAddCustom(false)
@@ -90,7 +114,8 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
               user_id: userId,
               category: card.category,
               is_custom: card.is_custom,
-              description: card.description
+              description: card.description,
+              tags: card.tags
             }))
           )
 
@@ -138,8 +163,61 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
                   placeholder={placeholder}
                   value={card.description}
                   onChange={(e) => handleUpdateDescription(card.category, e.target.value)}
-                  className="min-h-[80px]"
+                  className="min-h-[80px] mb-3"
                 />
+
+                {/* Tags section */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-600">
+                    Specifics (e.g., Claude, Gemini, AI)
+                  </label>
+
+                  {/* Display existing tags */}
+                  {card.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {card.tags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="gap-1 pr-1"
+                        >
+                          {tag}
+                          <button
+                            onClick={() => handleRemoveTag(card.category, tag)}
+                            className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add tag input */}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a tag..."
+                      value={tagInputs[card.category] || ''}
+                      onChange={(e) => setTagInputs(prev => ({ ...prev, [card.category]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleAddTag(card.category)
+                        }
+                      }}
+                      className="text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddTag(card.category)}
+                      disabled={!tagInputs[card.category]?.trim()}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )

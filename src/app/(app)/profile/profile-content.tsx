@@ -8,11 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { InterestCardEditor } from '@/components/interest-card-editor'
 import { PickEditor } from '@/components/pick-editor'
+import { PickCard } from '@/components/pick-card'
 import { ProfileBioEditor } from '@/components/profile-bio-editor'
 import { LogOut, Copy, Check, Edit2, MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { PRESET_INTERESTS } from '@/lib/interests'
-import { PICK_CATEGORIES } from '@/lib/pick-categories'
 import type { Activity, InterestCard, UserPick } from '@/types/database'
 
 interface ProfileContentProps {
@@ -222,7 +222,8 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               existingCards={interestCards.map(card => ({
                 category: card.category,
                 description: card.description,
-                is_custom: card.is_custom
+                is_custom: card.is_custom,
+                tags: card.tags || []
               }))}
               onSave={handleSaveComplete}
             />
@@ -262,7 +263,7 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               <CardTitle>My Picks</CardTitle>
               <CardDescription>Your current favorites</CardDescription>
             </div>
-            {!isEditingPicks && picks.length > 0 && (
+            {!isEditingPicks && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -276,7 +277,7 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
           </div>
         </CardHeader>
         <CardContent>
-          {isEditingPicks || picks.length === 0 ? (
+          {isEditingPicks ? (
             <PickEditor
               userId={user.id}
               existingPicks={picks.map(pick => ({
@@ -290,40 +291,22 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               }))}
               onSave={handleSaveComplete}
             />
+          ) : picks.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">No picks yet</p>
+              <p className="text-xs mt-1">Click Edit to add your current favorites</p>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
-              {picks.map(pick => {
-                const category = PICK_CATEGORIES.find((c) => c.id === pick.category)
-                const Icon = category?.icon
-                const label = category?.label || pick.category
-
-                return (
-                  <div
-                    key={pick.id}
-                    className={`relative overflow-hidden rounded-lg p-4 border-2 shadow-sm hover:shadow-md transition-all bg-gradient-to-br ${category?.color || 'from-gray-400 to-gray-500'}`}
-                  >
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-white rounded-full blur-2xl" />
-                    </div>
-                    <div className="relative flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        {Icon && (
-                          <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <Icon className="w-6 h-6 text-white" />
-                          </div>
-                        )}
-                        <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">{label}</span>
-                      </div>
-                    </div>
-                    <p className="font-bold text-white text-lg mb-2 relative">{pick.value}</p>
-                    {pick.interest_tag && (
-                      <div className="inline-block px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-                        → {pick.interest_tag}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              {picks.filter(pick => pick.value && pick.value.trim()).map(pick => (
+                <PickCard
+                  key={pick.id}
+                  pick={{
+                    ...pick,
+                    users: { name: user.name, avatar_url: null }
+                  }}
+                />
+              ))}
             </div>
           )}
         </CardContent>
