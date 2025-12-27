@@ -46,6 +46,10 @@ export default async function ProfilePage() {
         interests: profile?.interests || [],
         familyName: (profile?.families as { name: string } | null)?.name || 'Family',
         inviteCode: (profile?.families as { invite_code: string } | null)?.invite_code || '',
+        location: profile?.location || null,
+        occupation: profile?.occupation || null,
+        birthday: profile?.birthday || null,
+        bio: profile?.bio || null,
       }}
       recentActivities={(recentActivities || []) as Activity[]}
       interestCards={interestCards || []}

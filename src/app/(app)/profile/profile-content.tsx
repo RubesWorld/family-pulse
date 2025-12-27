@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { InterestCardEditor } from '@/components/interest-card-editor'
 import { PickEditor } from '@/components/pick-editor'
-import { LogOut, Copy, Check, Edit2 } from 'lucide-react'
+import { ProfileBioEditor } from '@/components/profile-bio-editor'
+import { LogOut, Copy, Check, Edit2, MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { PRESET_INTERESTS } from '@/lib/interests'
 import { PICK_CATEGORIES } from '@/lib/pick-categories'
@@ -22,6 +23,10 @@ interface ProfileContentProps {
     interests: string[]
     familyName: string
     inviteCode: string
+    location: string | null
+    occupation: string | null
+    birthday: string | null
+    bio: string | null
   }
   recentActivities: Activity[]
   interestCards: InterestCard[]
@@ -40,6 +45,7 @@ function getInitials(name: string): string {
 export function ProfileContent({ user, recentActivities, interestCards, picks }: ProfileContentProps) {
   const [copied, setCopied] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [isEditingBio, setIsEditingBio] = useState(false)
   const [isEditingInterests, setIsEditingInterests] = useState(false)
   const [isEditingPicks, setIsEditingPicks] = useState(false)
   const router = useRouter()
@@ -71,10 +77,13 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
   }
 
   const handleSaveComplete = () => {
+    setIsEditingBio(false)
     setIsEditingInterests(false)
     setIsEditingPicks(false)
     router.refresh()
   }
+
+  const hasBioInfo = user.location || user.occupation || user.birthday || user.bio
 
   return (
     <div className="max-w-lg mx-auto p-4 space-y-4">
@@ -95,6 +104,91 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               <p className="text-sm text-gray-500">{user.email}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Bio Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>About Me</CardTitle>
+              <CardDescription>A bit about who I am</CardDescription>
+            </div>
+            {!isEditingBio && hasBioInfo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingBio(true)}
+                className="gap-1"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isEditingBio || !hasBioInfo ? (
+            <ProfileBioEditor
+              userId={user.id}
+              initialData={{
+                location: user.location,
+                occupation: user.occupation,
+                birthday: user.birthday,
+                bio: user.bio,
+              }}
+              onSave={handleSaveComplete}
+            />
+          ) : (
+            <div className="space-y-3">
+              {user.location && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                    <p className="font-medium text-gray-900">{user.location}</p>
+                  </div>
+                </div>
+              )}
+
+              {user.occupation && (
+                <div className="flex items-start gap-3">
+                  <Briefcase className="w-5 h-5 text-purple-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Occupation</p>
+                    <p className="font-medium text-gray-900">{user.occupation}</p>
+                  </div>
+                </div>
+              )}
+
+              {user.birthday && (
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-pink-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Birthday</p>
+                    <p className="font-medium text-gray-900">
+                      {new Date(user.birthday).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {user.bio && (
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Bio</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{user.bio}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

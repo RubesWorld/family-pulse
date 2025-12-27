@@ -6,7 +6,8 @@ import { User, InterestCard, UserPick } from '@/types/database'
 import { InterestCard as InterestCardComponent } from '@/components/interest-card'
 import { PickCard } from '@/components/pick-card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowLeft, MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
 
 interface MemberDetailViewProps {
   member: User
@@ -47,6 +48,8 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
     ? picks.filter(p => p.interest_tag === selectedInterest)
     : picks
 
+  const hasBioInfo = member.location || member.occupation || member.birthday || member.bio
+
   return (
     <div className="max-w-4xl mx-auto p-4 pb-24">
       <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -79,6 +82,9 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
             <div className="h-8 w-32 bg-gray-200 rounded" />
           </div>
 
+          {/* Bio skeleton */}
+          <div className="h-40 bg-gray-200 rounded-lg" />
+
           {/* Interests skeleton */}
           <div className="space-y-3">
             <div className="h-6 w-24 bg-gray-200 rounded" />
@@ -101,6 +107,64 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
         </div>
       ) : (
         <>
+          {/* Bio Section */}
+          {hasBioInfo && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>About {member.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {member.location && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                        <p className="font-medium text-gray-900">{member.location}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {member.occupation && (
+                    <div className="flex items-start gap-3">
+                      <Briefcase className="w-5 h-5 text-purple-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Occupation</p>
+                        <p className="font-medium text-gray-900">{member.occupation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {member.birthday && (
+                    <div className="flex items-start gap-3">
+                      <Calendar className="w-5 h-5 text-pink-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Birthday</p>
+                        <p className="font-medium text-gray-900">
+                          {new Date(member.birthday).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {member.bio && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-5 h-5 text-green-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Bio</p>
+                        <p className="text-sm text-gray-700 leading-relaxed">{member.bio}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Interests Section */}
           {interests.length > 0 && (
             <section className="mb-8">
