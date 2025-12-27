@@ -175,6 +175,8 @@ export type Database = {
           category: string
           value: string
           interest_tag: string | null
+          is_current: boolean
+          archived_at: string | null
           created_at: string
           updated_at: string
         }
@@ -184,6 +186,8 @@ export type Database = {
           category: string
           value: string
           interest_tag?: string | null
+          is_current?: boolean
+          archived_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -193,6 +197,8 @@ export type Database = {
           category?: string
           value?: string
           interest_tag?: string | null
+          is_current?: boolean
+          archived_at?: string | null
           created_at?: string
           updated_at?: string
         }

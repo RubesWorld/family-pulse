@@ -305,6 +305,8 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
                     ...pick,
                     users: { name: user.name, avatar_url: null }
                   }}
+                  showHistoryButton={true}
+                  userId={user.id}
                 />
               ))}
             </div>

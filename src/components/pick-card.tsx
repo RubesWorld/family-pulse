@@ -3,14 +3,17 @@
 import { PickWithUser } from '@/types/database'
 import { PICK_CATEGORIES } from '@/lib/pick-categories'
 import { Badge } from '@/components/ui/badge'
+import { PickHistoryDialog } from '@/components/pick-history-dialog'
 
 interface PickCardProps {
   pick: PickWithUser
   onInterestClick?: (interestTag: string) => void
   showUser?: boolean
+  showHistoryButton?: boolean
+  userId?: string
 }
 
-export function PickCard({ pick, onInterestClick, showUser = false }: PickCardProps) {
+export function PickCard({ pick, onInterestClick, showUser = false, showHistoryButton = false, userId }: PickCardProps) {
   const category = PICK_CATEGORIES.find((c) => c.id === pick.category)
   if (!category) return null
 
@@ -68,6 +71,17 @@ export function PickCard({ pick, onInterestClick, showUser = false }: PickCardPr
           >
             → {pick.interest_tag}
           </Badge>
+        </div>
+      )}
+
+      {/* History button */}
+      {showHistoryButton && userId && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <PickHistoryDialog
+            userId={userId}
+            category={pick.category}
+            currentValue={pick.value}
+          />
         </div>
       )}
     </div>

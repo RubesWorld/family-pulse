@@ -85,30 +85,69 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
     try {
       const supabase = (await import('@/lib/supabase/client')).createClient()
 
-      // Delete existing picks
-      const { error: deleteError } = await supabase
+      // Fetch current picks
+      const { data: currentPicks, error: fetchError } = await supabase
         .from('picks')
-        .delete()
+        .select('*')
         .eq('user_id', userId)
+        .eq('is_current', true)
 
-      if (deleteError) throw deleteError
+      if (fetchError) throw fetchError
 
-      // Insert new picks (only those with values)
-      const picksToInsert = Object.entries(picks)
-        .filter(([, pick]) => pick.value.trim())
-        .map(([category, pick]) => ({
-          user_id: userId,
-          category,
-          value: pick.value,
-          interest_tag: pick.interest_tag
-        }))
+      // Process each category
+      for (const [category, newPick] of Object.entries(picks)) {
+        const trimmedValue = newPick.value.trim()
+        const currentPick = currentPicks?.find(p => p.category === category)
 
-      if (picksToInsert.length > 0) {
-        const { error: insertError } = await supabase
-          .from('picks')
-          .insert(picksToInsert)
+        if (currentPick) {
+          // There's an existing current pick for this category
+          if (!trimmedValue) {
+            // Value cleared - archive current pick
+            const { error } = await supabase
+              .from('picks')
+              .update({ is_current: false })
+              .eq('id', currentPick.id)
+            if (error) throw error
+          } else if (currentPick.value !== trimmedValue) {
+            // Value changed - archive old and insert new
+            const { error: archiveError } = await supabase
+              .from('picks')
+              .update({ is_current: false })
+              .eq('id', currentPick.id)
+            if (archiveError) throw archiveError
 
-        if (insertError) throw insertError
+            const { error: insertError } = await supabase
+              .from('picks')
+              .insert({
+                user_id: userId,
+                category,
+                value: trimmedValue,
+                interest_tag: newPick.interest_tag,
+                is_current: true
+              })
+            if (insertError) throw insertError
+          } else if (currentPick.interest_tag !== newPick.interest_tag) {
+            // Only interest tag changed - update in place (no history)
+            const { error } = await supabase
+              .from('picks')
+              .update({ interest_tag: newPick.interest_tag })
+              .eq('id', currentPick.id)
+            if (error) throw error
+          }
+          // If value and interest_tag are the same, do nothing
+        } else if (trimmedValue) {
+          // New pick - insert with is_current = true
+          const { error } = await supabase
+            .from('picks')
+            .insert({
+              user_id: userId,
+              category,
+              value: trimmedValue,
+              interest_tag: newPick.interest_tag,
+              is_current: true
+            })
+          if (error) throw error
+        }
       }
 
       onSave()

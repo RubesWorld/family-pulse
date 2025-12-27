@@ -31,7 +31,7 @@ export default async function FeedPage() {
     `)
     .order('created_at', { ascending: false })
 
-  // Get recent picks from family members (last 24 hours)
+  // Get recent picks from family members (last 24 hours, only current picks)
   const last24Hours = new Date()
   last24Hours.setHours(last24Hours.getHours() - 24)
 
@@ -42,11 +42,32 @@ export default async function FeedPage() {
       users (name, avatar_url)
     `)
     .in('user_id', familyMemberIds)
+    .eq('is_current', true)
     .gte('created_at', last24Hours.toISOString())
     .order('created_at', { ascending: false })
 
+  // Fetch previous values for picks to detect changes
+  const picksWithHistory = await Promise.all(
+    (recentPicks || []).map(async (pick) => {
+      const { data: previousPick } = await supabase
+        .from('picks')
+        .select('value')
+        .eq('user_id', pick.user_id)
+        .eq('category', pick.category)
+        .eq('is_current', false)
+        .order('archived_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      return {
+        ...pick,
+        previous_value: previousPick?.value || null
+      }
+    })
+  )
+
   const typedActivities = (activities || []) as ActivityWithUser[]
-  const typedPicks = (recentPicks || []) as PickWithUser[]
+  const typedPicks = picksWithHistory as (PickWithUser & { previous_value: string | null })[]
 
   return (
     <FeedContent

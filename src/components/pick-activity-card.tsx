@@ -4,10 +4,11 @@ import { PickWithUser } from '@/types/database'
 import { Card, CardContent } from '@/components/ui/card'
 import { PICK_CATEGORIES } from '@/lib/pick-categories'
 import { Badge } from '@/components/ui/badge'
+import { ArrowRight } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 interface PickActivityCardProps {
-  pick: PickWithUser
+  pick: PickWithUser & { previous_value?: string | null }
 }
 
 export function PickActivityCard({ pick }: PickActivityCardProps) {
@@ -29,10 +30,21 @@ export function PickActivityCard({ pick }: PickActivityCardProps) {
           {/* Content */}
           <div className="flex-1 min-w-0">
             <p className="text-sm text-gray-500 mb-1">
-              <span className="font-medium text-gray-900">{userName}</span> just added
+              <span className="font-medium text-gray-900">{userName}</span>{' '}
+              {pick.previous_value ? 'changed' : 'just added'}
             </p>
             <p className="font-semibold text-base mb-1">{category?.label || pick.category}</p>
-            <p className="text-gray-700">{pick.value}</p>
+
+            {/* Show change if there's a previous value */}
+            {pick.previous_value ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-gray-500 line-through">{pick.previous_value}</span>
+                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="font-medium text-gray-900">{pick.value}</span>
+              </div>
+            ) : (
+              <p className="text-gray-700">{pick.value}</p>
+            )}
 
             {/* Interest tag */}
             {pick.interest_tag && (

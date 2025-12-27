@@ -31,11 +31,12 @@ export default async function ProfilePage() {
     .select('*')
     .eq('user_id', user.id)
 
-  // Fetch picks (only non-empty ones)
+  // Fetch picks (only current, non-empty ones)
   const { data: picks } = await supabase
     .from('picks')
     .select('*')
     .eq('user_id', user.id)
+    .eq('is_current', true)
     .neq('value', '')
     .not('value', 'is', null)
 
