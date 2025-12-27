@@ -4,21 +4,28 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, isToday, isYesterday } from 'date-fns'
 import { ActivityCard } from '@/components/activity-card'
+import { PickActivityCard } from '@/components/pick-activity-card'
 import { CalendarView } from '@/components/calendar-view'
 import { FeedHeader } from './feed-header'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import type { ActivityWithUser } from '@/types/database'
+import type { ActivityWithUser, PickWithUser } from '@/types/database'
 
 interface FeedContentProps {
   familyName: string
   inviteCode: string
   activities: ActivityWithUser[]
+  recentPicks: PickWithUser[]
 }
 
-function groupActivitiesByDate(activities: ActivityWithUser[]) {
-  const grouped = new Map<string, ActivityWithUser[]>()
+type FeedItem =
+  | { type: 'activity'; data: ActivityWithUser }
+  | { type: 'pick'; data: PickWithUser }
 
+function groupFeedItemsByDate(activities: ActivityWithUser[], picks: PickWithUser[]) {
+  const grouped = new Map<string, FeedItem[]>()
+
+  // Add activities
   activities.forEach((activity) => {
     const date = new Date(activity.created_at)
     const dateKey = format(date, 'yyyy-MM-dd')
@@ -26,14 +33,32 @@ function groupActivitiesByDate(activities: ActivityWithUser[]) {
     if (!grouped.has(dateKey)) {
       grouped.set(dateKey, [])
     }
-    grouped.get(dateKey)!.push(activity)
+    grouped.get(dateKey)!.push({ type: 'activity', data: activity })
   })
 
-  return Array.from(grouped.entries()).map(([dateKey, activities]) => ({
-    dateKey,
-    date: new Date(dateKey),
-    activities,
-  }))
+  // Add picks
+  picks.forEach((pick) => {
+    const date = new Date(pick.created_at)
+    const dateKey = format(date, 'yyyy-MM-dd')
+
+    if (!grouped.has(dateKey)) {
+      grouped.set(dateKey, [])
+    }
+    grouped.get(dateKey)!.push({ type: 'pick', data: pick })
+  })
+
+  // Sort items within each day by created_at (newest first)
+  return Array.from(grouped.entries())
+    .map(([dateKey, items]) => ({
+      dateKey,
+      date: new Date(dateKey),
+      items: items.sort((a, b) => {
+        const dateA = new Date(a.data.created_at)
+        const dateB = new Date(b.data.created_at)
+        return dateB.getTime() - dateA.getTime()
+      }),
+    }))
+    .sort((a, b) => b.date.getTime() - a.date.getTime()) // Sort groups by date (newest first)
 }
 
 function formatDateHeader(date: Date): string {
@@ -48,14 +73,16 @@ function formatDateHeader(date: Date): string {
   return fullDate
 }
 
-export function FeedContent({ familyName, inviteCode, activities }: FeedContentProps) {
+export function FeedContent({ familyName, inviteCode, activities, recentPicks }: FeedContentProps) {
   const [view, setView] = useState<'feed' | 'calendar'>('feed')
   const router = useRouter()
 
-  const groupedActivities = useMemo(
-    () => groupActivitiesByDate(activities),
-    [activities]
+  const groupedItems = useMemo(
+    () => groupFeedItemsByDate(activities, recentPicks),
+    [activities, recentPicks]
   )
+
+  const hasContent = activities.length > 0 || recentPicks.length > 0
 
   return (
     <div className="max-w-lg mx-auto">
@@ -69,7 +96,7 @@ export function FeedContent({ familyName, inviteCode, activities }: FeedContentP
       {view === 'feed' ? (
         <>
           <div className="p-4 space-y-6">
-            {activities.length === 0 ? (
+            {!hasContent ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No activities yet</p>
                 <p className="text-gray-400 mt-1">
@@ -77,15 +104,19 @@ export function FeedContent({ familyName, inviteCode, activities }: FeedContentP
                 </p>
               </div>
             ) : (
-              groupedActivities.map((group) => (
+              groupedItems.map((group) => (
                 <div key={group.dateKey} className="space-y-3">
                   <h2 className="text-lg font-bold text-gray-900 px-1">
                     {formatDateHeader(group.date)}
                   </h2>
                   <div className="space-y-4">
-                    {group.activities.map((activity) => (
-                      <ActivityCard key={activity.id} activity={activity} />
-                    ))}
+                    {group.items.map((item) =>
+                      item.type === 'activity' ? (
+                        <ActivityCard key={item.data.id} activity={item.data} />
+                      ) : (
+                        <PickActivityCard key={item.data.id} pick={item.data} />
+                      )
+                    )}
                   </div>
                 </div>
               ))
