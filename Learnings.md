@@ -207,4 +207,362 @@ ALTER TABLE users
 
 ---
 
-*Last updated: 2025-12-26*
+## 3. Service Workers and Push Notifications
+
+### What are Service Workers?
+
+A Service Worker is a JavaScript file that runs in the background, separate from your web page. It acts as a proxy between your web app and the network, enabling features like:
+
+1. **Push notifications** - Receive and display notifications even when the app isn't open
+2. **Offline functionality** - Cache resources for offline access
+3. **Background sync** - Sync data when connectivity is restored
+
+### Key Characteristics
+
+- **Separate thread**: Runs independently from the main JavaScript thread
+- **No DOM access**: Cannot directly manipulate the page
+- **Event-driven**: Responds to events (push, fetch, sync)
+- **HTTPS required**: Only works on secure origins (localhost is OK for development)
+- **Scope-based**: Controls pages within its registered scope
+
+### Service Worker Lifecycle
+
+```javascript
+// 1. REGISTRATION - From your main app
+navigator.serviceWorker.register('/sw.js', {
+  scope: '/',
+  updateViaCache: 'none',
+})
+
+// 2. INSTALLATION - In sw.js
+self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installed')
+  self.skipWaiting() // Activate immediately
+})
+
+// 3. ACTIVATION - In sw.js
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activated')
+  event.waitUntil(clients.claim()) // Take control of all pages
+})
+
+// 4. FUNCTIONAL - Now handling events
+self.addEventListener('push', (event) => {
+  // Handle push notifications
+})
+```
+
+### Web Push Notifications Architecture
+
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   Browser   │─────▶│ Push Service │◀─────│ Your Server │
+│  (Client)   │      │   (Google,   │      │   (API)     │
+│             │      │   Mozilla)   │      │             │
+└─────────────┘      └──────────────┘      └─────────────┘
+      │                                            ▲
+      │                                            │
+      │ 1. Subscribe                               │
+      │ 2. Get subscription object                 │
+      │ 3. Send subscription to server ───────────┘
+      │ 4. Server sends push via Push Service
+      │ 5. Browser receives push
+      │ 6. Service worker shows notification
+      └──────────────────────────────────────────────
+```
+
+### VAPID Keys (Voluntary Application Server Identification)
+
+#### What are VAPID Keys?
+
+VAPID keys are a pair of cryptographic keys (public and private) that identify your application to push services. They prove that push notifications are coming from your authorized server.
+
+#### Why We Need Them
+
+1. **Authentication**: Proves you own the application sending notifications
+2. **Security**: Prevents unauthorized parties from sending notifications to your users
+3. **Identification**: Push services can contact you if there are issues
+4. **Standard**: Required by modern push notification services (FCM, Mozilla Push)
+
+#### The Two Keys
+
+```bash
+# PUBLIC KEY (NEXT_PUBLIC_VAPID_PUBLIC_KEY)
+# - Shared with browsers during subscription
+# - Safe to expose in client-side code
+# - Used to encrypt subscription data
+BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4-JAJBqAESdSKXvMvYMtP_iIuAgzmhXAx91ekoqxaU
+
+# PRIVATE KEY (VAPID_PRIVATE_KEY)
+# - NEVER expose to client
+# - Kept secret on server
+# - Used to sign push messages
+vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+```
+
+#### Generating VAPID Keys
+
+```bash
+# Method 1: Using web-push library
+npx web-push generate-vapid-keys
+
+# Method 2: Using openssl
+openssl ecparam -genkey -name prime256v1 -out private_key.pem
+openssl ec -in private_key.pem -pubout -out public_key.pem
+```
+
+### How Push Notifications Work in Our App
+
+#### Step 1: User Enables Notifications
+
+```typescript
+// Client-side: src/lib/push.ts
+export async function enablePushNotifications(): Promise<boolean> {
+  // 1. Register service worker
+  const registration = await navigator.serviceWorker.register('/sw.js')
+
+  // 2. Request browser permission
+  const permission = await Notification.requestPermission()
+  if (permission !== 'granted') return false
+
+  // 3. Subscribe to push with VAPID public key
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+  })
+
+  // 4. Save subscription to database
+  await saveSubscriptionToServer(subscription)
+  return true
+}
+```
+
+#### Step 2: Server Sends Notification
+
+```typescript
+// Server-side: src/lib/send-push.ts
+import webpush from 'web-push'
+
+webpush.setVapidDetails(
+  'mailto:noreply@familypulse.app',
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
+)
+
+export async function sendPushNotification({ userId, title, body }) {
+  // 1. Get user's push subscription from database
+  const subscription = await getSubscription(userId)
+
+  // 2. Prepare notification payload
+  const payload = JSON.stringify({ title, body, url: '/connect' })
+
+  // 3. Send via web-push (uses VAPID private key to sign)
+  await webpush.sendNotification(subscription, payload)
+}
+```
+
+#### Step 3: Service Worker Receives Push
+
+```javascript
+// public/sw.js
+self.addEventListener('push', (event) => {
+  const data = event.data.json()
+
+  const options = {
+    body: data.body,
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    vibrate: [200, 100, 200],
+    data: { url: data.url }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  )
+})
+```
+
+#### Step 4: User Clicks Notification
+
+```javascript
+// public/sw.js
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const urlToOpen = event.notification.data?.url || '/connect'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      // Focus existing window or open new one
+      for (const client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus()
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen)
+      }
+    })
+  )
+})
+```
+
+### Push Subscription Object
+
+When a user subscribes, the browser creates a subscription object:
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/abc123...",
+  "keys": {
+    "p256dh": "BKj3...encryption key...",
+    "auth": "xyz789...authentication secret..."
+  }
+}
+```
+
+**We store this in the database:**
+- `endpoint`: Unique URL for this device/browser
+- `p256dh`: Public key for encrypting messages to this device
+- `auth`: Authentication secret for this subscription
+
+### Security Considerations
+
+1. **HTTPS Only**: Service Workers only work on HTTPS (except localhost)
+2. **Private Key Security**: VAPID private key must NEVER be exposed to client
+3. **Subscription Validation**: Verify subscriptions before sending
+4. **Failed Subscription Handling**: Remove invalid subscriptions (410 Gone)
+5. **User Consent**: Always request permission, never force notifications
+
+### Common Pitfalls
+
+❌ **Service worker not updating**
+```javascript
+// Force update on install
+self.addEventListener('install', (event) => {
+  self.skipWaiting() // ✅ Activate immediately
+})
+```
+
+❌ **VAPID keys exposed**
+```typescript
+// ❌ NEVER do this:
+const VAPID_PRIVATE_KEY = 'abc123' // In client code
+
+// ✅ Only in server code:
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
+```
+
+❌ **Subscription not saved**
+```typescript
+// After subscribing, MUST save to database
+const subscription = await registration.pushManager.subscribe(...)
+await saveSubscriptionToServer(subscription) // ✅ Don't forget!
+```
+
+### Browser Support
+
+| Feature | Chrome | Firefox | Safari | Edge |
+|---------|--------|---------|--------|------|
+| Service Workers | ✅ | ✅ | ✅ | ✅ |
+| Push API | ✅ | ✅ | ⚠️ Limited | ✅ |
+| VAPID | ✅ | ✅ | ⚠️ 16.4+ | ✅ |
+
+**Safari Note**: iOS Safari requires PWA installation (Add to Home Screen) before push works.
+
+### Testing Service Workers
+
+```bash
+# Chrome DevTools
+1. Open DevTools → Application tab
+2. Click "Service Workers" section
+3. See status: installed, activated, running
+4. Use "Update" to test updates
+5. Use "Unregister" to remove
+
+# Firefox DevTools
+1. Open DevTools → Application tab (storage icon)
+2. Click "Service Workers"
+3. View registration details
+```
+
+### Debugging Push Notifications
+
+```javascript
+// In service worker (sw.js)
+self.addEventListener('push', (event) => {
+  console.log('Push received:', event) // Check browser console
+
+  // Check if data exists
+  if (!event.data) {
+    console.log('Push event but no data')
+    return
+  }
+
+  try {
+    const data = event.data.json()
+    console.log('Push data:', data)
+    // ... show notification
+  } catch (error) {
+    console.error('Error parsing push data:', error)
+  }
+})
+```
+
+### Our Implementation: Tiered Notification System
+
+We built a smart notification system with three tiers:
+
+**Tier 1 - Critical** (Always on)
+- Your turn to choose question
+- Pending question reminders
+
+**Tier 2 - Engagement** (Default on)
+- Last to answer
+- Weekly digest
+
+**Tier 3 - Optional** (Default off)
+- New activities
+- New answers
+- New picks
+
+**Plus quiet hours** (9pm-9am default) to prevent spam!
+
+### Key Takeaways
+
+1. **Service Workers** run in background, separate from main thread
+2. **VAPID keys** authenticate your server to push services
+3. **Public key** goes to client, **private key** stays on server
+4. **Subscription object** must be saved to database
+5. **HTTPS required** for production (localhost OK for dev)
+6. **User permission** is required before any notifications
+7. **Handle failures** gracefully (expired subscriptions, denied permission)
+
+### Research Topics
+
+- Service Worker API documentation
+- Web Push Protocol (RFC 8030)
+- Push API specification
+- Progressive Web Apps (PWA)
+- Background Sync API
+- Notification API
+- Cache API for offline functionality
+- Workbox library for advanced service worker patterns
+
+---
+
+## Additional Resources
+
+- [Supabase RLS Documentation](https://supabase.com/docs/guides/auth/row-level-security)
+- [Supabase Auth Deep Dive](https://supabase.com/docs/guides/auth)
+- [PostgreSQL RLS Official Docs](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
+- [Multi-tenant Database Design Patterns](https://www.citusdata.com/blog/2016/10/03/designing-your-saas-database-for-high-scalability/)
+- [Service Worker API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+- [Push API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
+- [Web Push Protocol (RFC 8030)](https://datatracker.ietf.org/doc/html/rfc8030)
+- [VAPID Specification](https://datatracker.ietf.org/doc/html/rfc8292)
+- [web-push npm library](https://github.com/web-push-libs/web-push)
+
+---
+
+*Last updated: 2025-12-29*
