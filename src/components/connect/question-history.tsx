@@ -36,7 +36,9 @@ export function QuestionHistory({ pastQuestions }: QuestionHistoryProps) {
 
       // Load answers if not already loaded
       if (!loadedAnswers[questionId]) {
-        setLoading(new Set([...loading, questionId]))
+        const newLoading = new Set(loading)
+        newLoading.add(questionId)
+        setLoading(newLoading)
 
         const supabase = createClient()
         const { data } = await supabase
