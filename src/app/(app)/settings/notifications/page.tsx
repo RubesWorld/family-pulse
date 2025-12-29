@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Database } from '@/types/database'
 import { NotificationSettingsContent } from './notification-settings-content'
@@ -7,7 +6,7 @@ import { NotificationSettingsContent } from './notification-settings-content'
 export const dynamic = 'force-dynamic'
 
 export default async function NotificationSettingsPage() {
-  const supabase = createServerComponentClient<Database>({ cookies })
+  const supabase = await createClient()
 
   const {
     data: { user },

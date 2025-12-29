@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import type { Database, NotificationPreferences } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -16,7 +16,7 @@ export function NotificationSettingsContent({
   preferences: initialPreferences,
 }: NotificationSettingsContentProps) {
   const router = useRouter()
-  const supabase = createClientComponentClient<Database>()
+  const supabase = createClient()
   const [preferences, setPreferences] = useState(initialPreferences)
   const [isSaving, setIsSaving] = useState(false)
 
