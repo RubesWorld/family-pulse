@@ -222,6 +222,8 @@ export type Database = {
           assigned_user_id: string
           is_preset: boolean
           is_current: boolean
+          status: 'pending' | 'active'
+          suggested_question_text: string | null
           archived_at: string | null
           created_at: string
         }
@@ -234,6 +236,8 @@ export type Database = {
           assigned_user_id: string
           is_preset?: boolean
           is_current?: boolean
+          status?: 'pending' | 'active'
+          suggested_question_text?: string | null
           archived_at?: string | null
           created_at?: string
         }
@@ -246,6 +250,8 @@ export type Database = {
           assigned_user_id?: string
           is_preset?: boolean
           is_current?: boolean
+          status?: 'pending' | 'active'
+          suggested_question_text?: string | null
           archived_at?: string | null
           created_at?: string
         }

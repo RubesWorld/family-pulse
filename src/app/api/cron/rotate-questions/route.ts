@@ -77,17 +77,19 @@ export async function GET(request: NextRequest) {
 
       const randomQuestion = presetQuestions[Math.floor(Math.random() * presetQuestions.length)]
 
-      // Create new question for this week
+      // Create new pending question for this week
       const { error: insertError } = await supabase
         .from('weekly_questions')
         .insert({
           family_id: family.id,
-          question_text: randomQuestion.question_text,
+          question_text: '', // Will be set when assigned person chooses
+          suggested_question_text: randomQuestion.question_text,
           week_start_date: weekStartDate.toISOString().split('T')[0],
           week_number: currentWeekNumber,
           assigned_user_id: nextAsker.id,
-          is_preset: true,
+          is_preset: true, // Will be updated to false if they write custom
           is_current: true,
+          status: 'pending',
         })
 
       if (insertError) {
@@ -96,7 +98,7 @@ export async function GET(request: NextRequest) {
         results.push({
           family_id: family.id,
           status: 'success',
-          question: randomQuestion.question_text,
+          suggested_question: randomQuestion.question_text,
           asker: nextAsker.name,
         })
       }

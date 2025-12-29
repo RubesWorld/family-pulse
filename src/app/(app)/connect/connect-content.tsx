@@ -7,7 +7,9 @@ import { CurrentQuestionCard } from '@/components/connect/current-question-card'
 import { AnswerForm } from '@/components/connect/answer-form'
 import { AnswersList } from '@/components/connect/answers-list'
 import { QuestionHistory } from '@/components/connect/question-history'
+import { QuestionSelector } from '@/components/connect/question-selector'
 import { Button } from '@/components/ui/button'
+import { Clock } from 'lucide-react'
 
 interface ConnectContentProps {
   currentUserId: string
@@ -71,25 +73,46 @@ export function ConnectContent({
 
         <TabsContent value="this-week" className="space-y-6">
           {currentQuestion ? (
-            <>
-              <CurrentQuestionCard
-                question={currentQuestion}
-                familyMembers={familyMembers}
-                totalAnswers={currentQuestion.question_answers?.filter(a => a.is_current).length || 0}
-              />
+            currentQuestion.status === 'pending' ? (
+              // Pending question - show selector for assigned person, waiting message for others
+              currentQuestion.assigned_user_id === currentUserId ? (
+                <QuestionSelector
+                  question={currentQuestion}
+                  onQuestionActivated={handleAnswerSubmit}
+                />
+              ) : (
+                <div className="text-center py-12 px-4 bg-gray-50 rounded-lg">
+                  <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg mb-2">
+                    Waiting for {currentQuestion.users?.name} to choose this week&apos;s question
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    They&apos;ll pick a question soon and everyone can start answering!
+                  </p>
+                </div>
+              )
+            ) : (
+              // Active question - normal flow
+              <>
+                <CurrentQuestionCard
+                  question={currentQuestion}
+                  familyMembers={familyMembers}
+                  totalAnswers={currentQuestion.question_answers?.filter(a => a.is_current).length || 0}
+                />
 
-              <AnswerForm
-                questionId={currentQuestion.id}
-                userId={currentUserId}
-                existingAnswer={currentUserAnswer}
-                onSubmit={handleAnswerSubmit}
-              />
+                <AnswerForm
+                  questionId={currentQuestion.id}
+                  userId={currentUserId}
+                  existingAnswer={currentUserAnswer}
+                  onSubmit={handleAnswerSubmit}
+                />
 
-              <AnswersList
-                answers={otherAnswers}
-                currentUserId={currentUserId}
-              />
-            </>
+                <AnswersList
+                  answers={otherAnswers}
+                  currentUserId={currentUserId}
+                />
+              </>
+            )
           ) : (
             <div className="text-center py-12 px-4 bg-gray-50 rounded-lg">
               <p className="text-gray-500 text-lg mb-2">No question for this week yet</p>

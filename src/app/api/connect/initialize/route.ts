@@ -69,17 +69,19 @@ export async function POST(request: NextRequest) {
 
     const randomQuestion = presetQuestions[Math.floor(Math.random() * presetQuestions.length)]
 
-    // Create first question for this family
+    // Create first pending question for this family
     const { data: newQuestion, error: insertError } = await supabase
       .from('weekly_questions')
       .insert({
         family_id: userData.family_id,
-        question_text: randomQuestion.question_text,
+        question_text: '', // Will be set when assigned person chooses
+        suggested_question_text: randomQuestion.question_text,
         week_start_date: weekStartDate.toISOString().split('T')[0],
         week_number: currentWeekNumber,
         assigned_user_id: firstMember.id,
         is_preset: true,
         is_current: true,
+        status: 'pending',
       })
       .select()
       .single()
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'First question created',
+      message: 'First question created (pending)',
       question: newQuestion,
     })
   } catch (error) {
