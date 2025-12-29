@@ -212,6 +212,129 @@ export type Database = {
           }
         ]
       }
+      weekly_questions: {
+        Row: {
+          id: string
+          family_id: string
+          question_text: string
+          week_start_date: string
+          week_number: number
+          assigned_user_id: string
+          is_preset: boolean
+          is_current: boolean
+          archived_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          question_text: string
+          week_start_date: string
+          week_number: number
+          assigned_user_id: string
+          is_preset?: boolean
+          is_current?: boolean
+          archived_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          family_id?: string
+          question_text?: string
+          week_start_date?: string
+          week_number?: number
+          assigned_user_id?: string
+          is_preset?: boolean
+          is_current?: boolean
+          archived_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_questions_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_questions_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      question_answers: {
+        Row: {
+          id: string
+          question_id: string
+          user_id: string
+          answer_text: string
+          is_current: boolean
+          archived_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          user_id: string
+          answer_text: string
+          is_current?: boolean
+          archived_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          user_id?: string
+          answer_text?: string
+          is_current?: boolean
+          archived_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_answers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      preset_questions: {
+        Row: {
+          id: string
+          question_text: string
+          category: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          question_text: string
+          category?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          question_text?: string
+          category?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -233,6 +356,9 @@ export type User = Database['public']['Tables']['users']['Row']
 export type Activity = Database['public']['Tables']['activities']['Row']
 export type InterestCard = Database['public']['Tables']['interest_cards']['Row']
 export type UserPick = Database['public']['Tables']['picks']['Row']
+export type WeeklyQuestion = Database['public']['Tables']['weekly_questions']['Row']
+export type QuestionAnswer = Database['public']['Tables']['question_answers']['Row']
+export type PresetQuestion = Database['public']['Tables']['preset_questions']['Row']
 
 export type ActivityWithUser = Activity & {
   users: Pick<User, 'name' | 'avatar_url' | 'phone_number'>
@@ -244,4 +370,13 @@ export type InterestCardWithUser = InterestCard & {
 
 export type PickWithUser = UserPick & {
   users: Pick<User, 'name' | 'avatar_url'>
+}
+
+export type QuestionWithAnswers = WeeklyQuestion & {
+  question_answers: (QuestionAnswer & { users: Pick<User, 'id' | 'name' | 'avatar_url'> })[]
+  users: Pick<User, 'id' | 'name' | 'avatar_url'>
+}
+
+export type AnswerWithUser = QuestionAnswer & {
+  users: Pick<User, 'id' | 'name' | 'avatar_url'>
 }
