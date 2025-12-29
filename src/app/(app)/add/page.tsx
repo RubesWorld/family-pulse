@@ -70,7 +70,7 @@ export default function AddActivityPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Share What You&apos;re Up To</CardTitle>
+          <CardTitle>Share Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

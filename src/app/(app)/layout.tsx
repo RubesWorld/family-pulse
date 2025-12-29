@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/bottom-nav'
+import { FloatingActionButton } from '@/components/floating-action-button'
 
 export default async function AppLayout({
   children,
@@ -29,6 +30,7 @@ export default async function AppLayout({
     <div className="min-h-screen bg-gray-50 pb-20">
       {children}
       <BottomNav />
+      <FloatingActionButton />
     </div>
   )
 }
