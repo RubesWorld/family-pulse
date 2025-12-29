@@ -11,9 +11,10 @@ interface PickCardProps {
   showUser?: boolean
   showHistoryButton?: boolean
   userId?: string
+  hideIcon?: boolean
 }
 
-export function PickCard({ pick, onInterestClick, showUser = false, showHistoryButton = false, userId }: PickCardProps) {
+export function PickCard({ pick, onInterestClick, showUser = false, showHistoryButton = false, userId, hideIcon = false }: PickCardProps) {
   const category = PICK_CATEGORIES.find((c) => c.id === pick.category)
   if (!category) return null
 
@@ -25,9 +26,11 @@ export function PickCard({ pick, onInterestClick, showUser = false, showHistoryB
     >
       {/* Header with icon and category */}
       <div className="flex items-start gap-2 sm:gap-3 mb-3">
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-        </div>
+        {!hideIcon && (
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+            <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <h4 className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5 sm:mb-1">
             {category.label}

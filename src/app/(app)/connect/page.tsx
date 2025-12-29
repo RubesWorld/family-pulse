@@ -65,12 +65,20 @@ export default async function ConnectPage() {
     .order('week_number', { ascending: false })
     .limit(10)
 
+  // Get user's current picks
+  const { data: currentPicks } = await supabase
+    .from('picks')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_current', true)
+
   return (
     <ConnectContent
       currentUserId={user.id}
       familyMembers={members || []}
       currentQuestion={currentQuestion}
       pastQuestions={pastQuestions || []}
+      currentPicks={currentPicks || []}
     />
   )
 }

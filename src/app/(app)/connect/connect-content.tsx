@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { QuestionWithAnswers, User } from '@/types/database'
+import { useRouter } from 'next/navigation'
+import { QuestionWithAnswers, User, UserPick } from '@/types/database'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CurrentQuestionCard } from '@/components/connect/current-question-card'
 import { AnswerForm } from '@/components/connect/answer-form'
 import { AnswersList } from '@/components/connect/answers-list'
-import { QuestionHistory } from '@/components/connect/question-history'
 import { QuestionSelector } from '@/components/connect/question-selector'
+import { MyPicks } from '@/components/connect/my-picks'
 import { Button } from '@/components/ui/button'
-import { Clock } from 'lucide-react'
+import { Clock, History } from 'lucide-react'
 
 interface PastQuestion {
   id: string
@@ -24,6 +25,7 @@ interface ConnectContentProps {
   familyMembers: Pick<User, 'id' | 'name' | 'avatar_url'>[]
   currentQuestion: QuestionWithAnswers | null
   pastQuestions: PastQuestion[]
+  currentPicks: UserPick[]
 }
 
 export function ConnectContent({
@@ -31,7 +33,9 @@ export function ConnectContent({
   familyMembers,
   currentQuestion,
   pastQuestions,
+  currentPicks,
 }: ConnectContentProps) {
+  const router = useRouter()
   const [initializing, setInitializing] = useState(false)
 
   const handleAnswerSubmit = () => {
@@ -71,13 +75,13 @@ export function ConnectContent({
     <div className="max-w-4xl mx-auto p-4 pb-24">
       <h1 className="text-2xl font-bold mb-6">Connect</h1>
 
-      <Tabs defaultValue="this-week" className="w-full">
+      <Tabs defaultValue="questions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="this-week">This Week</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="questions">Questions</TabsTrigger>
+          <TabsTrigger value="picks">My Picks</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="this-week" className="space-y-6">
+        <TabsContent value="questions" className="space-y-6">
           {currentQuestion ? (
             currentQuestion.status === 'pending' ? (
               // Pending question - show selector for assigned person, waiting message for others
@@ -130,13 +134,24 @@ export function ConnectContent({
               </Button>
             </div>
           )}
+
+          {/* View Past Questions Button */}
+          {pastQuestions.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => router.push('/connect/history')}
+              >
+                <History className="w-4 h-4" />
+                View Past Questions
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="history">
-          <QuestionHistory
-            pastQuestions={pastQuestions}
-            currentUserId={currentUserId}
-          />
+        <TabsContent value="picks" className="space-y-6">
+          <MyPicks currentPicks={currentPicks} userId={currentUserId} />
         </TabsContent>
       </Tabs>
     </div>
