@@ -341,6 +341,182 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          notify_your_turn: boolean
+          notify_pending_reminder: boolean
+          notify_last_to_answer: boolean
+          notify_weekly_digest: boolean
+          notify_activities: boolean
+          notify_answers: boolean
+          notify_picks: boolean
+          quiet_hours_start: string
+          quiet_hours_end: string
+          quiet_hours_enabled: boolean
+          push_enabled: boolean
+          email_enabled: boolean
+          sms_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          notify_your_turn?: boolean
+          notify_pending_reminder?: boolean
+          notify_last_to_answer?: boolean
+          notify_weekly_digest?: boolean
+          notify_activities?: boolean
+          notify_answers?: boolean
+          notify_picks?: boolean
+          quiet_hours_start?: string
+          quiet_hours_end?: string
+          quiet_hours_enabled?: boolean
+          push_enabled?: boolean
+          email_enabled?: boolean
+          sms_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          notify_your_turn?: boolean
+          notify_pending_reminder?: boolean
+          notify_last_to_answer?: boolean
+          notify_weekly_digest?: boolean
+          notify_activities?: boolean
+          notify_answers?: boolean
+          notify_picks?: boolean
+          quiet_hours_start?: string
+          quiet_hours_end?: string
+          quiet_hours_enabled?: boolean
+          push_enabled?: boolean
+          email_enabled?: boolean
+          sms_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent: string | null
+          is_active: boolean
+          last_used_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent?: string | null
+          is_active?: boolean
+          last_used_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          user_agent?: string | null
+          is_active?: boolean
+          last_used_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      notification_log: {
+        Row: {
+          id: string
+          user_id: string
+          notification_type: string
+          title: string
+          body: string
+          related_question_id: string | null
+          related_activity_id: string | null
+          delivery_method: string
+          delivered_at: string
+          clicked_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          notification_type: string
+          title: string
+          body: string
+          related_question_id?: string | null
+          related_activity_id?: string | null
+          delivery_method: string
+          delivered_at?: string
+          clicked_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          notification_type?: string
+          title?: string
+          body?: string
+          related_question_id?: string | null
+          related_activity_id?: string | null
+          delivery_method?: string
+          delivered_at?: string
+          clicked_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_related_question_id_fkey"
+            columns: ["related_question_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_related_activity_id_fkey"
+            columns: ["related_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -365,6 +541,9 @@ export type UserPick = Database['public']['Tables']['picks']['Row']
 export type WeeklyQuestion = Database['public']['Tables']['weekly_questions']['Row']
 export type QuestionAnswer = Database['public']['Tables']['question_answers']['Row']
 export type PresetQuestion = Database['public']['Tables']['preset_questions']['Row']
+export type NotificationPreferences = Database['public']['Tables']['notification_preferences']['Row']
+export type PushSubscription = Database['public']['Tables']['push_subscriptions']['Row']
+export type NotificationLog = Database['public']['Tables']['notification_log']['Row']
 
 export type ActivityWithUser = Activity & {
   users: Pick<User, 'name' | 'avatar_url' | 'phone_number'>
