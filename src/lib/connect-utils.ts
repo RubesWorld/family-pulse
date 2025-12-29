@@ -1,5 +1,3 @@
-import { User } from '@/types/database'
-
 /**
  * Get current week number in YYYYWW format (e.g., 202501)
  * Week starts on Sunday
@@ -50,10 +48,10 @@ export function formatWeekDisplay(date: Date | string): string {
  * Get the next user to ask a question using round-robin logic
  * Users are sorted alphabetically by ID, and the next asker is selected
  */
-export function getNextQuestionAsker(
-  familyMembers: User[],
+export function getNextQuestionAsker<T extends { id: string }>(
+  familyMembers: T[],
   lastAskedUserId?: string | null
-): User | null {
+): T | null {
   if (familyMembers.length === 0) return null
 
   // Sort users alphabetically by ID for consistent ordering
