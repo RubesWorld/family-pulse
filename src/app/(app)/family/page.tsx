@@ -19,11 +19,12 @@ export default async function FamilyPage() {
     .eq('family_id', profile?.family_id || '')
     .order('name')
 
-  // Get recent picks (last 10)
+  // Get recent picks (last 10, only current picks)
   const { data: recentPicks } = await supabase
     .from('picks')
     .select('*, users(name, avatar_url)')
     .in('user_id', members?.map(m => m.id) || [])
+    .eq('is_current', true)
     .order('created_at', { ascending: false })
     .limit(10)
 

@@ -31,11 +31,12 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
         .select('*')
         .eq('user_id', member.id)
 
-      // Fetch picks
+      // Fetch picks (only current picks)
       const { data: pickData } = await supabase
         .from('picks')
         .select('*')
         .eq('user_id', member.id)
+        .eq('is_current', true)
 
       setInterests(interestData || [])
       setPicks(pickData || [])
@@ -210,7 +211,7 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
               <h2 className="text-lg font-semibold mb-3">
                 {selectedInterest ? 'Related Picks' : 'Picks'}
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {filteredPicks.map(pick => (
                   <PickCard
                     key={pick.id}
