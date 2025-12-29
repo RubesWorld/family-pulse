@@ -4,16 +4,24 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
-import { AnswerWithUser } from '@/types/database'
+import { AnswerWithUser, User } from '@/types/database'
 import { formatWeekDisplay, timeAgo } from '@/lib/connect-utils'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
+interface PastQuestion {
+  id: string
+  question_text: string
+  week_start_date: string
+  week_number: number
+  users?: Pick<User, 'id' | 'name' | 'avatar_url'>
+}
+
 interface QuestionHistoryProps {
-  pastQuestions: any[]
+  pastQuestions: PastQuestion[]
   currentUserId: string
 }
 
-export function QuestionHistory({ pastQuestions, currentUserId }: QuestionHistoryProps) {
+export function QuestionHistory({ pastQuestions }: QuestionHistoryProps) {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
   const [loadedAnswers, setLoadedAnswers] = useState<Record<string, AnswerWithUser[]>>({})
   const [loading, setLoading] = useState<Set<string>>(new Set())

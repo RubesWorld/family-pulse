@@ -9,7 +9,7 @@ interface AnswersListProps {
   currentUserId: string
 }
 
-export function AnswersList({ answers, currentUserId }: AnswersListProps) {
+export function AnswersList({ answers }: AnswersListProps) {
   if (answers.length === 0) {
     return (
       <div className="text-center py-8 px-4 bg-gray-50 rounded-lg">

@@ -11,11 +11,19 @@ import { QuestionSelector } from '@/components/connect/question-selector'
 import { Button } from '@/components/ui/button'
 import { Clock } from 'lucide-react'
 
+interface PastQuestion {
+  id: string
+  question_text: string
+  week_start_date: string
+  week_number: number
+  users?: Pick<User, 'id' | 'name' | 'avatar_url'>
+}
+
 interface ConnectContentProps {
   currentUserId: string
   familyMembers: Pick<User, 'id' | 'name' | 'avatar_url'>[]
   currentQuestion: QuestionWithAnswers | null
-  pastQuestions: any[]
+  pastQuestions: PastQuestion[]
 }
 
 export function ConnectContent({
@@ -24,12 +32,10 @@ export function ConnectContent({
   currentQuestion,
   pastQuestions,
 }: ConnectContentProps) {
-  const [refreshKey, setRefreshKey] = useState(0)
   const [initializing, setInitializing] = useState(false)
 
   const handleAnswerSubmit = () => {
-    // Trigger a refresh by incrementing the key
-    setRefreshKey(prev => prev + 1)
+    // Placeholder for future optimistic updates
   }
 
   const handleInitialize = async () => {
