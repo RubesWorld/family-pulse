@@ -876,4 +876,311 @@ export default function ClientComponent() {
 
 ---
 
+## 5. Build-Time vs Runtime: Lazy Initialization Pattern
+
+### The Problem: Module-Level Code During Builds
+
+When deploying Next.js applications, you might encounter errors like:
+
+```
+Error: No key set vapidDetails.publicKey
+    at c.setVapidDetails
+    at 4798 (/vercel/path0/.next/server/app/api/cron/rotate-questions/route.js:1:4494)
+
+> Build error occurred
+Error: Failed to collect page data for /api/cron/rotate-questions
+```
+
+This happens because **Next.js analyzes all routes during build time**, even dynamic API routes and cron jobs.
+
+### What Happens During Build
+
+```typescript
+// ❌ This runs during build (when environment variables might not exist)
+import webpush from 'web-push'
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+
+webpush.setVapidDetails('mailto:app@example.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+//      ^^^^^^^^^^^^^^^^ FAILS at build time!
+
+export async function sendNotification() {
+  // Function code...
+}
+```
+
+**The problem:**
+1. Next.js imports your API route during build for static analysis
+2. Module-level code executes immediately
+3. `webpush.setVapidDetails()` runs before environment variables are available
+4. Build fails with cryptic error messages
+
+### Build-Time vs Runtime
+
+| Phase | When | Environment Variables | Purpose |
+|-------|------|----------------------|---------|
+| **Build Time** | During `next build` | Limited/None | Static analysis, type checking, optimization |
+| **Runtime** | When request hits server | All available | Actual request handling |
+
+**Key insight**: Module-level code (outside functions) runs at **build time**, not runtime!
+
+### The Solution: Lazy Initialization
+
+Move initialization into functions that only run when actually called:
+
+```typescript
+// ✅ Lazy initialization - only runs at runtime
+import webpush from 'web-push'
+
+let vapidInitialized = false
+
+function initializeVapid() {
+  if (vapidInitialized) return
+
+  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+  const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:noreply@example.com'
+
+  webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  vapidInitialized = true
+}
+
+export async function sendNotification() {
+  initializeVapid() // ✅ Called at runtime, when env vars exist
+  // Function code...
+}
+```
+
+### Pattern: Lazy Database Clients
+
+The same pattern applies to database connections:
+
+```typescript
+// ❌ Module-level initialization (runs at build time)
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,    // Might not exist at build time
+  process.env.SUPABASE_SERVICE_ROLE_KEY!     // Might not exist at build time
+)
+
+// ✅ Lazy initialization (runs at runtime)
+import { createClient } from '@supabase/supabase-js'
+
+function getSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+export async function sendNotification() {
+  const supabase = getSupabaseClient() // ✅ Created at runtime
+  // Use supabase...
+}
+```
+
+### Our Implementation
+
+**Before (fails in production builds):**
+
+```typescript
+// src/lib/send-push.ts
+import webpush from 'web-push'
+import { createClient } from '@supabase/supabase-js'
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+
+webpush.setVapidDetails('mailto:app@example.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function sendPushNotification({ userId, title, body }) {
+  // Uses supabase and webpush...
+}
+```
+
+**After (works in all environments):**
+
+```typescript
+// src/lib/send-push.ts
+import webpush from 'web-push'
+import { createClient } from '@supabase/supabase-js'
+
+let vapidInitialized = false
+
+function initializeVapid() {
+  if (vapidInitialized) return
+
+  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+  const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:noreply@example.com'
+
+  webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  vapidInitialized = true
+}
+
+function getSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+export async function sendPushNotification({ userId, title, body }) {
+  initializeVapid()                    // ✅ Initialize at runtime
+  const supabase = getSupabaseClient() // ✅ Create at runtime
+  // Uses supabase and webpush...
+}
+```
+
+### When to Use Lazy Initialization
+
+✅ **Use lazy initialization when:**
+- Accessing environment variables (especially server-only)
+- Initializing third-party services (database, push, email)
+- Setting up connections or clients
+- Calling functions with side effects
+- Module is imported by API routes or cron jobs
+
+❌ **Don't need lazy initialization for:**
+- Importing pure functions or constants
+- Type definitions and interfaces
+- Simple variable declarations
+- Client-side code (not analyzed at build time)
+
+### Other Things That Run at Build Time
+
+```typescript
+// ❌ All of these run during build:
+
+const db = initializeDatabase()           // Database connection
+const cache = new Redis(process.env.REDIS_URL)  // Redis connection
+fs.readFileSync('/path/to/file')         // File system operations
+console.log('Module loaded!')            // Console output (in build logs)
+sendAnalyticsEvent('module_loaded')      // External API calls
+
+// ✅ Move them into functions:
+function getDb() { return initializeDatabase() }
+function getCache() { return new Redis(process.env.REDIS_URL) }
+function loadData() { return fs.readFileSync('/path/to/file') }
+```
+
+### Debugging Build-Time Errors
+
+**Symptoms:**
+- ✅ Works locally with `npm run dev`
+- ❌ Fails in `npm run build` or Vercel deployment
+- Error mentions "during build" or "collecting page data"
+- Error traces back to API route or cron job import
+
+**How to debug:**
+
+1. **Check if module-level code exists:**
+```typescript
+// Look for code OUTSIDE functions at top of file
+```
+
+2. **Run build locally:**
+```bash
+npm run build
+# Will reproduce the same error as Vercel
+```
+
+3. **Check environment variables:**
+```typescript
+// Add debugging in the function that fails:
+console.log('Has env var:', !!process.env.SOME_VAR)
+```
+
+4. **Move to lazy initialization:**
+```typescript
+// Wrap in a function, call when actually needed
+```
+
+### TypeScript Type Issues in Builds
+
+Sometimes TypeScript errors only appear in production builds:
+
+```
+Type error: Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBuffer'
+```
+
+**Why?** Production builds use stricter TypeScript settings (`tsc --noEmit`).
+
+**Solution:** Add type assertions or explicit types:
+
+```typescript
+// ❌ TypeScript infers loose type
+const arr = new Uint8Array(rawData.length)
+
+// ✅ Explicit ArrayBuffer type
+const buffer = new ArrayBuffer(rawData.length)
+const arr = new Uint8Array(buffer)
+
+// ✅ Or use type assertion
+const arr = new Uint8Array(rawData.length) as BufferSource
+```
+
+### Key Takeaways
+
+1. **Module-level code** runs during build, not runtime
+2. **Environment variables** might not exist at build time
+3. **Lazy initialization** = wrap in functions, call when needed
+4. **`if (initialized) return`** prevents double initialization
+5. **Test builds locally** with `npm run build` before deploying
+6. **Check build logs** for "collecting page data" errors
+7. **API routes and cron jobs** are analyzed during build
+
+### Best Practice Pattern
+
+```typescript
+// src/lib/your-service.ts
+
+// 1. Import dependencies
+import SomeService from 'some-service'
+
+// 2. Track initialization state
+let serviceInitialized = false
+let serviceInstance: SomeService | null = null
+
+// 3. Create lazy initializer
+function getService() {
+  if (serviceInitialized && serviceInstance) {
+    return serviceInstance
+  }
+
+  // Initialize with environment variables
+  serviceInstance = new SomeService({
+    apiKey: process.env.SERVICE_API_KEY!,
+    url: process.env.SERVICE_URL!
+  })
+
+  serviceInitialized = true
+  return serviceInstance
+}
+
+// 4. Export functions that use the service
+export async function doSomething() {
+  const service = getService() // ✅ Initialized at runtime
+  return await service.execute()
+}
+```
+
+### Research Topics
+
+- Next.js build process and static optimization
+- Module-level side effects in JavaScript
+- Singleton pattern and lazy initialization
+- Environment variable injection in CI/CD
+- TypeScript strict mode and type inference
+- Build-time vs runtime in static site generators
+
+---
+
 *Last updated: 2025-12-29*
