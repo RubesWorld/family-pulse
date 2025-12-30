@@ -2,18 +2,28 @@ import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-// Initialize web-push with VAPID keys
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
-const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:noreply@familypulse.app'
+// Lazy initialization flag
+let vapidInitialized = false
 
-webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+// Initialize web-push with VAPID keys (called lazily at runtime)
+function initializeVapid() {
+  if (vapidInitialized) return
+
+  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!
+  const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:noreply@familypulse.app'
+
+  webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  vapidInitialized = true
+}
 
 // Create Supabase client with service role for server-side operations
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseClient() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 interface SendPushNotificationParams {
   userId: string
@@ -67,6 +77,11 @@ export async function sendPushNotification({
   activityId,
 }: SendPushNotificationParams): Promise<{ success: boolean; error?: string }> {
   try {
+    // Initialize VAPID details
+    initializeVapid()
+
+    const supabase = getSupabaseClient()
+
     // 1. Get user's notification preferences
     const { data: preferences, error: prefsError } = await supabase
       .from('notification_preferences')
