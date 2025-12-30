@@ -10,6 +10,7 @@ import { InterestCardEditor } from '@/components/interest-card-editor'
 import { PickEditor } from '@/components/pick-editor'
 import { PickCard } from '@/components/pick-card'
 import { ProfileBioEditor } from '@/components/profile-bio-editor'
+import { NotificationsGuide } from '@/components/profile/notifications-guide'
 import { LogOut, Copy, Check, Edit2, MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { PRESET_INTERESTS } from '@/lib/interests'
@@ -107,6 +108,9 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
           </div>
         </CardContent>
       </Card>
+
+      {/* Notifications Guide */}
+      <NotificationsGuide />
 
       {/* Bio Card */}
       <Card>
