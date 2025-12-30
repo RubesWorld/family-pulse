@@ -38,6 +38,9 @@ export function ConnectContent({
   const router = useRouter()
   const [initializing, setInitializing] = useState(false)
 
+  // Find current user from family members
+  const currentUser = familyMembers.find(member => member.id === currentUserId)
+
   const handleAnswerSubmit = () => {
     // Placeholder for future optimistic updates
   }
@@ -151,7 +154,13 @@ export function ConnectContent({
         </TabsContent>
 
         <TabsContent value="picks" className="space-y-6">
-          <MyPicks currentPicks={currentPicks} userId={currentUserId} />
+          {currentUser && (
+            <MyPicks
+              currentPicks={currentPicks}
+              userId={currentUserId}
+              currentUser={{ name: currentUser.name, avatar_url: currentUser.avatar_url }}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

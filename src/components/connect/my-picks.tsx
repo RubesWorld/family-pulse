@@ -1,6 +1,6 @@
 'use client'
 
-import { UserPick } from '@/types/database'
+import { UserPick, User } from '@/types/database'
 import { PickCard } from '@/components/pick-card'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -9,9 +9,10 @@ import { Edit, Sparkles } from 'lucide-react'
 interface MyPicksProps {
   currentPicks: UserPick[]
   userId: string
+  currentUser: Pick<User, 'name' | 'avatar_url'>
 }
 
-export function MyPicks({ currentPicks, userId }: MyPicksProps) {
+export function MyPicks({ currentPicks, userId, currentUser }: MyPicksProps) {
   const router = useRouter()
 
   if (currentPicks.length === 0) {
@@ -54,7 +55,7 @@ export function MyPicks({ currentPicks, userId }: MyPicksProps) {
         {currentPicks.map(pick => (
           <PickCard
             key={pick.id}
-            pick={{ ...pick, interest_tag: null }}
+            pick={{ ...pick, interest_tag: null, users: currentUser }}
             showHistoryButton
             userId={userId}
             hideIcon
