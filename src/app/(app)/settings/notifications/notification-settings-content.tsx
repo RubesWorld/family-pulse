@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Database, NotificationPreferences } from '@/types/database'
+import type { NotificationPreferences } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { EnablePushCard } from '@/components/notifications/enable-push-card'
@@ -185,7 +185,7 @@ export function NotificationSettingsContent({
             <div className="p-4 border-b border-gray-200 bg-gray-50">
               <h2 className="text-sm font-semibold text-gray-900">Quiet Hours</h2>
               <p className="text-xs text-gray-500 mt-1">
-                Don't send notifications during these hours
+                Don&apos;t send notifications during these hours
               </p>
             </div>
 

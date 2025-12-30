@@ -58,7 +58,7 @@ export default function TestNotificationsPage() {
               Step 2: Send Test Notification
             </h2>
             <p className="text-xs text-gray-500 mb-4">
-              Click the button below to send a test notification to yourself. Make sure you've enabled
+              Click the button below to send a test notification to yourself. Make sure you&apos;ve enabled
               push notifications first.
             </p>
 
@@ -138,10 +138,10 @@ export default function TestNotificationsPage() {
           <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
             <h2 className="text-sm font-semibold text-blue-900 mb-3">Testing Instructions</h2>
             <ol className="text-xs text-blue-800 space-y-2 list-decimal list-inside">
-              <li>Make sure you've run the notification migration in your database</li>
-              <li>Click "Enable Notifications" above to grant browser permission</li>
+              <li>Make sure you&apos;ve run the notification migration in your database</li>
+              <li>Click &quot;Enable Notifications&quot; above to grant browser permission</li>
               <li>Check that the service worker is active (debugging info above)</li>
-              <li>Click "Send Test Notification" to trigger a test push</li>
+              <li>Click &quot;Send Test Notification&quot; to trigger a test push</li>
               <li>You should see a notification appear on your device</li>
               <li>Try testing on both desktop and mobile browsers</li>
               <li>

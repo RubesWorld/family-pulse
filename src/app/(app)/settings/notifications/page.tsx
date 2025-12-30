@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import type { Database } from '@/types/database'
 import { NotificationSettingsContent } from './notification-settings-content'
 
 export const dynamic = 'force-dynamic'

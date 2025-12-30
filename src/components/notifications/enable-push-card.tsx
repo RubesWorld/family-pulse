@@ -91,7 +91,7 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
               Push notifications not supported
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Your browser doesn't support push notifications
+              Your browser doesn&apos;t support push notifications
             </p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
               Notifications blocked
             </p>
             <p className="text-xs text-red-700 mt-1">
-              You've blocked notifications. Please enable them in your browser settings.
+              You&apos;ve blocked notifications. Please enable them in your browser settings.
             </p>
           </div>
         </div>
