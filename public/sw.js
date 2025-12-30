@@ -20,26 +20,43 @@ self.addEventListener('push', (event) => {
   }
 
   try {
-    const data = event.data.json()
+    // Try to get the data as text first to debug
+    const textData = event.data.text()
+    console.log('Raw push data (text):', textData)
+
+    // Parse the JSON
+    const data = JSON.parse(textData)
+    console.log('Parsed push data:', data)
 
     const options = {
       body: data.body,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [200, 100, 200],
+      tag: 'family-pulse-notification',
+      requireInteraction: false,
       data: {
         url: data.url || '/connect',
         questionId: data.questionId,
         activityId: data.activityId,
       },
-      actions: data.actions || []
     }
+
+    console.log('About to show notification with title:', data.title)
+    console.log('Notification options:', options)
 
     event.waitUntil(
       self.registration.showNotification(data.title, options)
+        .then(() => {
+          console.log('✅ Notification shown successfully!')
+        })
+        .catch((err) => {
+          console.error('❌ Failed to show notification:', err)
+        })
     )
   } catch (error) {
-    console.error('Error showing notification:', error)
+    console.error('Error in push event handler:', error)
+    console.error('Error details:', error.message, error.stack)
   }
 })
 

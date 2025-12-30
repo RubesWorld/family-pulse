@@ -528,6 +528,87 @@ We built a smart notification system with three tiers:
 
 **Plus quiet hours** (9pm-9am default) to prevent spam!
 
+### Troubleshooting: Expired Push Subscriptions
+
+Push subscriptions can expire or become invalid when:
+- Service worker is unregistered
+- Browser cache is cleared
+- User tests on multiple browsers/devices
+- FCM/browser service invalidates the subscription
+
+**Symptoms:**
+- Error: `WebPushError: Received unexpected response code` with `statusCode: 410`
+- Message: `push subscription has unsubscribed or expired`
+- Notification doesn't appear even though code succeeds
+
+**How Our System Handles This:**
+
+The `send-push.ts` automatically handles expired subscriptions:
+
+```typescript
+catch (error) {
+  // If subscription is invalid (410 Gone or 404 Not Found), mark as inactive
+  if (error.statusCode === 410 || error.statusCode === 404) {
+    await supabase
+      .from('push_subscriptions')
+      .update({ is_active: false })
+      .eq('id', subscription.id)
+  }
+}
+```
+
+**Manual Cleanup (When Testing):**
+
+If you're getting 410 errors during testing and notifications aren't appearing, clean up old subscriptions:
+
+```sql
+-- 1. Check your current subscriptions
+SELECT id, endpoint, is_active, created_at
+FROM push_subscriptions
+WHERE user_id = auth.uid();
+
+-- 2. Mark ALL your subscriptions as inactive
+UPDATE push_subscriptions
+SET is_active = false
+WHERE user_id = auth.uid();
+
+-- 3. Verify they're all inactive
+SELECT id, endpoint, is_active, created_at
+FROM push_subscriptions
+WHERE user_id = auth.uid();
+```
+
+Then in your app:
+1. Hard refresh the page (Cmd+Shift+R or Ctrl+Shift+R)
+2. Click "Enable Notifications" to create a fresh subscription
+3. Test again - should work now!
+
+**Why This Happens During Development:**
+
+During testing, you might:
+- Unregister service workers manually in DevTools
+- Clear browser cache/storage
+- Test in multiple browsers
+- Restart dev server (service worker endpoint changes)
+
+Each creates a new subscription in the database, but browser only keeps the latest one valid. Old subscriptions become "orphaned" and return 410 errors.
+
+**Production Consideration:**
+
+In production, this is less common because:
+- Service workers stay registered
+- Users don't clear cache as often
+- Automatic cleanup happens via the 410 handler
+
+However, you should periodically clean up very old inactive subscriptions:
+
+```sql
+-- Delete subscriptions inactive for more than 30 days (run as cron job)
+DELETE FROM push_subscriptions
+WHERE is_active = false
+  AND last_used_at < NOW() - INTERVAL '30 days';
+```
+
 ### Key Takeaways
 
 1. **Service Workers** run in background, separate from main thread
@@ -537,6 +618,7 @@ We built a smart notification system with three tiers:
 5. **HTTPS required** for production (localhost OK for dev)
 6. **User permission** is required before any notifications
 7. **Handle failures** gracefully (expired subscriptions, denied permission)
+8. **410 errors** mean subscription expired - auto-deactivate and create new one
 
 ### Research Topics
 

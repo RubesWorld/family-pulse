@@ -97,10 +97,15 @@ export async function POST(request: Request) {
       }
     } else {
       // Update push_enabled to true
-      await supabase
+      const { error: updatePrefsError } = await supabase
         .from('notification_preferences')
         .update({ push_enabled: true })
         .eq('user_id', user.id)
+
+      if (updatePrefsError) {
+        console.error('Error updating notification preferences:', updatePrefsError)
+        // Don't fail the request if preferences update fails
+      }
     }
 
     return NextResponse.json({ success: true })
