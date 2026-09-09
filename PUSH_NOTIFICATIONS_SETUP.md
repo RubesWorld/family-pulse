@@ -37,7 +37,7 @@ Run the notification migration to create the required tables:
 
 ```bash
 # Connect to your Supabase project and run:
-psql [your-connection-string] < supabase-migration-notifications.sql
+psql [your-connection-string] < supabase/migrations/09_notifications.sql
 ```
 
 This creates:

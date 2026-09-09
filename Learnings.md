@@ -185,7 +185,7 @@ ALTER TABLE users
 **Implications for testing:**
 - Can't create test data with fake user IDs
 - Must create real auth accounts first, then add profile data
-- See `test-family-simple.sql` and `add-test-member.sql` for workarounds
+- See `supabase/seed/test-family-simple.sql` and `supabase/seed/add-test-member.sql` for workarounds
 
 ### Research Topics
 
