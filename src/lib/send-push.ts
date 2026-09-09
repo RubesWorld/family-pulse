@@ -1,6 +1,5 @@
 import webpush from 'web-push'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Lazy initialization flag
 let vapidInitialized = false
@@ -15,14 +14,6 @@ function initializeVapid() {
 
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
   vapidInitialized = true
-}
-
-// Create Supabase client with service role for server-side operations
-function getSupabaseClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 }
 
 interface SendPushNotificationParams {
@@ -80,7 +71,7 @@ export async function sendPushNotification({
     // Initialize VAPID details
     initializeVapid()
 
-    const supabase = getSupabaseClient()
+    const supabase = createAdminClient()
 
     // 1. Get user's notification preferences
     const { data: preferences, error: prefsError } = await supabase

@@ -33,8 +33,19 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // Public routes that don't require auth
-  const publicRoutes = ['/login', '/auth/callback', '/join']
+  // Routes that must not be redirected to /login.
+  //
+  // The two /api entries are called machine-to-machine (Vercel Cron, internal
+  // callers) and carry no session cookie, so this middleware would otherwise
+  // redirect them to /login and the route handler would never run. They
+  // authenticate themselves with CRON_SECRET / INTERNAL_API_SECRET instead.
+  const publicRoutes = [
+    '/login',
+    '/auth/callback',
+    '/join',
+    '/api/cron',
+    '/api/notifications/send',
+  ]
   const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
 
   // If not logged in and trying to access protected route, redirect to login

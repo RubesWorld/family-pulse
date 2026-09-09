@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentWeekNumber, getCurrentWeekStart, getNextQuestionAsker } from '@/lib/connect-utils'
 import { sendPushNotification } from '@/lib/send-push'
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    // Fail loudly rather than returning a 401 that looks like a bad caller.
+    console.error('CRON_SECRET is not set — the rotation job cannot authenticate')
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
+  }
+
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createClient()
+  // Must be the service-role client: a cron request carries no session cookie,
+  // so auth.uid() is null and RLS would hide every family member and preset
+  // question, making the job silently no-op.
+  const supabase = createAdminClient()
   const currentWeekNumber = getCurrentWeekNumber()
   const weekStartDate = getCurrentWeekStart()
 
