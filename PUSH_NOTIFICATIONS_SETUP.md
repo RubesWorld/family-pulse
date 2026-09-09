@@ -51,8 +51,8 @@ Update your `.env.local` file with the required secrets:
 
 ```bash
 # VAPID Keys (already added)
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4-JAJBqAESdSKXvMvYMtP_iIuAgzmhXAx91ekoqxaU
-VAPID_PRIVATE_KEY=vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your-vapid-public-key>
+VAPID_PRIVATE_KEY=<redacted-rotated>
 
 # Service Role Key - GET THIS FROM SUPABASE
 # Go to: Settings > API > Service Role Key

@@ -291,13 +291,13 @@ VAPID keys are a pair of cryptographic keys (public and private) that identify y
 # - Shared with browsers during subscription
 # - Safe to expose in client-side code
 # - Used to encrypt subscription data
-BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4-JAJBqAESdSKXvMvYMtP_iIuAgzmhXAx91ekoqxaU
+<your-vapid-public-key>
 
 # PRIVATE KEY (VAPID_PRIVATE_KEY)
 # - NEVER expose to client
 # - Kept secret on server
 # - Used to sign push messages
-vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+<redacted-rotated>
 ```
 
 #### Generating VAPID Keys
@@ -651,7 +651,7 @@ Environment variables are configuration values stored outside your code that can
 ```bash
 # These CAN be exposed to the browser
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4...
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your-vapid-public-key>...
 ```
 
 - **Prefix**: `NEXT_PUBLIC_`
@@ -663,7 +663,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4...
 
 ```bash
 # These are ONLY available on the server
-VAPID_PRIVATE_KEY=vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+VAPID_PRIVATE_KEY=<redacted-rotated>
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 INTERNAL_API_SECRET=c0d79fadd9ec72c4a90457b57e6c9bada0b9928a408388ec...
 CRON_SECRET=2e3a0147637b475aa1a46a570a47b8bdd4715898a4145d6eb...
@@ -682,7 +682,7 @@ For secrets like `INTERNAL_API_SECRET` and `CRON_SECRET`, you generate random cr
 # Generate a 256-bit (32-byte) random hex string
 openssl rand -hex 32
 
-# Output: c0d79fadd9ec72c4a90457b57e6c9bada0b9928a408388ec470e25c24aca5c9d
+# Output: <redacted>
 ```
 
 **Why random secrets?**
@@ -709,8 +709,8 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 # Using web-push library
 npx web-push generate-vapid-keys
 
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4...
-VAPID_PRIVATE_KEY=vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your-vapid-public-key>...
+VAPID_PRIVATE_KEY=<redacted-rotated>
 
 # Using openssl for random secrets
 INTERNAL_API_SECRET=$(openssl rand -hex 32)
@@ -791,10 +791,10 @@ git add .env.local
 ❌ **Using NEXT_PUBLIC_ for secrets**
 ```bash
 # ❌ This exposes your private key!
-NEXT_PUBLIC_VAPID_PRIVATE_KEY=vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+NEXT_PUBLIC_VAPID_PRIVATE_KEY=<redacted-rotated>
 
 # ✅ Correct:
-VAPID_PRIVATE_KEY=vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+VAPID_PRIVATE_KEY=<redacted-rotated>
 ```
 
 ❌ **Accessing server-only vars in client code**

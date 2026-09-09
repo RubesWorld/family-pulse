@@ -146,13 +146,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # VAPID (generated with npx web-push generate-vapid-keys)
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BI9UEdk_AQyvwAt1qPsFcx6UDclw3pdZaAB4qTvDj7Fwn4...
-VAPID_PRIVATE_KEY=vR4etrJCaypxqDLN3rTYZGviuVNiiQaBMUu7f2RJhZo
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your-vapid-public-key>...
+VAPID_PRIVATE_KEY=<redacted-rotated>
 VAPID_EMAIL=mailto:noreply@familypulse.app
 
 # Generated secrets (openssl rand -hex 32)
-INTERNAL_API_SECRET=c0d79fadd9ec72c4a90457b57e6c9bada0b9928a408388ec470e25c24aca5c9d
-CRON_SECRET=2e3a0147637b475aa1a46a570a47b8bdd4715898a4145d6eb1a15c88565327ef
+INTERNAL_API_SECRET=<redacted>
+CRON_SECRET=<redacted>
 ```
 
 ---
