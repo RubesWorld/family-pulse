@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { EnablePushCard } from '@/components/notifications/enable-push-card'
+import { getInstallState, isIOS, isStandalone } from '@/lib/pwa'
 import { Loader2, Send } from 'lucide-react'
 
 export default function TestNotificationsPage() {
@@ -10,6 +11,36 @@ export default function TestNotificationsPage() {
   const [result, setResult] = useState<{ success: boolean; message?: string; error?: string } | null>(
     null
   )
+  const [diagnostics, setDiagnostics] = useState<Record<string, string> | null>(null)
+
+  // Resolved on the client only. Reading navigator during render would make
+  // the server and client disagree and report the wrong values.
+  useEffect(() => {
+    const installState = getInstallState()
+    const pushApiPresent =
+      'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+
+    setDiagnostics({
+      Platform: isIOS() ? 'iOS' : 'Other',
+      'Installed app': isStandalone() ? '✓ Yes' : '✗ No — running in a browser tab',
+      'Install state': installState,
+      'Push API present': pushApiPresent ? '✓ Yes' : '✗ No',
+      'Push can work here':
+        installState === 'ios-browser'
+          ? '✗ No — iOS needs Add to Home Screen first'
+          : pushApiPresent
+            ? '✓ Yes'
+            : '✗ No',
+      'Notification permission':
+        'Notification' in window ? Notification.permission : 'N/A',
+      'Service worker':
+        'serviceWorker' in navigator
+          ? navigator.serviceWorker.controller
+            ? '✓ Active'
+            : '⚠ Not controlling this page yet'
+          : '✗ Not supported',
+    })
+  }, [])
 
   const handleSendTest = async () => {
     setIsSending(true)
@@ -103,34 +134,16 @@ export default function TestNotificationsPage() {
           <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-3">Debugging Information</h2>
             <div className="space-y-2 text-xs font-mono">
-              <div>
-                <span className="text-gray-500">Push Supported:</span>{' '}
-                <span className="text-gray-900">
-                  {typeof window !== 'undefined' &&
-                  'serviceWorker' in navigator &&
-                  'PushManager' in window
-                    ? '✓ Yes'
-                    : '✗ No'}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">Notification Permission:</span>{' '}
-                <span className="text-gray-900">
-                  {typeof window !== 'undefined' && 'Notification' in window
-                    ? Notification.permission
-                    : 'N/A'}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">Service Worker:</span>{' '}
-                <span className="text-gray-900">
-                  {typeof window !== 'undefined' && 'serviceWorker' in navigator
-                    ? navigator.serviceWorker.controller
-                      ? '✓ Active'
-                      : '⚠ Not Active'
-                    : '✗ Not Supported'}
-                </span>
-              </div>
+              {diagnostics === null ? (
+                <p className="text-gray-500">Checking…</p>
+              ) : (
+                Object.entries(diagnostics).map(([label, value]) => (
+                  <div key={label}>
+                    <span className="text-gray-500">{label}:</span>{' '}
+                    <span className="text-gray-900">{value}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

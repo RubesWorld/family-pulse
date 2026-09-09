@@ -9,6 +9,8 @@ import {
   isPushSupported,
   getCurrentSubscription,
 } from '@/lib/push'
+import { useInstallState } from '@/lib/pwa'
+import { IosInstallPrompt } from '@/components/notifications/install-instructions'
 
 interface EnablePushCardProps {
   variant?: 'card' | 'inline'
@@ -20,6 +22,8 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [permission, setPermission] = useState<NotificationPermission>('default')
+  const [ready, setReady] = useState(false)
+  const installState = useInstallState()
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -27,9 +31,16 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
       setIsSupported(supported)
 
       if (supported) {
-        const currentPermission = Notification.permission
-        setPermission(currentPermission)
+        setPermission(Notification.permission)
+      }
 
+      // Mark ready before awaiting the subscription lookup below.
+      // getCurrentSubscription() waits on navigator.serviceWorker.ready, which
+      // never resolves until a worker has been registered — i.e. exactly the
+      // first-run case. Gating render on it would leave this card blank.
+      setReady(true)
+
+      if (supported) {
         const subscription = await getCurrentSubscription()
         setIsSubscribed(!!subscription)
       }
@@ -77,6 +88,19 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // None of this is knowable on the server. Render nothing until the client
+  // has resolved it, rather than flashing a state that's about to change.
+  if (!ready || installState === null) {
+    return null
+  }
+
+  // On iOS, push can't be subscribed to from a browser tab at all. Show the
+  // install path instead of an Enable button that would fail with a generic
+  // error and leave the user with no idea why.
+  if (installState === 'ios-browser') {
+    return <IosInstallPrompt />
   }
 
   if (!isSupported) {
