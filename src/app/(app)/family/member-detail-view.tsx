@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import { User, InterestCard, UserPick } from '@/types/database'
 import { InterestCard as InterestCardComponent } from '@/components/interest-card'
 import { PickCard } from '@/components/pick-card'
@@ -12,39 +11,24 @@ import { openSMS } from '@/lib/sms'
 
 interface MemberDetailViewProps {
   member: User
+  /**
+   * Preloaded by the family page rather than fetched here on mount. This used to
+   * run two sequential queries inside a useEffect, so tapping a member showed a
+   * skeleton while two more round-trips completed. The server already knows the
+   * family, so it fetches everyone's cards alongside the member list.
+   */
+  interests: InterestCard[]
+  picks: UserPick[]
   onBack: () => void
 }
 
-export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
-  const [interests, setInterests] = useState<InterestCard[]>([])
-  const [picks, setPicks] = useState<UserPick[]>([])
+export function MemberDetailView({
+  member,
+  interests,
+  picks,
+  onBack,
+}: MemberDetailViewProps) {
   const [selectedInterest, setSelectedInterest] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-
-      // Fetch interests
-      const { data: interestData } = await supabase
-        .from('interest_cards')
-        .select('*')
-        .eq('user_id', member.id)
-
-      // Fetch picks (only current picks)
-      const { data: pickData } = await supabase
-        .from('picks')
-        .select('*')
-        .eq('user_id', member.id)
-        .eq('is_current', true)
-
-      setInterests(interestData || [])
-      setPicks(pickData || [])
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [member.id])
 
   const filteredPicks = selectedInterest
     ? picks.filter(p => p.interest_tag === selectedInterest)
@@ -95,144 +79,109 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
         )}
       </div>
 
-      {loading ? (
-        <div className="space-y-6 animate-pulse">
-          {/* User header skeleton */}
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gray-200" />
-            <div className="h-8 w-32 bg-gray-200 rounded" />
-          </div>
-
-          {/* Bio skeleton */}
-          <div className="h-40 bg-gray-200 rounded-lg" />
-
-          {/* Interests skeleton */}
-          <div className="space-y-3">
-            <div className="h-6 w-24 bg-gray-200 rounded" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-lg" />
-              ))}
-            </div>
-          </div>
-
-          {/* Picks skeleton */}
-          <div className="space-y-3">
-            <div className="h-6 w-20 bg-gray-200 rounded" />
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-40 bg-gray-200 rounded-lg" />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Bio Section */}
-          {hasBioInfo && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>About {member.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {member.location && (
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
-                        <p className="font-medium text-gray-900">{member.location}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {member.occupation && (
-                    <div className="flex items-start gap-3">
-                      <Briefcase className="w-5 h-5 text-purple-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Occupation</p>
-                        <p className="font-medium text-gray-900">{member.occupation}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {member.birthday && (
-                    <div className="flex items-start gap-3">
-                      <Calendar className="w-5 h-5 text-pink-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Birthday</p>
-                        <p className="font-medium text-gray-900">
-                          {new Date(member.birthday).toLocaleDateString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {member.bio && (
-                    <div className="flex items-start gap-3">
-                      <FileText className="w-5 h-5 text-green-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Bio</p>
-                        <p className="text-sm text-gray-700 leading-relaxed">{member.bio}</p>
-                      </div>
-                    </div>
-                  )}
+      {/* Bio Section */}
+      {hasBioInfo && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>About {member.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {member.location && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                    <p className="font-medium text-gray-900">{member.location}</p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
 
-          {/* Interests Section */}
-          {interests.length > 0 && (
-            <section className="mb-8">
-              <h2 className="text-lg font-semibold mb-3">Interests</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {interests.map(interest => (
-                  <InterestCardComponent
-                    key={interest.id}
-                    interest={{ ...interest, users: { name: member.name, avatar_url: member.avatar_url } }}
-                    onClick={() => setSelectedInterest(
-                      selectedInterest === interest.category ? null : interest.category
-                    )}
-                    isSelected={selectedInterest === interest.category}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+              {member.occupation && (
+                <div className="flex items-start gap-3">
+                  <Briefcase className="w-5 h-5 text-purple-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Occupation</p>
+                    <p className="font-medium text-gray-900">{member.occupation}</p>
+                  </div>
+                </div>
+              )}
 
-          {/* Picks Section */}
-          {filteredPicks.length > 0 && (
-            <section>
-              <h2 className="text-lg font-semibold mb-3">
-                {selectedInterest ? 'Related Picks' : 'Picks'}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredPicks.map(pick => (
-                  <PickCard
-                    key={pick.id}
-                    pick={{ ...pick, users: { name: member.name, avatar_url: member.avatar_url } }}
-                    onInterestClick={(tag) => setSelectedInterest(tag)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+              {member.birthday && (
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-pink-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Birthday</p>
+                    <p className="font-medium text-gray-900">
+                      {new Date(member.birthday).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-          {/* Empty States */}
-          {interests.length === 0 && picks.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg">No interests or picks yet</p>
-              <p className="text-sm mt-1">
-                {member.name} hasn&apos;t shared their favorites yet
-              </p>
+              {member.bio && (
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Bio</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{member.bio}</p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Interests Section */}
+      {interests.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">Interests</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {interests.map(interest => (
+              <InterestCardComponent
+                key={interest.id}
+                interest={{ ...interest, users: { name: member.name, avatar_url: member.avatar_url } }}
+                onClick={() => setSelectedInterest(
+                  selectedInterest === interest.category ? null : interest.category
+                )}
+                isSelected={selectedInterest === interest.category}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Picks Section */}
+      {filteredPicks.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3">
+            {selectedInterest ? 'Related Picks' : 'Picks'}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filteredPicks.map(pick => (
+              <PickCard
+                key={pick.id}
+                pick={{ ...pick, users: { name: member.name, avatar_url: member.avatar_url } }}
+                onInterestClick={(tag) => setSelectedInterest(tag)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Empty States */}
+      {interests.length === 0 && picks.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-lg">No interests or picks yet</p>
+          <p className="text-sm mt-1">
+            {member.name} hasn&apos;t shared their favorites yet
+          </p>
+        </div>
       )}
     </div>
   )
