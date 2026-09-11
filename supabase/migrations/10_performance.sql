@@ -400,17 +400,40 @@ ANALYZE question_answers;
 -- This is the last statement so that clients which show only the final result
 -- set (the Supabase dashboard among them) display it.
 
+-- `outcome` compares DEFINITIONS, not just names. An earlier version of this
+-- query only checked whether a policy of the same name existed afterwards, which
+-- reported "recreated" for policies whose body had been completely rewritten --
+-- reassuring in exactly the case that deserves attention.
 SELECT
-  l.ran_at,
   l.table_name,
   l.policy_name,
-  EXISTS (
-    SELECT 1 FROM pg_policies p
-    WHERE p.schemaname = 'public'
-      AND p.tablename  = l.table_name
-      AND p.policyname = l.policy_name
-  ) AS recreated,
-  l.using_expr,
-  l.check_expr
+  CASE
+    WHEN p.policyname IS NULL THEN 'REMOVED - nothing replaced it, review this'
+    WHEN COALESCE(p.qual, '')       = COALESCE(l.using_expr, '')
+     AND COALESCE(p.with_check, '') = COALESCE(l.check_expr, '')
+     AND COALESCE(p.cmd, '')        = COALESCE(l.cmd, '')
+      THEN 'unchanged'
+    ELSE 'replaced - same name, new definition'
+  END AS outcome,
+  l.rls_was_enabled AS rls_was_on_before,
+  c.relrowsecurity  AS rls_on_now,
+  l.using_expr      AS old_using,
+  p.qual            AS new_using,
+  l.check_expr      AS old_check,
+  p.with_check      AS new_check
 FROM rls_migration_log l
-ORDER BY recreated, l.table_name, l.policy_name;
+LEFT JOIN pg_policies p
+  ON p.schemaname = 'public'
+ AND p.tablename  = l.table_name
+ AND p.policyname = l.policy_name
+LEFT JOIN pg_class c ON c.relname = l.table_name
+LEFT JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+WHERE l.ran_at = (SELECT max(ran_at) FROM rls_migration_log)
+ORDER BY
+  CASE
+    WHEN p.policyname IS NULL THEN 0   -- anything removed sorts to the top
+    WHEN COALESCE(p.qual, '') = COALESCE(l.using_expr, '')
+     AND COALESCE(p.with_check, '') = COALESCE(l.check_expr, '') THEN 2
+    ELSE 1
+  END,
+  l.table_name, l.policy_name;
