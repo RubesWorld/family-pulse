@@ -115,14 +115,27 @@ GRANT EXECUTE ON FUNCTION public.current_family_member_ids() TO authenticated;
 --
 -- Drop the table whenever you're done with it:  DROP TABLE rls_migration_log;
 
+-- Captures enough to RECREATE each dropped policy, not merely describe it:
+-- cmd and roles are as load-bearing as the expressions. supabase/rollback_10.sql
+-- reconstructs the old policy set from these rows.
 CREATE TABLE IF NOT EXISTS rls_migration_log (
-  id          bigserial PRIMARY KEY,
-  ran_at      timestamptz NOT NULL DEFAULT now(),
-  table_name  text        NOT NULL,
-  policy_name text        NOT NULL,
-  using_expr  text,
-  check_expr  text
+  id            bigserial PRIMARY KEY,
+  ran_at        timestamptz NOT NULL DEFAULT now(),
+  table_name    text        NOT NULL,
+  policy_name   text        NOT NULL,
+  cmd           text,
+  roles         text[],
+  permissive    text,
+  using_expr    text,
+  check_expr    text,
+  rls_was_enabled boolean
 );
+
+-- Older runs of this migration created the table without these columns.
+ALTER TABLE rls_migration_log ADD COLUMN IF NOT EXISTS cmd text;
+ALTER TABLE rls_migration_log ADD COLUMN IF NOT EXISTS roles text[];
+ALTER TABLE rls_migration_log ADD COLUMN IF NOT EXISTS permissive text;
+ALTER TABLE rls_migration_log ADD COLUMN IF NOT EXISTS rls_was_enabled boolean;
 
 -- This table lives in `public`, so PostgREST would otherwise expose it over the
 -- API. RLS on with zero policies denies anon and authenticated outright; the
@@ -140,15 +153,26 @@ DECLARE
   ];
 BEGIN
   FOR p IN
-    SELECT tablename, policyname, qual, with_check
-    FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = ANY(managed)
-    ORDER BY tablename, policyname
+    SELECT pol.tablename, pol.policyname, pol.cmd, pol.roles,
+           pol.permissive, pol.qual, pol.with_check,
+           c.relrowsecurity AS rls_on
+    FROM pg_policies pol
+    JOIN pg_class c ON c.relname = pol.tablename
+    JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = pol.schemaname
+    WHERE pol.schemaname = 'public' AND pol.tablename = ANY(managed)
+    ORDER BY pol.tablename, pol.policyname
   LOOP
-    -- Capture the full definition before destroying it, so the old policy can
-    -- be reconstructed from this log if something turns out to have been load-bearing.
-    INSERT INTO rls_migration_log (table_name, policy_name, using_expr, check_expr)
-    VALUES (p.tablename, p.policyname, p.qual, p.with_check);
+    -- Capture the full definition before destroying it, so the old policy can be
+    -- reconstructed by supabase/rollback_10.sql. rls_was_enabled records whether
+    -- the table was actually enforcing anything, which step 3 below changes.
+    INSERT INTO rls_migration_log (
+      table_name, policy_name, cmd, roles, permissive,
+      using_expr, check_expr, rls_was_enabled
+    )
+    VALUES (
+      p.tablename, p.policyname, p.cmd, p.roles::text[], p.permissive,
+      p.qual, p.with_check, p.rls_on
+    );
 
     RAISE NOTICE 'dropping pre-existing policy on %: %', p.tablename, p.policyname;
     EXECUTE format('DROP POLICY %I ON public.%I', p.policyname, p.tablename);
