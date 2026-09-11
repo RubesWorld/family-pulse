@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/bottom-nav'
 import { FloatingActionButton } from '@/components/floating-action-button'
+import { AmbientBackdrop } from '@/components/ui/ambient-backdrop'
+import { ThemeProvider } from '@/components/theme-provider'
 
 export default async function AppLayout({
   children,
@@ -27,10 +29,14 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {children}
-      <BottomNav />
-      <FloatingActionButton />
-    </div>
+    <ThemeProvider>
+      <div className="relative min-h-screen bg-paper">
+        <AmbientBackdrop />
+        {/* pb clears the floating nav plus the iOS home indicator */}
+        <div className="relative z-10 pb-32">{children}</div>
+        <FloatingActionButton />
+        <BottomNav />
+      </div>
+    </ThemeProvider>
   )
 }

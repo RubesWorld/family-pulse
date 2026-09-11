@@ -2,18 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatDistanceToNow } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { GlowAvatar } from '@/components/ui/glow-avatar'
+import { CollapsibleSection } from '@/components/ui/collapsible-section'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { InterestCardEditor } from '@/components/interest-card-editor'
 import { PickEditor } from '@/components/pick-editor'
 import { PickCard } from '@/components/pick-card'
+import { InterestCard as InterestCardView } from '@/components/interest-card'
 import { ProfileBioEditor } from '@/components/profile-bio-editor'
 import { NotificationsGuide } from '@/components/profile/notifications-guide'
-import { LogOut, Copy, Check, Edit2, MapPin, Briefcase, Calendar, FileText } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { PRESET_INTERESTS } from '@/lib/interests'
+import { LogOut, Copy, Check, Edit2 } from 'lucide-react'
 import type { Activity, InterestCard, UserPick } from '@/types/database'
 
 interface ProfileContentProps {
@@ -35,16 +36,32 @@ interface ProfileContentProps {
   picks: UserPick[]
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+const BIO_ROWS: { key: 'location' | 'occupation' | 'birthday' | 'bio'; emoji: string; label: string }[] = [
+  { key: 'location', emoji: '📍', label: 'Location' },
+  { key: 'occupation', emoji: '💼', label: 'Work' },
+  { key: 'birthday', emoji: '🎂', label: 'Birthday' },
+  { key: 'bio', emoji: '✍️', label: 'Bio' },
+]
+
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex flex-none items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11.5px] font-extrabold text-ink-faint transition-colors hover:bg-paper-2 hover:text-ink"
+    >
+      <Edit2 className="h-3 w-3" />
+      Edit
+    </button>
+  )
 }
 
-export function ProfileContent({ user, recentActivities, interestCards, picks }: ProfileContentProps) {
+export function ProfileContent({
+  user,
+  recentActivities,
+  interestCards,
+  picks,
+}: ProfileContentProps) {
   const [copied, setCopied] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [isEditingBio, setIsEditingBio] = useState(false)
@@ -66,7 +83,6 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback
       const textarea = document.createElement('textarea')
       textarea.value = inviteUrl
       document.body.appendChild(textarea)
@@ -85,55 +101,48 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
     router.refresh()
   }
 
-  const hasBioInfo = user.location || user.occupation || user.birthday || user.bio
+  const hasBioInfo = !!(user.location || user.occupation || user.birthday || user.bio)
+  const filledPicks = picks.filter((p) => p.value && p.value.trim())
 
   return (
-    <div className="max-w-lg mx-auto p-4 space-y-4">
-      {/* Profile Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
-                {getInitials(user.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-lg font-semibold">{user.name}</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="mx-auto max-w-lg">
+      {/* hero */}
+      <header className="flex items-center gap-4 px-5 pb-2 pt-14">
+        <GlowAvatar
+          name={user.name}
+          userId={user.id}
+          size="xl"
+        />
+        <div className="min-w-0">
+          <h1 className="truncate font-display text-[26px] font-black leading-tight tracking-tight text-ink">
+            {user.name}
+          </h1>
+          <p className="mt-0.5 truncate text-[12px] font-bold text-ink-faint">
+            {user.email}
+          </p>
+        </div>
+      </header>
 
-      {/* Notifications Guide */}
-      <NotificationsGuide />
-
-      {/* Bio Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>About Me</CardTitle>
-              <CardDescription>A bit about who I am</CardDescription>
-            </div>
-            {!isEditingBio && hasBioInfo && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditingBio(true)}
-                className="gap-1"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit
-              </Button>
-            )}
+      <div className="mt-5 flex flex-col gap-3 px-5">
+        {/* Appearance — the night/day switch lives here */}
+        <div className="rounded-card border-card border-edge bg-card p-4 shadow-card backdrop-blur-card">
+          <div className="mb-2.5 font-display text-[17px] font-bold text-ink">
+            Appearance
           </div>
-        </CardHeader>
-        <CardContent>
+          <ThemeToggle />
+        </div>
+
+        <CollapsibleSection
+          title="About me"
+          emoji="✍️"
+          summary={hasBioInfo ? 'Location, work, birthday, bio' : 'Nothing added yet'}
+          forceOpen={isEditingBio || !hasBioInfo}
+          action={
+            hasBioInfo && !isEditingBio ? (
+              <EditButton onClick={() => setIsEditingBio(true)} />
+            ) : null
+          }
+        >
           {isEditingBio || !hasBioInfo ? (
             <ProfileBioEditor
               userId={user.id}
@@ -147,247 +156,210 @@ export function ProfileContent({ user, recentActivities, interestCards, picks }:
               onSave={handleSaveComplete}
             />
           ) : (
-            <div className="space-y-3">
-              {user.location && (
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
-                    <p className="font-medium text-gray-900">{user.location}</p>
-                  </div>
-                </div>
-              )}
-
-              {user.occupation && (
-                <div className="flex items-start gap-3">
-                  <Briefcase className="w-5 h-5 text-purple-600 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Occupation</p>
-                    <p className="font-medium text-gray-900">{user.occupation}</p>
-                  </div>
-                </div>
-              )}
-
-              {user.birthday && (
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-pink-600 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Birthday</p>
-                    <p className="font-medium text-gray-900">
-                      {new Date(user.birthday).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {user.bio && (
-                <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-green-600 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Bio</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">{user.bio}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Interests Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Interests</CardTitle>
-              <CardDescription>What you love to do</CardDescription>
-            </div>
-            {!isEditingInterests && interestCards.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditingInterests(true)}
-                className="gap-1"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isEditingInterests || interestCards.length === 0 ? (
-            <InterestCardEditor
-              userId={user.id}
-              existingCards={interestCards.map(card => ({
-                category: card.category,
-                description: card.description,
-                is_custom: card.is_custom,
-                tags: card.tags || []
-              }))}
-              onSave={handleSaveComplete}
-            />
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {interestCards.map(card => {
-                const preset = PRESET_INTERESTS.find((p) => p.id === card.category)
-                const emoji = preset?.emoji || '⭐'
-                const label = preset?.label || card.category
-
+            <div className="-my-1">
+              {BIO_ROWS.map(({ key, emoji, label }) => {
+                const value = user[key]
+                if (!value) return null
                 return (
                   <div
-                    key={card.id}
-                    className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-blue-200 shadow-sm hover:shadow-md transition-all"
+                    key={key}
+                    className="flex items-start gap-3 border-b border-dashed border-edge py-2.5 last:border-b-0"
                   >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-bl-full" />
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-sm">
-                        <span className="text-2xl">{emoji}</span>
+                    <span className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-paper-2 text-sm">
+                      {emoji}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
+                        {label}
                       </div>
-                      <p className="font-bold text-gray-900 text-lg">{label}</p>
+                      <div
+                        className={
+                          key === 'bio'
+                            ? 'mt-0.5 text-[13px] font-medium leading-relaxed text-ink-soft'
+                            : 'mt-0.5 text-[13.5px] font-bold text-ink'
+                        }
+                      >
+                        {key === 'birthday'
+                          ? new Date(value).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                            })
+                          : value}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed pl-15">{card.description}</p>
                   </div>
                 )
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </CollapsibleSection>
 
-      {/* Picks Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>My Picks</CardTitle>
-              <CardDescription>Your current favorites</CardDescription>
-            </div>
-            {!isEditingPicks && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditingPicks(true)}
-                className="gap-1"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isEditingPicks ? (
-            <PickEditor
+        <CollapsibleSection
+          title="Interests"
+          emoji="🎨"
+          summary={
+            interestCards.length > 0
+              ? `${interestCards.length} ${interestCards.length === 1 ? 'interest' : 'interests'}`
+              : 'Nothing added yet'
+          }
+          forceOpen={isEditingInterests || interestCards.length === 0}
+          action={
+            interestCards.length > 0 && !isEditingInterests ? (
+              <EditButton onClick={() => setIsEditingInterests(true)} />
+            ) : null
+          }
+        >
+          {isEditingInterests || interestCards.length === 0 ? (
+            <InterestCardEditor
               userId={user.id}
-              existingPicks={picks.map(pick => ({
-                category: pick.category,
-                value: pick.value,
-                interest_tag: pick.interest_tag
-              }))}
-              userInterests={interestCards.map(card => ({
+              existingCards={interestCards.map((card) => ({
                 category: card.category,
-                is_custom: card.is_custom
+                description: card.description,
+                is_custom: card.is_custom,
+                tags: card.tags || [],
               }))}
               onSave={handleSaveComplete}
             />
-          ) : picks.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">No picks yet</p>
-              <p className="text-xs mt-1">Click Edit to add your current favorites</p>
-            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {picks.filter(pick => pick.value && pick.value.trim()).map(pick => (
+            <div className="flex flex-col gap-3">
+              {interestCards.map((card) => (
+                <InterestCardView
+                  key={card.id}
+                  interest={{
+                    ...card,
+                    users: { name: user.name, avatar_url: null },
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="My picks"
+          emoji="⭐"
+          summary={
+            filledPicks.length > 0
+              ? `${filledPicks.length} ${filledPicks.length === 1 ? 'favorite' : 'favorites'}`
+              : 'Nothing added yet'
+          }
+          forceOpen={isEditingPicks}
+          action={
+            !isEditingPicks ? (
+              <EditButton onClick={() => setIsEditingPicks(true)} />
+            ) : null
+          }
+        >
+          {isEditingPicks ? (
+            <PickEditor
+              userId={user.id}
+              existingPicks={picks.map((pick) => ({
+                category: pick.category,
+                value: pick.value,
+                interest_tag: pick.interest_tag,
+              }))}
+              userInterests={interestCards.map((card) => ({
+                category: card.category,
+                is_custom: card.is_custom,
+              }))}
+              onSave={handleSaveComplete}
+            />
+          ) : filledPicks.length === 0 ? (
+            <p className="py-4 text-center text-[13px] font-semibold text-ink-soft">
+              No picks yet. Tap Edit to add your favorites.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filledPicks.map((pick) => (
                 <PickCard
                   key={pick.id}
-                  pick={{
-                    ...pick,
-                    users: { name: user.name, avatar_url: null }
-                  }}
-                  showHistoryButton={true}
+                  pick={{ ...pick, users: { name: user.name, avatar_url: null } }}
+                  showHistoryButton
                   userId={user.id}
                 />
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </CollapsibleSection>
 
-      {/* Recent Activities Card */}
-      {recentActivities.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-            <CardDescription>Your latest posts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+        {recentActivities.length > 0 && (
+          <CollapsibleSection
+            title="Recent activity"
+            emoji="📅"
+            summary={`${recentActivities.length} recent ${
+              recentActivities.length === 1 ? 'post' : 'posts'
+            }`}
+          >
+            <div className="flex flex-col gap-3">
               {recentActivities.map((activity) => (
                 <div
                   key={activity.id}
-                  className="border-l-2 border-blue-200 pl-3 py-1"
+                  className="border-l-2 border-marigold/60 py-0.5 pl-3"
                 >
-                  <p className="font-medium text-sm">{activity.title}</p>
+                  <p className="font-display text-[15px] font-bold text-ink">
+                    {activity.title}
+                  </p>
                   {activity.description && (
-                    <p className="text-xs text-gray-600 mt-0.5">
+                    <p className="mt-0.5 text-[12.5px] font-medium text-ink-soft">
                       {activity.description}
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                  <p className="mt-1 text-[11px] font-bold text-ink-faint">
+                    {formatDistanceToNow(new Date(activity.created_at), {
+                      addSuffix: true,
+                    })}
                   </p>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </CollapsibleSection>
+        )}
 
-      {/* Family Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Family</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="font-medium">{user.familyName}</p>
-            <p className="text-sm text-gray-500">Your family group</p>
+        <CollapsibleSection
+          title="Notifications"
+          emoji="🔔"
+          summary="Push setup and troubleshooting"
+        >
+          <NotificationsGuide />
+        </CollapsibleSection>
+
+        {/* Family + invite stays visible — it is the main thing people come here to do */}
+        <div className="rounded-card border-card border-edge bg-card p-4 shadow-card backdrop-blur-card">
+          <div className="font-display text-[17px] font-bold text-ink">
+            {user.familyName}
           </div>
+          <p className="mt-0.5 text-[12px] font-bold text-ink-faint">
+            Your family group
+          </p>
           <Button
             variant="outline"
             onClick={copyInviteLink}
-            className="w-full gap-2"
+            className="mt-3 w-full"
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4" />
-                Link Copied!
+                <Check className="h-4 w-4" />
+                Link copied!
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4" />
-                Copy Invite Link
+                <Copy className="h-4 w-4" />
+                Copy invite link
               </>
             )}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Logout Button */}
-      <Button
-        variant="outline"
-        onClick={handleLogout}
-        disabled={loggingOut}
-        className="w-full gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-      >
-        <LogOut className="w-4 h-4" />
-        {loggingOut ? 'Logging out...' : 'Log Out'}
-      </Button>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="h-4 w-4" />
+          {loggingOut ? 'Logging out…' : 'Log out'}
+        </Button>
+      </div>
     </div>
   )
 }

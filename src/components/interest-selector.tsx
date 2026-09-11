@@ -2,15 +2,19 @@
 
 import { PRESET_INTERESTS } from '@/lib/interests'
 import { Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface InterestSelectorProps {
   selectedInterests: string[]
   onToggle: (interestId: string) => void
 }
 
-export function InterestSelector({ selectedInterests, onToggle }: InterestSelectorProps) {
+export function InterestSelector({
+  selectedInterests,
+  onToggle,
+}: InterestSelectorProps) {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
       {PRESET_INTERESTS.map((interest) => {
         const isSelected = selectedInterests.includes(interest.id)
 
@@ -19,21 +23,36 @@ export function InterestSelector({ selectedInterests, onToggle }: InterestSelect
             key={interest.id}
             type="button"
             onClick={() => onToggle(interest.id)}
-            className={`
-              relative flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all
-              ${isSelected
-                ? 'bg-blue-50 border-blue-500 shadow-sm'
-                : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-              }
-            `}
+            aria-pressed={isSelected}
+            className={cn(
+              'relative flex flex-col items-center justify-center gap-1 rounded-panel border-[1.5px] p-3 transition-all active:scale-[0.97]',
+              isSelected
+                ? 'border-coral bg-coral/[0.16]'
+                : 'border-edge bg-card hover:border-ink-faint'
+            )}
+            style={
+              isSelected
+                ? {
+                    boxShadow:
+                      '0 5px 20px -5px hsl(var(--coral) / calc(0.7 * var(--glow)))',
+                  }
+                : undefined
+            }
           >
             {isSelected && (
-              <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                <Check className="w-3 h-3 text-white" />
-              </div>
+              <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-coral">
+                <Check className="h-2.5 w-2.5 text-on-ink" />
+              </span>
             )}
-            <span className="text-2xl mb-1">{interest.emoji}</span>
-            <span className={`text-xs font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+            <span className="text-2xl" aria-hidden>
+              {interest.emoji}
+            </span>
+            <span
+              className={cn(
+                'text-[11px] font-extrabold',
+                isSelected ? 'text-coral' : 'text-ink-soft'
+              )}
+            >
               {interest.label}
             </span>
           </button>

@@ -60,10 +60,10 @@ export function NotificationSettingsContent({
 
   if (!preferences) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
-        <div className="max-w-2xl mx-auto p-4">
+      <div className="min-h-screen bg-paper">
+        <div className="mx-auto max-w-2xl p-4">
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-coral" />
           </div>
         </div>
       </div>
@@ -71,10 +71,10 @@ export function NotificationSettingsContent({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white pb-20">
-      <div className="max-w-2xl mx-auto p-4">
+    <div className="min-h-screen bg-paper pb-20">
+      <div className="mx-auto max-w-2xl p-4 pt-12">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -83,7 +83,9 @@ export function NotificationSettingsContent({
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Notification Settings</h1>
+          <h1 className="font-display text-[26px] font-black tracking-tight text-ink">
+            Notifications
+          </h1>
         </div>
 
         <div className="space-y-6">
@@ -93,19 +95,19 @@ export function NotificationSettingsContent({
           </div>
 
           {/* Notification Types */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h2 className="text-sm font-semibold text-gray-900">What to Notify Me About</h2>
-              <p className="text-xs text-gray-500 mt-1">
+          <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
+            <div className="border-b border-edge bg-paper-2 p-4">
+              <h2 className="font-display text-[15px] font-bold text-ink">What to notify me about</h2>
+              <p className="mt-1 text-[12px] font-medium text-ink-soft">
                 Choose which events you want to be notified about
               </p>
             </div>
 
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-edge">
               {/* Tier 1: Critical */}
               <div className="p-4">
-                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-3">
-                  Critical Updates
+                <p className="mb-3 text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-coral">
+                  Critical updates
                 </p>
                 <div className="space-y-3">
                   <NotificationToggle
@@ -127,8 +129,8 @@ export function NotificationSettingsContent({
 
               {/* Tier 2: Engagement */}
               <div className="p-4">
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
-                  Family Engagement
+                <p className="mb-3 text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-denim">
+                  Family engagement
                 </p>
                 <div className="space-y-3">
                   <NotificationToggle
@@ -150,8 +152,8 @@ export function NotificationSettingsContent({
 
               {/* Tier 3: Nice-to-have */}
               <div className="p-4">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                  Optional Updates
+                <p className="mb-3 text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
+                  Optional updates
                 </p>
                 <div className="space-y-3">
                   <NotificationToggle
@@ -181,10 +183,10 @@ export function NotificationSettingsContent({
           </div>
 
           {/* Quiet Hours */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h2 className="text-sm font-semibold text-gray-900">Quiet Hours</h2>
-              <p className="text-xs text-gray-500 mt-1">
+          <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
+            <div className="border-b border-edge bg-paper-2 p-4">
+              <h2 className="font-display text-[15px] font-bold text-ink">Quiet hours</h2>
+              <p className="mt-1 text-[12px] font-medium text-ink-soft">
                 Don&apos;t send notifications during these hours
               </p>
             </div>
@@ -201,27 +203,27 @@ export function NotificationSettingsContent({
               {preferences.quiet_hours_enabled && (
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Start Time
+                    <label className="mb-1 block text-xs font-extrabold text-ink-soft">
+                      Start time
                     </label>
                     <input
                       type="time"
                       value={preferences.quiet_hours_start}
                       onChange={(e) => handleTimeChange('quiet_hours_start', e.target.value)}
                       disabled={isSaving}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full rounded-field border-card border-edge bg-field px-3 py-2.5 text-[14px] font-semibold text-ink focus:border-coral focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      End Time
+                    <label className="mb-1 block text-xs font-extrabold text-ink-soft">
+                      End time
                     </label>
                     <input
                       type="time"
                       value={preferences.quiet_hours_end}
                       onChange={(e) => handleTimeChange('quiet_hours_end', e.target.value)}
                       disabled={isSaving}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full rounded-field border-card border-edge bg-field px-3 py-2.5 text-[14px] font-semibold text-ink focus:border-coral focus:outline-none"
                     />
                   </div>
                 </div>
@@ -230,10 +232,10 @@ export function NotificationSettingsContent({
           </div>
 
           {/* Notification Methods */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h2 className="text-sm font-semibold text-gray-900">Notification Methods</h2>
-              <p className="text-xs text-gray-500 mt-1">
+          <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
+            <div className="border-b border-edge bg-paper-2 p-4">
+              <h2 className="font-display text-[15px] font-bold text-ink">How to reach me</h2>
+              <p className="mt-1 text-[12px] font-medium text-ink-soft">
                 Choose how you want to receive notifications
               </p>
             </div>
@@ -286,14 +288,14 @@ function NotificationToggle({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex-1">
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        <p className="text-xs text-gray-500">{description}</p>
+        <p className="text-[13.5px] font-extrabold text-ink">{label}</p>
+        <p className="mt-0.5 text-[12px] font-medium text-ink-soft">{description}</p>
       </div>
       <button
         onClick={() => onChange(!checked)}
         disabled={disabled}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-          checked ? 'bg-purple-600' : 'bg-gray-200'
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-coral focus:ring-offset-2 focus:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-50 ${
+          checked ? 'bg-coral' : 'bg-paper-2'
         }`}
       >
         <span

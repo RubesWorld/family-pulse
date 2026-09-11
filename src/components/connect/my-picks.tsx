@@ -1,9 +1,9 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { UserPick, User } from '@/types/database'
 import { PickCard } from '@/components/pick-card'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
 import { Edit, Sparkles } from 'lucide-react'
 
 interface MyPicksProps {
@@ -17,42 +17,41 @@ export function MyPicks({ currentPicks, userId, currentUser }: MyPicksProps) {
 
   if (currentPicks.length === 0) {
     return (
-      <div className="text-center py-16 px-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Sparkles className="w-8 h-8 text-purple-600" />
-        </div>
-        <p className="text-xl font-semibold text-gray-900 mb-2">Share Your Favorites</p>
-        <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-          Let your family know what you love - food, movies, music, and more!
+      <div className="px-8 py-16 text-center">
+        <div className="text-4xl">✨</div>
+        <p className="mt-4 font-display text-xl font-bold text-ink">
+          Share your favorites
+        </p>
+        <p className="mx-auto mt-1.5 max-w-xs text-[13.5px] font-medium text-ink-soft">
+          Let your family know what you love — food, movies, music, and more.
         </p>
         <Button
           onClick={() => router.push('/profile')}
           size="lg"
-          className="gap-2"
+          className="mt-6"
         >
-          <Sparkles className="w-4 h-4" />
-          Add Your Picks
+          <Sparkles className="h-4 w-4" />
+          Add your picks
         </Button>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
+    <div className="px-5">
+      <div className="flex justify-end">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="gap-2"
           onClick={() => router.push('/profile')}
         >
-          <Edit className="w-4 h-4" />
+          <Edit className="h-3.5 w-3.5" />
           Edit
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {currentPicks.map(pick => (
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        {currentPicks.map((pick) => (
           <PickCard
             key={pick.id}
             pick={{ ...pick, interest_tag: null, users: currentUser }}

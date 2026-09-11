@@ -184,7 +184,7 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
               {/* Interest tag selector */}
               {currentPick?.value && userInterests.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs text-gray-500">Link to interest:</p>
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink-faint">Link to interest</p>
                   <div className="flex flex-wrap gap-2">
                     <Badge
                       variant={currentPick.interest_tag === null ? 'default' : 'outline'}
@@ -213,8 +213,8 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
 
       {/* Error message */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="rounded-field border border-destructive/40 bg-destructive/10 p-3">
+          <p className="text-[13px] font-bold text-destructive">{error}</p>
         </div>
       )}
 

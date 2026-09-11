@@ -1,18 +1,17 @@
 import { Suspense } from 'react'
 import { LoginForm } from './login-form'
+import { AuthShell } from '@/components/auth-shell'
 
 function LoginLoading() {
-  return (
-    <div className="w-full max-w-md h-96 animate-pulse bg-gray-100 rounded-lg" />
-  )
+  return <div className="h-96 w-full animate-pulse rounded-card bg-paper-2" />
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white">
+    <AuthShell>
       <Suspense fallback={<LoginLoading />}>
         <LoginForm />
       </Suspense>
-    </div>
+    </AuthShell>
   )
 }

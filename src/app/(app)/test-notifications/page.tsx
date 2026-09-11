@@ -67,11 +67,11 @@ export default function TestNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white pb-20">
+    <div className="min-h-screen bg-paper pb-20">
       <div className="max-w-2xl mx-auto p-4">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Test Push Notifications</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-ink">Test Push Notifications</h1>
+          <p className="text-sm text-ink-faint mt-1">
             Enable and test push notifications during development
           </p>
         </div>
@@ -79,16 +79,16 @@ export default function TestNotificationsPage() {
         <div className="space-y-6">
           {/* Enable Push Card */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Step 1: Enable Push Notifications</h2>
+            <h2 className="text-sm font-semibold text-ink mb-3">Step 1: Enable Push Notifications</h2>
             <EnablePushCard variant="card" />
           </div>
 
           {/* Send Test Notification */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">
+          <div className="bg-card rounded-panel border border-edge p-6">
+            <h2 className="text-sm font-semibold text-ink mb-3">
               Step 2: Send Test Notification
             </h2>
-            <p className="text-xs text-gray-500 mb-4">
+            <p className="text-xs text-ink-faint mb-4">
               Click the button below to send a test notification to yourself. Make sure you&apos;ve enabled
               push notifications first.
             </p>
@@ -113,10 +113,10 @@ export default function TestNotificationsPage() {
 
             {result && (
               <div
-                className={`mt-4 p-3 rounded-lg border ${
+                className={`mt-4 p-3 rounded-panel border ${
                   result.success
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-red-50 border-red-200'
+                    ? 'bg-sage/10 border-sage/40'
+                    : 'bg-destructive/10 border-destructive/40'
                 }`}
               >
                 <p
@@ -131,16 +131,16 @@ export default function TestNotificationsPage() {
           </div>
 
           {/* Debugging Info */}
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Debugging Information</h2>
+          <div className="bg-paper-2 rounded-panel border border-edge p-6">
+            <h2 className="text-sm font-semibold text-ink mb-3">Debugging Information</h2>
             <div className="space-y-2 text-xs font-mono">
               {diagnostics === null ? (
-                <p className="text-gray-500">Checking…</p>
+                <p className="text-ink-faint">Checking…</p>
               ) : (
                 Object.entries(diagnostics).map(([label, value]) => (
                   <div key={label}>
-                    <span className="text-gray-500">{label}:</span>{' '}
-                    <span className="text-gray-900">{value}</span>
+                    <span className="text-ink-faint">{label}:</span>{' '}
+                    <span className="text-ink">{value}</span>
                   </div>
                 ))
               )}
@@ -148,7 +148,7 @@ export default function TestNotificationsPage() {
           </div>
 
           {/* Instructions */}
-          <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
+          <div className="bg-blue-50 rounded-panel border border-blue-200 p-6">
             <h2 className="text-sm font-semibold text-blue-900 mb-3">Testing Instructions</h2>
             <ol className="text-xs text-blue-800 space-y-2 list-decimal list-inside">
               <li>Make sure you&apos;ve run the notification migration in your database</li>
@@ -164,7 +164,7 @@ export default function TestNotificationsPage() {
           </div>
 
           {/* Environment Variables */}
-          <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
+          <div className="bg-yellow-50 rounded-panel border border-yellow-200 p-6">
             <h2 className="text-sm font-semibold text-yellow-900 mb-3">
               Required Environment Variables
             </h2>

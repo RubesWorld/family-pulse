@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { QuestionAnswer } from '@/types/database'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
@@ -46,7 +45,6 @@ export function AnswerForm({
           .eq('id', existingAnswer.id)
       }
 
-      // Insert new answer
       const { error: insertError } = await supabase
         .from('question_answers')
         .insert({
@@ -71,74 +69,77 @@ export function AnswerForm({
     }
   }
 
+  // Answered and resting — sage-tinted so it reads as settled.
   if (existingAnswer && !isEditing) {
     return (
-      <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              Your Answer
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-              className="gap-1.5"
-            >
-              <Edit2 className="w-4 h-4" />
-              Edit
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-700 leading-relaxed">{existingAnswer.answer_text}</p>
-        </CardContent>
-      </Card>
+      <div
+        className="rounded-card border-card p-4 backdrop-blur-card"
+        style={{
+          background: 'hsl(var(--sage) / 0.12)',
+          borderColor: 'hsl(var(--sage) / 0.4)',
+        }}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <span className="inline-flex items-center gap-1.5 text-[11.5px] font-extrabold text-sage">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Your answer
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="inline-flex items-center gap-1.5 text-[11.5px] font-extrabold text-ink-faint transition-colors hover:text-ink"
+          >
+            <Edit2 className="h-3 w-3" />
+            Edit
+          </button>
+        </div>
+        <p className="mt-2.5 font-display text-[15px] leading-relaxed text-ink">
+          {existingAnswer.answer_text}
+        </p>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">
-          {existingAnswer ? 'Edit Your Answer' : 'Share Your Answer'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          placeholder="Type your answer here..."
-          rows={4}
-          className="resize-none"
-          disabled={loading}
-        />
-        {error && (
-          <p className="text-sm text-red-600">{error}</p>
-        )}
-        <div className="flex gap-2">
+    <div className="rounded-card border-card border-edge bg-card p-4 shadow-card backdrop-blur-card">
+      <h3 className="mb-2.5 font-display text-[17px] font-bold text-ink">
+        {existingAnswer ? 'Edit your answer' : 'Your turn'}
+      </h3>
+
+      <Textarea
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        placeholder="Type your answer here…"
+        rows={4}
+        className="resize-none"
+        disabled={loading}
+      />
+
+      {error && (
+        <p className="mt-2 text-[12.5px] font-bold text-destructive">{error}</p>
+      )}
+
+      <div className="mt-3 flex gap-2">
+        <Button onClick={handleSubmit} disabled={loading} className="flex-1">
+          {loading
+            ? 'Sending…'
+            : existingAnswer
+              ? 'Update answer'
+              : 'Share answer'}
+        </Button>
+        {existingAnswer && (
           <Button
-            onClick={handleSubmit}
+            variant="ghost"
+            onClick={() => {
+              setAnswer(existingAnswer.answer_text)
+              setIsEditing(false)
+            }}
             disabled={loading}
-            className="flex-1"
           >
-            {loading ? 'Submitting...' : existingAnswer ? 'Update Answer' : 'Submit Answer'}
+            Cancel
           </Button>
-          {existingAnswer && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setAnswer(existingAnswer.answer_text)
-                setIsEditing(false)
-              }}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </div>
   )
 }

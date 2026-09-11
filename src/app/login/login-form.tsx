@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FamilyOrbs, Swash } from '@/components/auth-shell'
 
 export function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -43,7 +43,6 @@ export function LoginForm() {
 
           if (profileError) throw profileError
 
-          // Redirect to join or create family
           if (inviteCode) {
             router.push(`/join/${inviteCode}`)
           } else {
@@ -58,7 +57,6 @@ export function LoginForm() {
 
         if (signInError) throw signInError
 
-        // Check if user has a family
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           const { data: profile } = await supabase
@@ -84,82 +82,86 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Family Pulse</CardTitle>
-        <CardDescription>
-          {isSignUp ? 'Create your account' : 'Welcome back'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <div className="space-y-2">
-              <Label htmlFor="name">Your Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="What should we call you?"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required={isSignUp}
-                className="h-12 text-lg"
-              />
-            </div>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+    <div>
+      <FamilyOrbs />
+
+      <h1 className="font-display text-[40px] font-black leading-[0.95] tracking-tight text-ink">
+        Family
+        <br />
+        Pulse
+      </h1>
+      <Swash />
+      <p className="mt-3 max-w-[26ch] text-[14px] font-semibold leading-relaxed text-ink-soft">
+        See what everyone&apos;s up to — without the group chat.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-3.5">
+        {isSignUp && (
+          <div>
+            <Label htmlFor="name">Your name</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-12 text-lg"
+              id="name"
+              type="text"
+              placeholder="What should we call you?"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required={isSignUp}
+              autoComplete="name"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="h-12 text-lg"
-            />
-          </div>
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {error}
-            </p>
-          )}
-          <Button
-            type="submit"
-            className="w-full h-12 text-lg"
-            disabled={loading}
-          >
-            {loading ? 'Please wait...' : isSignUp ? 'Sign Up' : 'Log In'}
-          </Button>
-        </form>
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp)
-              setError(null)
-            }}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            {isSignUp
-              ? 'Already have an account? Log in'
-              : "Don't have an account? Sign up"}
-          </button>
+        )}
+
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
         </div>
-      </CardContent>
-    </Card>
+
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+          />
+        </div>
+
+        {error && (
+          <p className="rounded-field border border-destructive/40 bg-destructive/10 p-3 text-[13px] font-bold text-destructive">
+            {error}
+          </p>
+        )}
+
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          {loading ? 'Please wait…' : isSignUp ? 'Create account' : 'Log in'}
+        </Button>
+      </form>
+
+      <p className="mt-5 text-center text-[12.5px] font-bold text-ink-soft">
+        {isSignUp ? 'Already have an account?' : 'New here?'}{' '}
+        <button
+          type="button"
+          onClick={() => {
+            setIsSignUp(!isSignUp)
+            setError(null)
+          }}
+          className="font-extrabold text-coral hover:underline"
+        >
+          {isSignUp ? 'Log in' : 'Create an account'}
+        </button>
+      </p>
+    </div>
   )
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AuthShell, Swash } from '@/components/auth-shell'
 import { Family } from '@/types/database'
 
 export default function JoinFamilyPage() {
@@ -85,52 +85,55 @@ export default function JoinFamilyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white">
-        <p className="text-lg text-gray-600">Loading...</p>
-      </div>
+      <AuthShell>
+        <div className="h-48 w-full animate-pulse rounded-card bg-paper-2" />
+      </AuthShell>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-red-600">Oops!</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => router.push('/create-family')}
-              className="w-full h-12 text-lg"
-            >
-              Create Your Own Family
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <AuthShell>
+        <div className="text-4xl">🤔</div>
+        <h1 className="mt-4 font-display text-[32px] font-black leading-tight tracking-tight text-ink">
+          That link didn&apos;t work
+        </h1>
+        <Swash className="w-28" />
+        <p className="mt-3 text-[14px] font-semibold leading-relaxed text-ink-soft">
+          {error}
+        </p>
+        <Button
+          onClick={() => router.push('/create-family')}
+          size="lg"
+          className="mt-7 w-full"
+        >
+          Create your own family
+        </Button>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Join Family</CardTitle>
-          <CardDescription>
-            You&apos;ve been invited to join <strong>{family?.name}</strong>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            onClick={handleJoin}
-            className="w-full h-12 text-lg"
-            disabled={joining}
-          >
-            {joining ? 'Joining...' : `Join ${family?.name}`}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell>
+      <div className="text-4xl">👋</div>
+      <h1 className="mt-4 font-display text-[32px] font-black leading-tight tracking-tight text-ink">
+        You&apos;re invited to
+        <br />
+        {family?.name}
+      </h1>
+      <Swash className="w-32" />
+      <p className="mt-3 text-[14px] font-semibold leading-relaxed text-ink-soft">
+        Join to see what everyone&apos;s up to and share what you&apos;re doing.
+      </p>
+
+      <Button
+        onClick={handleJoin}
+        size="lg"
+        className="mt-7 w-full"
+        disabled={joining}
+      >
+        {joining ? 'Joining…' : `Join ${family?.name}`}
+      </Button>
+    </AuthShell>
   )
 }

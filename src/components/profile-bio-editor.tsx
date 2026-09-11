@@ -59,8 +59,8 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
     <div className="space-y-4">
       {/* Location */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <MapPin className="w-4 h-4" />
+        <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
+          <MapPin className="h-3.5 w-3.5" />
           Location
         </label>
         <Input
@@ -72,8 +72,8 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
 
       {/* Occupation */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Briefcase className="w-4 h-4" />
+        <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
+          <Briefcase className="h-3.5 w-3.5" />
           Occupation
         </label>
         <Input
@@ -85,8 +85,8 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
 
       {/* Birthday */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Calendar className="w-4 h-4" />
+        <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
+          <Calendar className="h-3.5 w-3.5" />
           Birthday
         </label>
         <Input
@@ -98,8 +98,8 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
 
       {/* Phone Number */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Phone className="w-4 h-4" />
+        <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
+          <Phone className="h-3.5 w-3.5" />
           Phone Number
         </label>
         <Input
@@ -108,15 +108,15 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-[11.5px] font-semibold text-ink-faint">
           Family members can use this to text you from the app
         </p>
       </div>
 
       {/* Bio */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <FileText className="w-4 h-4" />
+        <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
+          <FileText className="h-3.5 w-3.5" />
           Bio
         </label>
         <Textarea
@@ -129,14 +129,14 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
 
       {/* Error message */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="rounded-field border border-destructive/40 bg-destructive/10 p-3">
+          <p className="text-[13px] font-bold text-destructive">{error}</p>
         </div>
       )}
 
       {/* Save button */}
       <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
-        {saving ? 'Saving...' : 'Save Profile'}
+        {saving ? 'Saving…' : 'Save profile'}
       </Button>
     </div>
   )

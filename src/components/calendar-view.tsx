@@ -18,6 +18,9 @@ import {
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ActivityCard } from '@/components/activity-card'
+import { SectionHeader } from '@/components/ui/surface'
+import { accentVar, personAccent } from '@/lib/person-color'
+import { cn } from '@/lib/utils'
 import type { ActivityWithUser } from '@/types/database'
 
 interface CalendarViewProps {
@@ -39,6 +42,8 @@ function groupActivitiesByDate(activities: ActivityWithUser[]) {
   return grouped
 }
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 export function CalendarView({ activities }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -52,79 +57,66 @@ export function CalendarView({ activities }: CalendarViewProps) {
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth)
     const monthEnd = endOfMonth(currentMonth)
-    const calendarStart = startOfWeek(monthStart)
-    const calendarEnd = endOfWeek(monthEnd)
-
-    return eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+    return eachDayOfInterval({
+      start: startOfWeek(monthStart),
+      end: endOfWeek(monthEnd),
+    })
   }, [currentMonth])
 
-  const handlePreviousMonth = () => {
-    setCurrentMonth((prev) => subMonths(prev, 1))
-  }
-
-  const handleNextMonth = () => {
-    setCurrentMonth((prev) => addMonths(prev, 1))
-  }
-
-  const handleDayClick = (date: Date) => {
-    setSelectedDate(date)
-  }
-
   const scheduledCount = activities.filter((a) => a.starts_at).length
+  const selectedDayActivities = selectedDate
+    ? activitiesByDate.get(format(selectedDate, 'yyyy-MM-dd')) || []
+    : []
 
   return (
-    <div className="max-w-lg mx-auto p-4">
-      {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="mx-auto max-w-lg px-5 pt-4">
+      {/* month nav */}
+      <div className="mb-3 flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
-          onClick={handlePreviousMonth}
-          className="gap-1"
+          onClick={() => setCurrentMonth((prev) => subMonths(prev, 1))}
+          aria-label="Previous month"
         >
-          <ChevronLeft className="w-4 h-4" />
-          Prev
+          <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-lg font-semibold">
+        <h2 className="font-display text-lg font-black text-ink">
           {format(currentMonth, 'MMMM yyyy')}
         </h2>
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleNextMonth}
-          className="gap-1"
+          onClick={() => setCurrentMonth((prev) => addMonths(prev, 1))}
+          aria-label="Next month"
         >
-          Next
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Activity Count */}
       {scheduledCount > 0 && (
-        <p className="text-sm text-gray-600 text-center mb-4">
-          {scheduledCount} scheduled {scheduledCount === 1 ? 'activity' : 'activities'}
+        <p className="mb-3 text-center text-[12px] font-bold text-ink-soft">
+          {scheduledCount} scheduled{' '}
+          {scheduledCount === 1 ? 'activity' : 'activities'}
         </p>
       )}
 
-      {/* Calendar Grid */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {/* Day Headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+      {/* grid */}
+      <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
+        <div className="grid grid-cols-7 border-b border-edge">
+          {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="py-2 text-center text-xs font-medium text-gray-500"
+              className="py-2.5 text-center text-[10px] font-extrabold uppercase tracking-wider text-ink-faint"
             >
-              {day}
+              {day.slice(0, 1)}
             </div>
           ))}
         </div>
 
-        {/* Calendar Days */}
         <div className="grid grid-cols-7">
           {calendarDays.map((day, index) => {
-            const dateKey = format(day, 'yyyy-MM-dd')
-            const dayActivities = activitiesByDate.get(dateKey) || []
+            const dayActivities =
+              activitiesByDate.get(format(day, 'yyyy-MM-dd')) || []
             const isCurrentMonth = isSameMonth(day, currentMonth)
             const isCurrentDay = isToday(day)
             const isSelected = selectedDate && isSameDay(day, selectedDate)
@@ -132,35 +124,46 @@ export function CalendarView({ activities }: CalendarViewProps) {
             return (
               <button
                 key={index}
-                onClick={() => handleDayClick(day)}
-                className={`
-                  relative min-h-[60px] p-2 border-r border-b border-gray-100
-                  hover:bg-blue-50 transition-colors
-                  ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'text-gray-900'}
-                  ${isCurrentDay ? 'bg-blue-50 font-semibold' : ''}
-                  ${isSelected ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
-                  ${index % 7 === 6 ? 'border-r-0' : ''}
-                `}
+                type="button"
+                onClick={() => setSelectedDate(day)}
+                aria-label={format(day, 'EEEE, MMMM d')}
+                aria-pressed={!!isSelected}
+                className={cn(
+                  'relative min-h-[58px] border-b border-r border-edge p-1.5 transition-colors',
+                  index % 7 === 6 && 'border-r-0',
+                  isCurrentMonth ? 'text-ink' : 'text-ink-faint opacity-50',
+                  isCurrentDay && 'bg-marigold/[0.12] font-black',
+                  isSelected && 'bg-coral/[0.18]'
+                )}
               >
-                <div className="text-sm">
+                <span
+                  className={cn(
+                    'text-[13px] font-bold',
+                    isCurrentDay && 'text-marigold'
+                  )}
+                >
                   {format(day, 'd')}
-                </div>
+                </span>
 
-                {/* Activity Dots */}
                 {dayActivities.length > 0 && (
-                  <div className="flex gap-1 justify-center mt-1">
-                    {dayActivities.slice(0, 3).map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-blue-500"
+                  <span className="mt-1 flex items-center justify-center gap-0.5">
+                    {dayActivities.slice(0, 3).map((activity) => (
+                      <span
+                        key={activity.id}
+                        className="block h-1.5 w-1.5 rounded-full"
+                        style={{
+                          background: `hsl(${accentVar(
+                            personAccent(activity.user_id)
+                          )})`,
+                        }}
                       />
                     ))}
                     {dayActivities.length > 3 && (
-                      <span className="text-[10px] text-blue-600 font-medium">
+                      <span className="text-[9px] font-extrabold text-ink-faint">
                         +{dayActivities.length - 3}
                       </span>
                     )}
-                  </div>
+                  </span>
                 )}
               </button>
             )
@@ -168,65 +171,49 @@ export function CalendarView({ activities }: CalendarViewProps) {
         </div>
       </div>
 
-      {/* Selected Day Activities */}
+      {/* selected day */}
       {selectedDate && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">
-              {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-            </h3>
-            <Button
-              size="sm"
-              onClick={() => {
-                const dateStr = format(selectedDate, 'yyyy-MM-dd')
-                router.push(`/add?date=${dateStr}`)
-              }}
-              className="gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              Add Activity
-            </Button>
-          </div>
-          {(() => {
-            const dateKey = format(selectedDate, 'yyyy-MM-dd')
-            const selectedDayActivities = activitiesByDate.get(dateKey) || []
-
-            if (selectedDayActivities.length === 0) {
-              return (
-                <p className="text-center text-gray-500 text-sm py-8">
-                  No activities scheduled for this day
-                </p>
-              )
+        <section className="mt-2">
+          <SectionHeader
+            className="px-0"
+            action={
+              <Button
+                size="sm"
+                onClick={() =>
+                  router.push(`/add?date=${format(selectedDate, 'yyyy-MM-dd')}`)
+                }
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add
+              </Button>
             }
+          >
+            {format(selectedDate, 'EEE, MMM d')}
+          </SectionHeader>
 
-            return (
-              <div className="space-y-4">
-                {selectedDayActivities.map((activity) => (
-                  <ActivityCard key={activity.id} activity={activity} />
-                ))}
-              </div>
-            )
-          })()}
-        </div>
+          {selectedDayActivities.length === 0 ? (
+            <p className="py-8 text-center text-[13px] font-semibold text-ink-soft">
+              Nothing scheduled for this day.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3.5">
+              {selectedDayActivities.map((activity, i) => (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  tilt={i % 2 === 0 ? 'a' : 'b'}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
-      {/* Empty State */}
       {scheduledCount === 0 && !selectedDate && (
-        <p className="text-center text-gray-500 text-sm mt-6">
-          No activities scheduled. Click a day to view or add activities!
+        <p className="mt-6 text-center text-[13px] font-semibold text-ink-soft">
+          Nothing scheduled yet. Tap a day to add something.
         </p>
       )}
-
-      {/* Fixed Add Button */}
-      <div className="fixed bottom-6 right-6">
-        <Button
-          size="lg"
-          className="rounded-full shadow-lg h-14 w-14 p-0"
-          onClick={() => router.push('/add')}
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-      </div>
     </div>
   )
 }

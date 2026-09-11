@@ -1,65 +1,71 @@
 'use client'
 
-import { PickWithUser } from '@/types/database'
-import { Card, CardContent } from '@/components/ui/card'
-import { PICK_CATEGORIES } from '@/lib/pick-categories'
-import { Badge } from '@/components/ui/badge'
-import { ArrowRight } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { PickWithUser } from '@/types/database'
+import { getPickCategory } from '@/lib/pick-categories'
+import { PickSticker } from '@/components/ui/pick-sticker'
+import { Surface } from '@/components/ui/surface'
 
 interface PickActivityCardProps {
   pick: PickWithUser & { previous_value?: string | null }
+  tilt?: 'a' | 'b'
 }
 
-export function PickActivityCard({ pick }: PickActivityCardProps) {
-  const category = PICK_CATEGORIES.find(c => c.id === pick.category)
-  const Icon = category?.icon
+export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
+  const category = getPickCategory(pick.category)
   const userName = pick.users?.name || 'Someone'
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Icon with gradient background */}
-          {Icon && category && (
-            <div className={`p-3 rounded-lg bg-gradient-to-br ${category.color} flex-shrink-0`}>
-              <Icon className="w-5 h-5 text-white" />
+    <Surface tilt={tilt}>
+      <div className="flex items-start gap-3.5">
+        <PickSticker category={pick.category} size="md" />
+
+        <div className="min-w-0 flex-1">
+          <p className="text-[12.5px] font-bold text-ink-soft">
+            <span className="font-extrabold text-ink">{userName}</span>{' '}
+            {pick.previous_value ? 'switched it up' : 'just added'}
+          </p>
+
+          <p className="mt-0.5 font-display text-[17px] font-bold text-ink">
+            {category?.label || pick.category}
+          </p>
+
+          {pick.previous_value ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+              <span className="text-[14px] font-semibold text-ink-faint line-through">
+                {pick.previous_value}
+              </span>
+              <span
+                aria-hidden
+                className="font-black text-marigold"
+                style={{
+                  textShadow:
+                    '0 0 12px hsl(var(--marigold) / calc(1 * var(--glow)))',
+                }}
+              >
+                →
+              </span>
+              <span className="text-[15px] font-extrabold text-ink">
+                {pick.value}
+              </span>
             </div>
+          ) : (
+            <p className="mt-1.5 text-[15px] font-extrabold text-ink">
+              {pick.value}
+            </p>
           )}
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-500 mb-1">
-              <span className="font-medium text-gray-900">{userName}</span>{' '}
-              {pick.previous_value ? 'changed' : 'just added'}
-            </p>
-            <p className="font-semibold text-base mb-1">{category?.label || pick.category}</p>
+          {pick.interest_tag && (
+            <span className="mt-2.5 inline-block rounded-full border border-sage/30 bg-sage/[0.16] px-2.5 py-1 text-[11px] font-extrabold text-sage">
+              {pick.interest_tag}
+            </span>
+          )}
 
-            {/* Show change if there's a previous value */}
-            {pick.previous_value ? (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-gray-500 line-through">{pick.previous_value}</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="font-medium text-gray-900">{pick.value}</span>
-              </div>
-            ) : (
-              <p className="text-gray-700">{pick.value}</p>
-            )}
-
-            {/* Interest tag */}
-            {pick.interest_tag && (
-              <Badge variant="outline" className="mt-2">
-                → {pick.interest_tag}
-              </Badge>
-            )}
-
-            {/* Timestamp */}
-            <p className="text-xs text-gray-400 mt-2">
-              {formatDistanceToNow(new Date(pick.created_at), { addSuffix: true })}
-            </p>
-          </div>
+          <p className="mt-2 text-[11px] font-bold text-ink-faint">
+            {formatDistanceToNow(new Date(pick.created_at), { addSuffix: true })}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Surface>
   )
 }

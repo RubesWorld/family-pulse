@@ -1,7 +1,8 @@
 'use client'
 
 import { AnswerWithUser } from '@/types/database'
-import { Card, CardContent } from '@/components/ui/card'
+import { GlowAvatar } from '@/components/ui/glow-avatar'
+import { Surface } from '@/components/ui/surface'
 import { timeAgo } from '@/lib/connect-utils'
 
 interface AnswersListProps {
@@ -12,54 +13,44 @@ interface AnswersListProps {
 export function AnswersList({ answers }: AnswersListProps) {
   if (answers.length === 0) {
     return (
-      <div className="text-center py-8 px-4 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">No answers from family yet</p>
-        <p className="text-sm text-gray-400 mt-1">
-          Be the first to share your thoughts!
+      <div className="rounded-card border-card border-edge bg-card px-6 py-10 text-center backdrop-blur-card">
+        <p className="font-display text-lg font-bold text-ink">
+          No answers yet
+        </p>
+        <p className="mt-1 text-[13px] font-medium text-ink-soft">
+          Be the first to share your thoughts.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Family Answers</h2>
-      <div className="space-y-3">
-        {answers.map((answer) => (
-          <Card key={answer.id}>
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {answer.users?.avatar_url ? (
-                    <img
-                      src={answer.users.avatar_url}
-                      alt={answer.users.name || 'User'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm font-bold text-gray-600">
-                      {answer.users?.name?.[0] || '?'}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-semibold text-gray-900">
-                      {answer.users?.name || 'Unknown'}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {timeAgo(answer.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    {answer.answer_text}
-                  </p>
-                </div>
+    <div className="flex flex-col gap-3.5">
+      {answers.map((answer, i) => (
+        <Surface key={answer.id} tilt={i % 2 === 0 ? 'a' : 'b'}>
+          <div className="flex gap-3">
+            <GlowAvatar
+              name={answer.users?.name}
+              userId={answer.user_id}
+              avatarUrl={answer.users?.avatar_url}
+              size="md"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="text-[14.5px] font-extrabold text-ink">
+                  {answer.users?.name || 'Unknown'}
+                </span>
+                <time className="text-[11.5px] font-bold text-ink-faint">
+                  {timeAgo(answer.created_at)}
+                </time>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <p className="mt-1.5 font-display text-[15px] leading-relaxed text-ink">
+                {answer.answer_text}
+              </p>
+            </div>
+          </div>
+        </Surface>
+      ))}
     </div>
   )
 }

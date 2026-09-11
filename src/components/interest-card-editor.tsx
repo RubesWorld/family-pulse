@@ -168,7 +168,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
 
                 {/* Tags section */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-600">
+                  <label className="text-xs font-extrabold text-ink-soft">
                     Specifics (e.g., Claude, Gemini, AI)
                   </label>
 
@@ -184,7 +184,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
                           {tag}
                           <button
                             onClick={() => handleRemoveTag(card.category, tag)}
-                            className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                            className="ml-1 rounded-full p-0.5 hover:bg-paper-2"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -289,8 +289,8 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
 
       {/* Error message */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="rounded-field border border-destructive/40 bg-destructive/10 p-3">
+          <p className="text-[13px] font-bold text-destructive">{error}</p>
         </div>
       )}
 

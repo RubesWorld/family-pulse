@@ -105,16 +105,16 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
 
   if (!isSupported) {
     return (
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <div className="rounded-panel border border-edge bg-paper-2 p-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <BellOff className="w-5 h-5 text-gray-400" />
+          <div className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-card">
+            <BellOff className="h-5 w-5 text-ink-faint" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-[13.5px] font-extrabold text-ink">
               Push notifications not supported
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-[12px] font-medium text-ink-soft">
               Your browser doesn&apos;t support push notifications
             </p>
           </div>
@@ -125,16 +125,16 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
 
   if (permission === 'denied') {
     return (
-      <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+      <div className="rounded-panel border border-destructive/40 bg-destructive/10 p-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <BellOff className="w-5 h-5 text-red-600" />
+          <div className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-destructive/15">
+            <BellOff className="h-5 w-5 text-destructive" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-900">
+            <p className="text-[13.5px] font-extrabold text-ink">
               Notifications blocked
             </p>
-            <p className="text-xs text-red-700 mt-1">
+            <p className="mt-1 text-[12px] font-medium text-ink-soft">
               You&apos;ve blocked notifications. Please enable them in your browser settings.
             </p>
           </div>
@@ -147,18 +147,16 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
     return (
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-            isSubscribed
-              ? 'bg-green-100'
-              : 'bg-gradient-to-br from-purple-100 to-pink-100'
+          <div className={`grid h-10 w-10 flex-none place-items-center rounded-xl ${
+            isSubscribed ? 'bg-sage/20' : 'bg-marigold/20'
           }`}>
-            <Bell className={`w-5 h-5 ${isSubscribed ? 'text-green-600' : 'text-purple-600'}`} />
+            <Bell className={`h-5 w-5 ${isSubscribed ? 'text-sage' : 'text-marigold'}`} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">
-              Push Notifications
+            <p className="text-[13.5px] font-extrabold text-ink">
+              Push notifications
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-[12px] font-medium text-ink-soft">
               {isSubscribed ? 'Enabled' : 'Get notified of important updates'}
             </p>
           </div>
@@ -185,24 +183,22 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
   }
 
   return (
-    <div className={`rounded-lg p-4 border ${
+    <div className={`rounded-panel border p-4 ${
       isSubscribed
-        ? 'bg-green-50 border-green-200'
-        : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
+        ? 'border-sage/40 bg-sage/[0.12]'
+        : 'border-marigold/40 bg-marigold/[0.12]'
     }`}>
       <div className="flex items-start gap-3">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          isSubscribed
-            ? 'bg-green-100'
-            : 'bg-gradient-to-br from-purple-100 to-pink-100'
+        <div className={`grid h-12 w-12 flex-none place-items-center rounded-xl ${
+          isSubscribed ? 'bg-sage/20' : 'bg-marigold/20'
         }`}>
-          <Bell className={`w-6 h-6 ${isSubscribed ? 'text-green-600' : 'text-purple-600'}`} />
+          <Bell className={`h-6 w-6 ${isSubscribed ? 'text-sage' : 'text-marigold'}`} />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-[13.5px] font-extrabold text-ink">
             {isSubscribed ? 'Push Notifications Enabled' : 'Enable Push Notifications'}
           </p>
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="mt-1 text-[12px] font-medium leading-relaxed text-ink-soft">
             {isSubscribed
               ? 'You\'ll receive notifications for important family updates'
               : 'Stay updated when it\'s your turn to ask a question, when family members answer, and more'
@@ -210,7 +206,7 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
           </p>
 
           {error && (
-            <p className="text-xs text-red-600 mt-2">{error}</p>
+            <p className="mt-2 text-[12px] font-bold text-destructive">{error}</p>
           )}
 
           <div className="mt-3">
@@ -219,7 +215,6 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
               disabled={isLoading}
               variant={isSubscribed ? 'outline' : 'default'}
               size="sm"
-              className={isSubscribed ? '' : 'bg-purple-600 hover:bg-purple-700'}
             >
               {isLoading ? (
                 <>

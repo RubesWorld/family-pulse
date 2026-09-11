@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { X } from 'lucide-react'
+
+function Optional() {
+  return <span className="font-bold text-ink-faint"> · optional</span>
+}
 
 export default function AddActivityPage() {
   const searchParams = useSearchParams()
@@ -56,100 +58,131 @@ export default function AddActivityPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto p-4">
-      <div className="flex justify-end mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="gap-2"
+    <div className="mx-auto max-w-lg">
+      <header className="relative px-5 pb-2 pt-14">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
+              Share
+            </div>
+            <h1 className="mt-1 font-display text-[27px] font-black leading-[1.06] tracking-tight text-ink">
+              What are you
+              <br />
+              up to?
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mt-7 text-[12.5px] font-extrabold text-ink-faint transition-colors hover:text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <svg
+          aria-hidden
+          viewBox="0 0 132 9"
+          fill="none"
+          className="mt-0.5 block h-2 w-32 text-marigold"
+          style={{
+            filter: 'drop-shadow(0 0 8px hsl(var(--marigold) / var(--glow)))',
+          }}
         >
-          <X className="w-4 h-4" />
-          Cancel
+          <path
+            d="M2 6.2c22-4.4 44-5.2 66-3.1 21 2 42 2.4 63-.6"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </header>
+
+      <form onSubmit={handleSubmit} className="mt-5 space-y-4 px-5">
+        <div>
+          <Label htmlFor="title">The thing</Label>
+          <Input
+            id="title"
+            type="text"
+            placeholder="Taking a sewing class, going to a concert…"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            autoFocus
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="description">
+            Tell us more
+            <Optional />
+          </Label>
+          <Textarea
+            id="description"
+            placeholder="What's it about? Why are you doing it?"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="startsAt">
+            When
+            <Optional />
+          </Label>
+          <Input
+            id="startsAt"
+            type="datetime-local"
+            value={startsAt}
+            onChange={(e) => setStartsAt(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="location">
+            Where
+            <Optional />
+          </Label>
+          <Input
+            id="location"
+            type="text"
+            placeholder="Downtown, Mom's house, the park…"
+            value={locationName}
+            onChange={(e) => setLocationName(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="notes">
+            Note for family
+            <Optional />
+          </Label>
+          <Textarea
+            id="notes"
+            placeholder="Call me if you want to join!"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="min-h-[72px]"
+          />
+        </div>
+
+        {error && (
+          <p className="rounded-field border border-destructive/40 bg-destructive/10 p-3 text-[13px] font-bold text-destructive">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={loading || !title.trim()}
+        >
+          {loading ? 'Posting…' : 'Share with family'}
         </Button>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Share Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">What are you doing?</Label>
-              <Input
-                id="title"
-                type="text"
-                placeholder="Taking a sewing class, Going to a concert..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className="h-12 text-lg"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Tell us more (optional)</Label>
-              <Textarea
-                id="description"
-                placeholder="What's it about? Why are you doing it?"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className="text-base"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="startsAt">When? (optional)</Label>
-              <Input
-                id="startsAt"
-                type="datetime-local"
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-                className="h-12"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Where? (optional)</Label>
-              <Input
-                id="location"
-                type="text"
-                placeholder="Downtown, Mom's house, The park..."
-                value={locationName}
-                onChange={(e) => setLocationName(e.target.value)}
-                className="h-12 text-base"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes for family (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Call me if you want to join! Or: I'll be busy during this time."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                className="text-base"
-              />
-            </div>
-
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                {error}
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full h-12 text-lg"
-              disabled={loading || !title.trim()}
-            >
-              {loading ? 'Posting...' : 'Share with Family'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      </form>
     </div>
   )
 }

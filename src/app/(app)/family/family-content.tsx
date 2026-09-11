@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { User, PickWithUser } from '@/types/database'
 import { FamilyMemberCard } from '@/components/family-member-card'
 import { PickCard } from '@/components/pick-card'
+import { SectionHeader } from '@/components/ui/surface'
 import { MemberDetailView } from './member-detail-view'
 
 interface FamilyContentProps {
@@ -12,7 +13,11 @@ interface FamilyContentProps {
   recentPicks: PickWithUser[]
 }
 
-export function FamilyContent({ familyName, members, recentPicks }: FamilyContentProps) {
+export function FamilyContent({
+  familyName,
+  members,
+  recentPicks,
+}: FamilyContentProps) {
   const [selectedMember, setSelectedMember] = useState<User | null>(null)
 
   if (selectedMember) {
@@ -25,41 +30,62 @@ export function FamilyContent({ familyName, members, recentPicks }: FamilyConten
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 pb-24">
-      <h1 className="text-2xl font-bold mb-6">{familyName}</h1>
-
-      {/* Family Members Grid */}
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Family Members</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {members.map(member => (
-            <FamilyMemberCard
-              key={member.id}
-              user={member}
-              onClick={() => setSelectedMember(member)}
-            />
-          ))}
+    <div className="mx-auto max-w-lg">
+      <header className="px-5 pb-1 pt-14">
+        <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
+          {members.length} {members.length === 1 ? 'member' : 'members'}
         </div>
-      </section>
+        <h1 className="mt-1 font-display text-[30px] font-black leading-[1.06] tracking-tight text-ink">
+          {familyName}
+        </h1>
+        <svg
+          aria-hidden
+          viewBox="0 0 132 9"
+          fill="none"
+          className="mt-0.5 block h-2 w-32 text-marigold"
+          style={{
+            filter: 'drop-shadow(0 0 8px hsl(var(--marigold) / var(--glow)))',
+          }}
+        >
+          <path
+            d="M2 6.2c22-4.4 44-5.2 66-3.1 21 2 42 2.4 63-.6"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </header>
 
-      {/* Recent Picks Section */}
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Recent Picks</h2>
+      <SectionHeader>Everyone</SectionHeader>
+      <div className="grid grid-cols-2 gap-3 px-5">
+        {members.map((member) => (
+          <FamilyMemberCard
+            key={member.id}
+            user={member}
+            onClick={() => setSelectedMember(member)}
+          />
+        ))}
+      </div>
+
+      <SectionHeader>Fresh picks</SectionHeader>
+      <div className="px-5">
         {recentPicks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {recentPicks.map(pick => (
+          <div className="grid grid-cols-2 gap-3">
+            {recentPicks.map((pick) => (
               <PickCard key={pick.id} pick={pick} showUser />
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 px-4 bg-gray-50 rounded-lg">
-            <p className="text-gray-500">No recent picks from the last 24 hours</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Share your favorites in your profile!
+          <div className="rounded-card border-card border-edge bg-card px-6 py-10 text-center backdrop-blur-card">
+            <p className="font-display text-[17px] font-bold text-ink">
+              Quiet last 24 hours
+            </p>
+            <p className="mt-1 text-[13px] font-medium text-ink-soft">
+              Share a favorite from your profile to get things going.
             </p>
           </div>
         )}
-      </section>
+      </div>
     </div>
   )
 }

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { AnswerWithUser, User } from '@/types/database'
+import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { formatWeekDisplay, timeAgo } from '@/lib/connect-utils'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface PastQuestion {
   id: string
@@ -36,9 +36,7 @@ export function QuestionHistory({ pastQuestions }: QuestionHistoryProps) {
 
       // Load answers if not already loaded
       if (!loadedAnswers[questionId]) {
-        const newLoading = new Set(loading)
-        newLoading.add(questionId)
-        setLoading(newLoading)
+        setLoading((prev) => new Set(prev).add(questionId))
 
         const supabase = createClient()
         const { data } = await supabase
@@ -48,11 +46,11 @@ export function QuestionHistory({ pastQuestions }: QuestionHistoryProps) {
           .eq('is_current', false) // Historical answers
           .order('created_at', { ascending: false })
 
-        setLoadedAnswers(prev => ({ ...prev, [questionId]: data || [] }))
-        setLoading(prev => {
-          const newLoading = new Set(prev)
-          newLoading.delete(questionId)
-          return newLoading
+        setLoadedAnswers((prev) => ({ ...prev, [questionId]: data || [] }))
+        setLoading((prev) => {
+          const next = new Set(prev)
+          next.delete(questionId)
+          return next
         })
       }
     }
@@ -62,80 +60,79 @@ export function QuestionHistory({ pastQuestions }: QuestionHistoryProps) {
 
   if (pastQuestions.length === 0) {
     return (
-      <div className="text-center py-12 px-4 bg-gray-50 rounded-lg">
-        <p className="text-gray-500 text-lg">No past questions yet</p>
-        <p className="text-sm text-gray-400 mt-1">
-          History will appear here after the week changes
+      <div className="rounded-card border-card border-edge bg-card px-6 py-12 text-center backdrop-blur-card">
+        <div className="text-3xl">📭</div>
+        <p className="mt-3 font-display text-lg font-bold text-ink">
+          No past questions yet
+        </p>
+        <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
+          History shows up here once the week turns over.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-3.5">
       {pastQuestions.map((question) => {
         const isExpanded = expandedQuestions.has(question.id)
         const answers = loadedAnswers[question.id] || []
         const isLoading = loading.has(question.id)
 
         return (
-          <Card key={question.id}>
-            <CardHeader>
-              <div
-                className="flex items-start justify-between gap-4 cursor-pointer"
-                onClick={() => toggleQuestion(question.id)}
-              >
-                <div className="flex-1">
-                  <CardTitle className="text-lg mb-2">{question.question_text}</CardTitle>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span>Asked by {question.users?.name}</span>
-                    <span>•</span>
-                    <span>{formatWeekDisplay(question.week_start_date)}</span>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm">
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5" />
-                  )}
-                </Button>
+          <div
+            key={question.id}
+            className="rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card"
+          >
+            <button
+              type="button"
+              onClick={() => toggleQuestion(question.id)}
+              aria-expanded={isExpanded}
+              className="flex w-full items-start justify-between gap-3 p-4 text-left"
+            >
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-[17px] font-bold leading-snug text-ink">
+                  {question.question_text}
+                </h3>
+                <p className="mt-1.5 text-[11.5px] font-bold text-ink-soft">
+                  Asked by {question.users?.name} ·{' '}
+                  {formatWeekDisplay(question.week_start_date)}
+                </p>
               </div>
-            </CardHeader>
+              <ChevronDown
+                className={cn(
+                  'mt-1 h-4 w-4 flex-none text-ink-faint transition-transform',
+                  isExpanded && 'rotate-180'
+                )}
+              />
+            </button>
 
             {isExpanded && (
-              <CardContent className="pt-0">
+              <div className="border-t border-edge px-4 py-3.5">
                 {isLoading ? (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-gray-500">Loading answers...</p>
-                  </div>
+                  <p className="py-2 text-center text-[12.5px] font-semibold text-ink-soft">
+                    Loading answers…
+                  </p>
                 ) : answers.length > 0 ? (
-                  <div className="space-y-3 border-t pt-4">
+                  <div className="flex flex-col gap-3.5">
                     {answers.map((answer) => (
-                      <div key={answer.id} className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {answer.users?.avatar_url ? (
-                            <img
-                              src={answer.users.avatar_url}
-                              alt={answer.users.name || 'User'}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-xs font-bold text-gray-600">
-                              {answer.users?.name?.[0] || '?'}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2 mb-1">
-                            <span className="font-semibold text-gray-900 text-sm">
+                      <div key={answer.id} className="flex items-start gap-2.5">
+                        <GlowAvatar
+                          name={answer.users?.name}
+                          userId={answer.user_id}
+                          avatarUrl={answer.users?.avatar_url}
+                          size="sm"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-[13px] font-extrabold text-ink">
                               {answer.users?.name || 'Unknown'}
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <time className="text-[11px] font-bold text-ink-faint">
                               {timeAgo(answer.created_at)}
-                            </span>
+                            </time>
                           </div>
-                          <p className="text-sm text-gray-700 leading-relaxed">
+                          <p className="mt-1 font-display text-[14px] leading-relaxed text-ink-soft">
                             {answer.answer_text}
                           </p>
                         </div>
@@ -143,13 +140,13 @@ export function QuestionHistory({ pastQuestions }: QuestionHistoryProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-4 border-t">
-                    <p className="text-sm text-gray-500">No answers for this question</p>
-                  </div>
+                  <p className="py-2 text-center text-[12.5px] font-semibold text-ink-soft">
+                    No answers for this one.
+                  </p>
                 )}
-              </CardContent>
+              </div>
             )}
-          </Card>
+          </div>
         )
       })}
     </div>

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AuthShell, Swash } from '@/components/auth-shell'
 
 export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState('')
@@ -93,68 +93,73 @@ export default function CreateFamilyPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Create Your Family</CardTitle>
-          <CardDescription>
-            {needsProfile
-              ? "Let's set up your profile and create your family."
-              : "Give your family a name. You'll get an invite link to share."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {needsProfile && (
-              <div className="space-y-2">
-                <Label htmlFor="userName">Your Name</Label>
-                <Input
-                  id="userName"
-                  type="text"
-                  placeholder="What should we call you?"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  required
-                  className="h-12 text-lg"
-                />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="familyName">Family Name</Label>
-              <Input
-                id="familyName"
-                type="text"
-                placeholder="The Smiths, Our Family, etc."
-                value={familyName}
-                onChange={(e) => setFamilyName(e.target.value)}
-                required
-                className="h-12 text-lg"
-              />
-            </div>
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                {error}
-              </p>
-            )}
-            <Button
-              type="submit"
-              className="w-full h-12 text-lg"
-              disabled={loading || (needsProfile && !userName.trim())}
-            >
-              {loading ? 'Creating...' : 'Create Family'}
-            </Button>
-          </form>
-          <div className="mt-4 pt-4 border-t">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full text-sm text-gray-500 hover:text-gray-700"
-            >
-              Log out and start over
-            </button>
+    <AuthShell>
+      <h1 className="font-display text-[34px] font-black leading-[1.05] tracking-tight text-ink">
+        Start your
+        <br />
+        family
+      </h1>
+      <Swash className="w-28" />
+      <p className="mt-3 max-w-[30ch] text-[14px] font-semibold leading-relaxed text-ink-soft">
+        {needsProfile
+          ? "Let's set up your profile and create your family."
+          : "Give it a name. You'll get an invite link to share."}
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-3.5">
+        {needsProfile && (
+          <div>
+            <Label htmlFor="userName">Your name</Label>
+            <Input
+              id="userName"
+              type="text"
+              placeholder="What should we call you?"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              required
+              autoComplete="name"
+            />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+
+        <div>
+          <Label htmlFor="familyName">Family name</Label>
+          <Input
+            id="familyName"
+            type="text"
+            placeholder="The Smiths, Our Crew, etc."
+            value={familyName}
+            onChange={(e) => setFamilyName(e.target.value)}
+            required
+            autoFocus
+          />
+        </div>
+
+        {error && (
+          <p className="rounded-field border border-destructive/40 bg-destructive/10 p-3 text-[13px] font-bold text-destructive">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={loading || (needsProfile && !userName.trim())}
+        >
+          {loading ? 'Creating…' : 'Create family'}
+        </Button>
+      </form>
+
+      <div className="mt-6 border-t border-edge pt-4">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full text-[12.5px] font-bold text-ink-faint transition-colors hover:text-ink"
+        >
+          Log out and start over
+        </button>
+      </div>
+    </AuthShell>
   )
 }

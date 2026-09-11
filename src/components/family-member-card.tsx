@@ -1,7 +1,7 @@
 'use client'
 
 import { User } from '@/types/database'
-import { Card, CardContent } from '@/components/ui/card'
+import { GlowAvatar } from '@/components/ui/glow-avatar'
 
 interface FamilyMemberCardProps {
   user: User
@@ -10,43 +10,37 @@ interface FamilyMemberCardProps {
   onClick: () => void
 }
 
-export function FamilyMemberCard({ user, interestCount = 0, pickCount = 0, onClick }: FamilyMemberCardProps) {
+export function FamilyMemberCard({
+  user,
+  interestCount = 0,
+  pickCount = 0,
+  onClick,
+}: FamilyMemberCardProps) {
   return (
-    <Card
-      className="cursor-pointer transition-all hover:shadow-md hover:scale-105"
+    <button
+      type="button"
       onClick={onClick}
+      className="flex flex-col items-center gap-2.5 rounded-card border-card border-edge bg-card px-3 py-4 text-center shadow-card backdrop-blur-card transition-transform active:scale-[0.97]"
     >
-      <CardContent className="p-4 flex flex-col items-center text-center">
-        {/* Avatar */}
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden mb-3 shadow-md">
-          {user.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt={user.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-3xl font-bold text-white">
-              {user.name[0]}
-            </span>
-          )}
-        </div>
+      <GlowAvatar
+        name={user.name}
+        userId={user.id}
+        avatarUrl={user.avatar_url}
+        size="lg"
+      />
 
-        {/* Name */}
-        <h3 className="font-bold text-gray-900 mb-2">{user.name}</h3>
+      <h3 className="font-display text-[17px] font-bold text-ink">
+        {user.name}
+      </h3>
 
-        {/* Counts */}
-        <div className="flex gap-3 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <span className="font-medium text-gray-700">{interestCount}</span>
-            <span>interests</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="font-medium text-gray-700">{pickCount}</span>
-            <span>picks</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex gap-2.5 text-[10.5px] font-extrabold text-ink-faint">
+        <span>
+          <span className="text-ink-soft">{interestCount}</span> interests
+        </span>
+        <span>
+          <span className="text-ink-soft">{pickCount}</span> picks
+        </span>
+      </div>
+    </button>
   )
 }

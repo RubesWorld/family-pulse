@@ -2,77 +2,213 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Warm Scrapbook theme tokens.
+
+   Night is the default (`:root`). Day is a pure token swap
+   applied by `[data-theme="day"]` on <html>. Nothing outside
+   this block should reference a raw colour — if a component
+   hardcodes a hex or a Tailwind palette class, theme switching
+   silently breaks for that element.
+
+   Colours are stored as bare HSL triples so Tailwind can wrap
+   them in hsl(var(--x) / <alpha-value>) and alpha modifiers
+   like bg-card/60 keep working.
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* --- surfaces --- */
+    --paper: 30 33% 7%;
+    --paper-2: 27 26% 10%;
+    --card: 33 100% 93%;
+    --card-alpha: 0.055;
+    --edge: 33 100% 86%;
+    --edge-alpha: 0.13;
+    --field: 33 100% 92%;
+    --field-alpha: 0.05;
+
+    /* --- ink --- */
+    --ink: 35 68% 91%;
+    --ink-soft: 35 68% 91%;
+    --ink-soft-alpha: 0.66;
+    --ink-faint: 35 68% 91%;
+    --ink-faint-alpha: 0.4;
+
+    /* --- person accents --- */
+    --coral: 11 100% 68%;
+    --denim: 205 48% 61%;
+    --plum: 313 37% 66%;
+    --marigold: 36 100% 65%;
+    --sage: 132 30% 65%;
+
+    /* text that sits on top of an accent fill */
+    --on-accent: 24 45% 12%;
+    --on-ink: 26 82% 10%;
+
+    /* --- theme-dependent structure --- */
+    --card-bw: 1.5px;
+    --card-blur: blur(24px) saturate(140%);
+    --card-shadow: 0 12px 34px -16px rgb(0 0 0 / 0.85),
+      inset 0 1px 0 rgb(255 235 210 / 0.11);
+    --nav-bg: 27 26% 11%;
+    --nav-bg-alpha: 0.72;
+
+    /* Bloom intensity multiplier — every glow in the app scales off this
+       one number, so it is the single dial for "more/less neon".
+       1.0 was pushing into neon territory; 0.6 keeps the light without
+       the halos shouting. */
+    --glow: 0.6;
+    --grain-opacity: 0.3;
+    --grain-blend: overlay;
+    --ambient-opacity: 0.34;
+
+    --radius: 1.5rem;
+
+    /* shadcn compatibility aliases, mapped onto the warm system */
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --primary: var(--coral);
+    --primary-foreground: var(--on-ink);
+    --secondary: var(--paper-2);
+    --secondary-foreground: var(--ink);
+    --muted: var(--paper-2);
+    --muted-foreground: var(--ink-soft);
+    --accent: var(--marigold);
+    --accent-foreground: var(--on-accent);
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--edge);
+    --input: var(--edge);
+    --ring: var(--coral);
+    --popover: var(--paper-2);
+    --popover-foreground: var(--ink);
+    --card-foreground: var(--ink);
+  }
+
+  [data-theme="day"] {
+    --paper: 35 71% 96%;
+    --paper-2: 35 53% 92%;
+    --card: 43 71% 98%;
+    --card-alpha: 1;
+    --edge: 34 42% 86%;
+    --edge-alpha: 1;
+    --field: 35 71% 96%;
+    --field-alpha: 1;
+
+    --ink: 26 28% 13%;
+    --ink-soft: 30 17% 41%;
+    --ink-soft-alpha: 1;
+    --ink-faint: 28 14% 60%;
+    --ink-faint-alpha: 1;
+
+    --coral: 9 77% 60%;
+    --denim: 205 38% 39%;
+    --plum: 311 20% 45%;
+    --marigold: 33 86% 56%;
+    --sage: 132 14% 50%;
+
+    --on-accent: 0 0% 100%;
+    --on-ink: 40 100% 95%;
+
+    --card-bw: 2px;
+    --card-blur: none;
+    --card-shadow: 0 12px 24px -14px rgb(90 60 25 / 0.45),
+      inset 0 1px 0 rgb(255 255 255 / 0.95);
+    --nav-bg: 43 71% 98%;
+    --nav-bg-alpha: 1;
+
+    --glow: 0.3;
+    /* Multiply grain over cream desaturates fast — keep it light.
+       Likewise the cool blobs (plum, sage) turn the paper grey if the
+       ambient wash is as strong as it is at night. */
+    --grain-opacity: 0.3;
+    --grain-blend: multiply;
+    --ambient-opacity: 0.24;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-edge;
+  }
+
+  html {
+    /* keeps the warm paper behind iOS rubber-band overscroll */
+    background-color: hsl(var(--paper));
+  }
+
+  body {
+    @apply bg-paper text-ink font-body antialiased;
+  }
+
+  /* Fields inherit the paper, not the browser default white */
+  input,
+  textarea,
+  select {
+    @apply bg-field text-ink;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-ink-faint;
+  }
+
+  /* iOS renders datetime-local in near-black by default, which
+     disappears against night paper */
+  input[type="datetime-local"],
+  input[type="date"] {
+    color-scheme: dark;
+  }
+
+  [data-theme="day"] input[type="datetime-local"],
+  [data-theme="day"] input[type="date"] {
+    color-scheme: light;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-}
 
-
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+  /* Paper grain. Sits above content, never intercepts taps. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='2'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+
+  /* Feed cards tilt a fraction of a degree so the stack reads
+     handmade. Anything the user types into must stay square. */
+  .tilt-a {
+    transform: rotate(-0.45deg);
+  }
+  .tilt-b {
+    transform: rotate(0.35deg);
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
-
-
-@layer base {
-  * {
-    @apply border-border;
+@media (prefers-reduced-motion: reduce) {
+  .tilt-a,
+  .tilt-b {
+    transform: none;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

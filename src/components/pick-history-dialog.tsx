@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { History, ArrowRight, Badge as BadgeIcon } from 'lucide-react'
+import { History, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { PICK_CATEGORIES } from '@/lib/pick-categories'
+import { getPickCategory } from '@/lib/pick-categories'
+import { PickSticker } from '@/components/ui/pick-sticker'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -30,22 +30,19 @@ interface PickHistory {
   created_at: string
 }
 
-export function PickHistoryDialog({ userId, category, currentValue }: PickHistoryDialogProps) {
+export function PickHistoryDialog({
+  userId,
+  category,
+  currentValue,
+}: PickHistoryDialogProps) {
   const [history, setHistory] = useState<PickHistory[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
 
-  const categoryData = PICK_CATEGORIES.find(c => c.id === category)
-  const Icon = categoryData?.icon
+  const categoryData = getPickCategory(category)
   const label = categoryData?.label || category
 
-  useEffect(() => {
-    if (open) {
-      fetchHistory()
-    }
-  }, [open])
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setLoading(true)
     try {
       const supabase = createClient()
@@ -64,88 +61,99 @@ export function PickHistoryDialog({ userId, category, currentValue }: PickHistor
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, category])
+
+  useEffect(() => {
+    if (open) fetchHistory()
+  }, [open, fetchHistory])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-gray-600 hover:text-gray-900">
-          <History className="w-3.5 h-3.5" />
+        <Button variant="ghost" size="sm" className="gap-1.5 text-[11.5px]">
+          <History className="h-3 w-3" />
           See history
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+
+      <DialogContent className="max-h-[80vh] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {Icon && (
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${categoryData?.color} flex items-center justify-center`}>
-                <Icon className="w-4 h-4 text-white" />
-              </div>
-            )}
-            {label} History
+          <DialogTitle className="flex items-center gap-2.5">
+            <PickSticker category={category} size="sm" />
+            {label}
           </DialogTitle>
           <DialogDescription>
-            See how your favorite {label.toLowerCase()} has changed over time
+            How this has changed over time
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          {/* Current pick */}
-          <div className="p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <BadgeIcon className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="text-xs font-semibold text-blue-600 uppercase">Current</span>
-                </div>
-                <p className="text-lg font-bold text-gray-900">{currentValue}</p>
-              </div>
+        <div className="mt-2 space-y-4">
+          {/* current */}
+          <div className="rounded-panel border-[1.5px] border-coral/40 bg-coral/[0.12] p-4">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-coral">
+              Now
             </div>
+            <p className="mt-1 font-display text-[18px] font-bold text-ink">
+              {currentValue}
+            </p>
           </div>
 
-          {/* History */}
           {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">Loading history...</p>
-            </div>
+            <p className="py-8 text-center text-[13px] font-semibold text-ink-soft">
+              Loading history…
+            </p>
           ) : history.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <History className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm font-medium">No previous picks</p>
-              <p className="text-xs mt-1">This is your first {label.toLowerCase()}</p>
+            <div className="py-8 text-center">
+              <div className="text-3xl">🌱</div>
+              <p className="mt-2.5 text-[13.5px] font-bold text-ink">
+                No previous picks
+              </p>
+              <p className="mt-1 text-[12px] font-medium text-ink-soft">
+                This is your first one.
+              </p>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-px flex-1 bg-gray-200" />
-                <span className="text-xs text-gray-500 uppercase font-medium">Previous Picks</span>
-                <div className="h-px flex-1 bg-gray-200" />
+              <div className="flex items-center gap-2">
+                <span className="h-px flex-1 bg-edge" />
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
+                  Before
+                </span>
+                <span className="h-px flex-1 bg-edge" />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {history.map((pick, index) => {
-                  const nextPick = index === 0 ? currentValue : history[index - 1]?.value
+                  const nextPick =
+                    index === 0 ? currentValue : history[index - 1]?.value
                   const timestamp = pick.archived_at || pick.created_at
 
                   return (
                     <div
                       key={pick.id}
-                      className="p-3 rounded-lg bg-gray-50 border border-gray-200"
+                      className="rounded-panel border border-edge bg-paper-2 p-3"
                     >
-                      <div className="flex items-center gap-2 mb-2 text-sm">
-                        <span className="text-gray-500 line-through">{pick.value}</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="font-medium text-gray-900">{nextPick}</span>
+                      <div className="flex flex-wrap items-center gap-2 text-[13.5px]">
+                        <span className="font-semibold text-ink-faint line-through">
+                          {pick.value}
+                        </span>
+                        <ArrowRight className="h-3 w-3 flex-none text-marigold" />
+                        <span className="font-extrabold text-ink">
+                          {nextPick}
+                        </span>
                       </div>
 
                       {pick.interest_tag && (
-                        <Badge variant="secondary" className="text-xs mb-2">
+                        <span className="mt-2 inline-block rounded-full border border-sage/30 bg-sage/[0.16] px-2.5 py-0.5 text-[10.5px] font-extrabold text-sage">
                           {pick.interest_tag}
-                        </Badge>
+                        </span>
                       )}
 
-                      <p className="text-xs text-gray-500">
-                        Changed {formatDistanceToNow(new Date(timestamp), { addSuffix: true })}
+                      <p className="mt-2 text-[11px] font-bold text-ink-faint">
+                        Changed{' '}
+                        {formatDistanceToNow(new Date(timestamp), {
+                          addSuffix: true,
+                        })}
                       </p>
                     </div>
                   )

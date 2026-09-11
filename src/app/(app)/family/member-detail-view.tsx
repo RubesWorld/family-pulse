@@ -5,15 +5,27 @@ import { createClient } from '@/lib/supabase/client'
 import { User, InterestCard, UserPick } from '@/types/database'
 import { InterestCard as InterestCardComponent } from '@/components/interest-card'
 import { PickCard } from '@/components/pick-card'
+import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, MapPin, Briefcase, Calendar, FileText, MessageCircle } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/surface'
+import { ArrowLeft, MessageCircle } from 'lucide-react'
 import { openSMS } from '@/lib/sms'
 
 interface MemberDetailViewProps {
   member: User
   onBack: () => void
 }
+
+const BIO_ROWS: {
+  key: keyof Pick<User, 'location' | 'occupation' | 'birthday' | 'bio'>
+  emoji: string
+  label: string
+}[] = [
+  { key: 'location', emoji: '📍', label: 'Location' },
+  { key: 'occupation', emoji: '💼', label: 'Work' },
+  { key: 'birthday', emoji: '🎂', label: 'Birthday' },
+  { key: 'bio', emoji: '✍️', label: 'Bio' },
+]
 
 export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
   const [interests, setInterests] = useState<InterestCard[]>([])
@@ -25,13 +37,11 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
     const fetchData = async () => {
       const supabase = createClient()
 
-      // Fetch interests
       const { data: interestData } = await supabase
         .from('interest_cards')
         .select('*')
         .eq('user_id', member.id)
 
-      // Fetch picks (only current picks)
       const { data: pickData } = await supabase
         .from('picks')
         .select('*')
@@ -47,188 +57,156 @@ export function MemberDetailView({ member, onBack }: MemberDetailViewProps) {
   }, [member.id])
 
   const filteredPicks = selectedInterest
-    ? picks.filter(p => p.interest_tag === selectedInterest)
+    ? picks.filter((p) => p.interest_tag === selectedInterest)
     : picks
 
-  const hasBioInfo = member.location || member.occupation || member.birthday || member.bio
+  const hasBioInfo =
+    member.location || member.occupation || member.birthday || member.bio
 
   const handleTextClick = () => {
     if (!member.phone_number) return
-    const message = `Hey ${member.name}!`
-    openSMS(member.phone_number, message)
+    openSMS(member.phone_number, `Hey ${member.name}!`)
+  }
+
+  const formatValue = (
+    key: (typeof BIO_ROWS)[number]['key'],
+    value: string
+  ) => {
+    if (key !== 'birthday') return value
+    return new Date(value).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+    })
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 pb-24">
-      <Button variant="ghost" onClick={onBack} className="mb-4">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Family
-      </Button>
+    <div className="mx-auto max-w-lg">
+      <div className="px-5 pt-12">
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-3">
+          <ArrowLeft className="h-4 w-4" />
+          Family
+        </Button>
+      </div>
 
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden shadow-md">
-            {member.avatar_url ? (
-              <img
-                src={member.avatar_url}
-                alt={member.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-white">
-                {member.name[0]}
-              </span>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold">{member.name}</h1>
+      <header className="flex items-center justify-between gap-3 px-5 pt-3">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <GlowAvatar
+            name={member.name}
+            userId={member.id}
+            avatarUrl={member.avatar_url}
+            size="xl"
+          />
+          <h1 className="truncate font-display text-[26px] font-black tracking-tight text-ink">
+            {member.name}
+          </h1>
         </div>
         {member.phone_number && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTextClick}
-            className="gap-1.5"
-          >
-            <MessageCircle className="w-4 h-4" />
+          <Button variant="outline" size="sm" onClick={handleTextClick}>
+            <MessageCircle className="h-3.5 w-3.5" />
             Text
           </Button>
         )}
-      </div>
+      </header>
 
       {loading ? (
-        <div className="space-y-6 animate-pulse">
-          {/* User header skeleton */}
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gray-200" />
-            <div className="h-8 w-32 bg-gray-200 rounded" />
-          </div>
-
-          {/* Bio skeleton */}
-          <div className="h-40 bg-gray-200 rounded-lg" />
-
-          {/* Interests skeleton */}
-          <div className="space-y-3">
-            <div className="h-6 w-24 bg-gray-200 rounded" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-lg" />
-              ))}
-            </div>
-          </div>
-
-          {/* Picks skeleton */}
-          <div className="space-y-3">
-            <div className="h-6 w-20 bg-gray-200 rounded" />
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-40 bg-gray-200 rounded-lg" />
-              ))}
-            </div>
-          </div>
+        <div className="space-y-3 px-5 pt-8">
+          <div className="h-32 animate-pulse rounded-card bg-paper-2" />
+          <div className="h-24 animate-pulse rounded-card bg-paper-2" />
+          <div className="h-24 animate-pulse rounded-card bg-paper-2" />
         </div>
       ) : (
         <>
-          {/* Bio Section */}
           {hasBioInfo && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>About {member.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {member.location && (
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Location</p>
-                        <p className="font-medium text-gray-900">{member.location}</p>
+            <>
+              <SectionHeader>About {member.name.split(' ')[0]}</SectionHeader>
+              <div className="px-5">
+                <div className="rounded-card border-card border-edge bg-card px-4 shadow-card backdrop-blur-card">
+                  {BIO_ROWS.map(({ key, emoji, label }) => {
+                    const value = member[key]
+                    if (!value) return null
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-start gap-3 border-b border-dashed border-edge py-3 last:border-b-0"
+                      >
+                        <span className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-paper-2 text-sm">
+                          {emoji}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
+                            {label}
+                          </div>
+                          <div
+                            className={
+                              key === 'bio'
+                                ? 'mt-0.5 text-[13px] font-medium leading-relaxed text-ink-soft'
+                                : 'mt-0.5 text-[13.5px] font-bold text-ink'
+                            }
+                          >
+                            {formatValue(key, value)}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {member.occupation && (
-                    <div className="flex items-start gap-3">
-                      <Briefcase className="w-5 h-5 text-purple-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Occupation</p>
-                        <p className="font-medium text-gray-900">{member.occupation}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {member.birthday && (
-                    <div className="flex items-start gap-3">
-                      <Calendar className="w-5 h-5 text-pink-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Birthday</p>
-                        <p className="font-medium text-gray-900">
-                          {new Date(member.birthday).toLocaleDateString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {member.bio && (
-                    <div className="flex items-start gap-3">
-                      <FileText className="w-5 h-5 text-green-600 mt-0.5" />
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Bio</p>
-                        <p className="text-sm text-gray-700 leading-relaxed">{member.bio}</p>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </>
           )}
 
-          {/* Interests Section */}
           {interests.length > 0 && (
-            <section className="mb-8">
-              <h2 className="text-lg font-semibold mb-3">Interests</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {interests.map(interest => (
+            <>
+              <SectionHeader>Interests</SectionHeader>
+              <div className="flex flex-col gap-3 px-5">
+                {interests.map((interest) => (
                   <InterestCardComponent
                     key={interest.id}
-                    interest={{ ...interest, users: { name: member.name, avatar_url: member.avatar_url } }}
-                    onClick={() => setSelectedInterest(
-                      selectedInterest === interest.category ? null : interest.category
-                    )}
+                    interest={{
+                      ...interest,
+                      users: { name: member.name, avatar_url: member.avatar_url },
+                    }}
+                    onClick={() =>
+                      setSelectedInterest(
+                        selectedInterest === interest.category
+                          ? null
+                          : interest.category
+                      )
+                    }
                     isSelected={selectedInterest === interest.category}
                   />
                 ))}
               </div>
-            </section>
+            </>
           )}
 
-          {/* Picks Section */}
           {filteredPicks.length > 0 && (
-            <section>
-              <h2 className="text-lg font-semibold mb-3">
-                {selectedInterest ? 'Related Picks' : 'Picks'}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredPicks.map(pick => (
+            <>
+              <SectionHeader>
+                {selectedInterest ? 'Related picks' : 'Picks'}
+              </SectionHeader>
+              <div className="grid grid-cols-2 gap-3 px-5">
+                {filteredPicks.map((pick) => (
                   <PickCard
                     key={pick.id}
-                    pick={{ ...pick, users: { name: member.name, avatar_url: member.avatar_url } }}
+                    pick={{
+                      ...pick,
+                      users: { name: member.name, avatar_url: member.avatar_url },
+                    }}
                     onInterestClick={(tag) => setSelectedInterest(tag)}
                   />
                 ))}
               </div>
-            </section>
+            </>
           )}
 
-          {/* Empty States */}
           {interests.length === 0 && picks.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg">No interests or picks yet</p>
-              <p className="text-sm mt-1">
-                {member.name} hasn&apos;t shared their favorites yet
+            <div className="px-8 py-16 text-center">
+              <div className="text-4xl">🫥</div>
+              <p className="mt-4 font-display text-lg font-bold text-ink">
+                Nothing shared yet
+              </p>
+              <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
+                {member.name} hasn&apos;t added interests or picks.
               </p>
             </div>
           )}

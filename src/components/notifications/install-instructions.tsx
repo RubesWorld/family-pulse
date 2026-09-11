@@ -43,10 +43,10 @@ export function InstallSteps({ platform }: { platform: InstallPlatform }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
+      <p className="text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
         {label}
       </p>
-      <ol className="text-xs text-gray-700 space-y-1.5 list-decimal list-inside ml-2">
+      <ol className="ml-1 list-inside list-decimal space-y-1.5 text-[12.5px] font-medium text-ink-soft">
         {steps.map((step) => (
           <li key={step}>{step}</li>
         ))}
@@ -64,25 +64,25 @@ export function InstallSteps({ platform }: { platform: InstallPlatform }) {
  */
 export function IosInstallPrompt() {
   return (
-    <div className="rounded-lg p-4 border border-amber-200 bg-amber-50">
+    <div className="rounded-panel border border-marigold/40 bg-marigold/[0.12] p-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <Smartphone className="w-5 h-5 text-amber-600" />
+        <div className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-marigold/20">
+          <Smartphone className="h-5 w-5 text-marigold" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-amber-900">
+          <p className="text-[13.5px] font-extrabold text-ink">
             Add Family Pulse to your Home Screen first
           </p>
-          <p className="text-xs text-amber-800 mt-1">
+          <p className="mt-1 text-[12px] font-medium leading-relaxed text-ink-soft">
             On iPhone and iPad, notifications only work once the app is installed.
             They can&apos;t be turned on from a Safari tab.
           </p>
 
-          <div className="mt-3 rounded border border-amber-200 bg-white p-3">
+          <div className="mt-3 rounded-panel border border-edge bg-card p-3">
             <InstallSteps platform="ios" />
           </div>
 
-          <p className="text-xs text-amber-800 mt-3">
+          <p className="mt-3 text-[12px] font-medium leading-relaxed text-ink-soft">
             Already added it? Make sure you opened Family Pulse from the Home Screen
             icon rather than from Safari.
           </p>

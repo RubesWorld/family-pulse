@@ -1,14 +1,12 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { format, isToday, isYesterday } from 'date-fns'
 import { ActivityCard } from '@/components/activity-card'
 import { PickActivityCard } from '@/components/pick-activity-card'
 import { CalendarView } from '@/components/calendar-view'
 import { FeedHeader, FeedFilter } from './feed-header'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/surface'
 import type { ActivityWithUser, PickWithUser } from '@/types/database'
 
 interface FeedContentProps {
@@ -25,110 +23,100 @@ type FeedItem =
 function groupFeedItemsByDate(activities: ActivityWithUser[], picks: PickWithUser[]) {
   const grouped = new Map<string, FeedItem[]>()
 
-  // Add activities
   activities.forEach((activity) => {
-    const date = new Date(activity.created_at)
-    const dateKey = format(date, 'yyyy-MM-dd')
-
-    if (!grouped.has(dateKey)) {
-      grouped.set(dateKey, [])
-    }
+    const dateKey = format(new Date(activity.created_at), 'yyyy-MM-dd')
+    if (!grouped.has(dateKey)) grouped.set(dateKey, [])
     grouped.get(dateKey)!.push({ type: 'activity', data: activity })
   })
 
-  // Add picks
   picks.forEach((pick) => {
-    const date = new Date(pick.created_at)
-    const dateKey = format(date, 'yyyy-MM-dd')
-
-    if (!grouped.has(dateKey)) {
-      grouped.set(dateKey, [])
-    }
+    const dateKey = format(new Date(pick.created_at), 'yyyy-MM-dd')
+    if (!grouped.has(dateKey)) grouped.set(dateKey, [])
     grouped.get(dateKey)!.push({ type: 'pick', data: pick })
   })
 
-  // Sort items within each day by created_at (newest first)
   return Array.from(grouped.entries())
     .map(([dateKey, items]) => ({
       dateKey,
       date: new Date(dateKey),
-      items: items.sort((a, b) => {
-        const dateA = new Date(a.data.created_at)
-        const dateB = new Date(b.data.created_at)
-        return dateB.getTime() - dateA.getTime()
-      }),
+      items: items.sort(
+        (a, b) =>
+          new Date(b.data.created_at).getTime() -
+          new Date(a.data.created_at).getTime()
+      ),
     }))
-    .sort((a, b) => b.date.getTime() - a.date.getTime()) // Sort groups by date (newest first)
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
 }
 
 function formatDateHeader(date: Date): string {
-  const fullDate = format(date, 'EEEE, MMMM d, yyyy')
-
-  if (isToday(date)) {
-    return `Today, ${format(date, 'MMMM d, yyyy')}`
-  }
-  if (isYesterday(date)) {
-    return `Yesterday, ${format(date, 'MMMM d, yyyy')}`
-  }
-  return fullDate
+  if (isToday(date)) return `Today · ${format(date, 'EEEE')}`
+  if (isYesterday(date)) return 'Yesterday'
+  return format(date, 'EEEE, MMMM d')
 }
 
-export function FeedContent({ familyName, inviteCode, activities, recentPicks }: FeedContentProps) {
+export function FeedContent({
+  familyName,
+  inviteCode,
+  activities,
+  recentPicks,
+}: FeedContentProps) {
   const [view, setView] = useState<'feed' | 'calendar'>('feed')
   const [filter, setFilter] = useState<FeedFilter>('all')
-  const router = useRouter()
 
   const groupedItems = useMemo(
     () => groupFeedItemsByDate(activities, recentPicks),
     [activities, recentPicks]
   )
 
-  // Filter grouped items based on selected filter
   const filteredGroupedItems = useMemo(() => {
     if (filter === 'all') return groupedItems
 
     return groupedItems
-      .map(group => ({
+      .map((group) => ({
         ...group,
-        items: group.items.filter(item => {
-          if (filter === 'activities') return item.type === 'activity'
-          if (filter === 'picks') return item.type === 'pick'
-          return true
-        })
+        items: group.items.filter((item) =>
+          filter === 'activities'
+            ? item.type === 'activity'
+            : item.type === 'pick'
+        ),
       }))
-      .filter(group => group.items.length > 0) // Remove empty date groups
+      .filter((group) => group.items.length > 0)
   }, [groupedItems, filter])
 
   const hasContent = activities.length > 0 || recentPicks.length > 0
   const hasFilteredContent = filteredGroupedItems.length > 0
 
-  const getEmptyMessage = () => {
+  const emptyMessage = (() => {
     if (!hasContent) {
       return {
-        title: 'No activities yet',
-        subtitle: "Be the first to share what you're up to!"
+        emoji: '🌱',
+        title: 'Nothing here yet',
+        subtitle: "Be the first to share what you're up to.",
       }
     }
     if (filter === 'activities') {
       return {
+        emoji: '📭',
         title: 'No activities',
-        subtitle: 'No activities to show. Try switching to "All" or add an activity!'
+        subtitle: 'Try switching to All, or add something you’re doing.',
       }
     }
     if (filter === 'picks') {
       return {
+        emoji: '💭',
         title: 'No picks',
-        subtitle: 'No picks to show. Try switching to "All" or add your picks in your profile!'
+        subtitle: 'Try switching to All, or add your favorites in your profile.',
       }
     }
     return {
+      emoji: '🍂',
       title: 'Nothing to show',
-      subtitle: 'Try switching filters or add some content!'
+      subtitle: 'Try a different filter.',
     }
-  }
+  })()
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="mx-auto max-w-lg">
       <FeedHeader
         familyName={familyName}
         inviteCode={inviteCode}
@@ -139,46 +127,40 @@ export function FeedContent({ familyName, inviteCode, activities, recentPicks }:
       />
 
       {view === 'feed' ? (
-        <>
-          <div className="p-4 space-y-6">
-            {!hasFilteredContent ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">{getEmptyMessage().title}</p>
-                <p className="text-gray-400 mt-1">
-                  {getEmptyMessage().subtitle}
-                </p>
+        !hasFilteredContent ? (
+          <div className="px-8 py-20 text-center">
+            <div className="text-4xl">{emptyMessage.emoji}</div>
+            <p className="mt-4 font-display text-xl font-bold text-ink">
+              {emptyMessage.title}
+            </p>
+            <p className="mt-1.5 text-[13.5px] font-medium text-ink-soft">
+              {emptyMessage.subtitle}
+            </p>
+          </div>
+        ) : (
+          filteredGroupedItems.map((group) => (
+            <section key={group.dateKey}>
+              <SectionHeader>{formatDateHeader(group.date)}</SectionHeader>
+              <div className="flex flex-col gap-3.5 px-5">
+                {group.items.map((item, i) =>
+                  item.type === 'activity' ? (
+                    <ActivityCard
+                      key={item.data.id}
+                      activity={item.data}
+                      tilt={i % 2 === 0 ? 'a' : 'b'}
+                    />
+                  ) : (
+                    <PickActivityCard
+                      key={item.data.id}
+                      pick={item.data}
+                      tilt={i % 2 === 0 ? 'a' : 'b'}
+                    />
+                  )
+                )}
               </div>
-            ) : (
-              filteredGroupedItems.map((group) => (
-                <div key={group.dateKey} className="space-y-3">
-                  <h2 className="text-lg font-bold text-gray-900 px-1">
-                    {formatDateHeader(group.date)}
-                  </h2>
-                  <div className="space-y-4">
-                    {group.items.map((item) =>
-                      item.type === 'activity' ? (
-                        <ActivityCard key={item.data.id} activity={item.data} />
-                      ) : (
-                        <PickActivityCard key={item.data.id} pick={item.data} />
-                      )
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Fixed Add Button for Feed View */}
-          <div className="fixed bottom-6 right-6">
-            <Button
-              size="lg"
-              className="rounded-full shadow-lg h-14 w-14 p-0"
-              onClick={() => router.push('/add')}
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
-          </div>
-        </>
+            </section>
+          ))
+        )
       ) : (
         <CalendarView activities={activities} />
       )}

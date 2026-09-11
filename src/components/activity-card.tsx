@@ -1,24 +1,15 @@
 'use client'
 
 import { formatDistanceToNow, format, isToday, isTomorrow, isYesterday } from 'date-fns'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { MapPin, Calendar, MessageCircle } from 'lucide-react'
+import { GlowAvatar } from '@/components/ui/glow-avatar'
+import { MetaChip, NoteCallout, Surface } from '@/components/ui/surface'
 import { ActivityWithUser } from '@/types/database'
 import { openSMS } from '@/lib/sms'
 
 interface ActivityCardProps {
   activity: ActivityWithUser
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  tilt?: 'a' | 'b'
 }
 
 function formatActivityTime(date: string | null): string | null {
@@ -36,10 +27,10 @@ function formatActivityTime(date: string | null): string | null {
     return `Yesterday at ${format(d, 'h:mm a')}`
   }
 
-  return format(d, 'EEE, MMM d \'at\' h:mm a')
+  return format(d, "EEE, MMM d 'at' h:mm a")
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
+export function ActivityCard({ activity, tilt }: ActivityCardProps) {
   const timeAgo = formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })
   const activityTime = formatActivityTime(activity.starts_at)
 
@@ -51,66 +42,64 @@ export function ActivityCard({ activity }: ActivityCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex gap-3">
-          <Avatar className="h-10 w-10 flex-shrink-0">
-            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-medium">
-              {getInitials(activity.users?.name || 'U')}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2">
-              <span className="font-semibold text-gray-900 truncate">
-                {activity.users?.name}
-              </span>
-              <span className="text-xs text-gray-500 flex-shrink-0">
-                {timeAgo}
-              </span>
-            </div>
-            <h3 className="font-medium text-gray-900 mt-1">
-              {activity.title}
-            </h3>
-            {activity.description && (
-              <p className="text-gray-600 mt-1 text-sm">
-                {activity.description}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-3 mt-2">
-              {activityTime && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>{activityTime}</span>
-                </div>
-              )}
-              {activity.location_name && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{activity.location_name}</span>
-                </div>
-              )}
-            </div>
-            {activity.notes && (
-              <p className="text-sm text-gray-500 mt-2 italic border-l-2 border-gray-200 pl-2">
-                {activity.notes}
-              </p>
-            )}
-            {activity.users?.phone_number && (
-              <div className="mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTextClick}
-                  className="gap-1.5"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Text {activity.users.name.split(' ')[0]}
-                </Button>
-              </div>
-            )}
+    <Surface tilt={tilt}>
+      <div className="flex gap-3">
+        <GlowAvatar
+          name={activity.users?.name}
+          userId={activity.user_id}
+          avatarUrl={activity.users?.avatar_url}
+          size="md"
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="truncate text-[14.5px] font-extrabold text-ink">
+              {activity.users?.name}
+            </span>
+            <time className="flex-none text-[11.5px] font-bold text-ink-faint">
+              {timeAgo}
+            </time>
           </div>
+
+          <h3 className="mt-1 font-display text-[19px] font-bold leading-snug tracking-tight text-ink">
+            {activity.title}
+          </h3>
+
+          {activity.description && (
+            <p className="mt-1 text-[13.5px] font-medium leading-relaxed text-ink-soft">
+              {activity.description}
+            </p>
+          )}
+
+          {(activityTime || activity.location_name) && (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {activityTime && <MetaChip icon={Calendar}>{activityTime}</MetaChip>}
+              {activity.location_name && (
+                <MetaChip icon={MapPin}>{activity.location_name}</MetaChip>
+              )}
+            </div>
+          )}
+
+          {activity.notes && (
+            <NoteCallout className="mt-2.5">{activity.notes}</NoteCallout>
+          )}
+
+          {activity.users?.phone_number && (
+            <button
+              type="button"
+              onClick={handleTextClick}
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-coral to-marigold px-4 py-2.5 text-[12.5px] font-extrabold text-on-ink transition-transform active:scale-95"
+              style={{
+                boxShadow:
+                  '0 8px 24px -6px hsl(var(--coral) / calc(0.9 * var(--glow))), inset 0 1px 0 rgb(255 255 255 / 0.45)',
+              }}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Text {activity.users.name.split(' ')[0]}
+            </button>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Surface>
   )
 }
