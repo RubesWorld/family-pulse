@@ -1,20 +1,14 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentProfile, getCurrentUser } from '@/lib/supabase/queries'
 
 export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  // Check if user has a family
-  const { data: profile } = await supabase
-    .from('users')
-    .select('family_id')
-    .eq('id', user.id)
-    .single()
+  const profile = await getCurrentProfile()
 
   if (profile?.family_id) {
     redirect('/feed')

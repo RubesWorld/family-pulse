@@ -1,25 +1,19 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentProfile, getCurrentUser } from '@/lib/supabase/queries'
 import { QuestionHistoryPage } from './question-history-page'
 
 export default async function ConnectHistoryPage() {
   const supabase = await createClient()
 
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Both already resolved by the (app) layout.
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  // Get user's family
-  const { data: userData } = await supabase
-    .from('users')
-    .select('family_id')
-    .eq('id', user.id)
-    .single()
+  const userData = await getCurrentProfile()
 
   if (!userData?.family_id) {
     redirect('/onboarding')

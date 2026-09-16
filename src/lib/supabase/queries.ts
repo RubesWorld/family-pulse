@@ -6,22 +6,42 @@ import { createClient } from './server'
  *
  * React's `cache()` memoizes for the duration of a single server render pass,
  * so a layout and the page nested inside it share one result instead of each
- * paying for its own. Before this, loading /feed made three separate
- * `getUser()` calls — one in middleware, one in the (app) layout, one in the
- * page — and `getUser()` is a network round-trip to the Supabase Auth server,
- * not a local cookie read. The layout and page halves of that now collapse
- * into one. (Middleware runs as a separate invocation and cannot share the
- * cache; it needs its own call anyway to refresh the session cookie.)
+ * paying for its own.
  *
  * Server components only — `cache()` has no meaning on the client.
  */
 
+/**
+ * The signed-in user's id and email, or null when there is no valid session.
+ *
+ * Uses getClaims() rather than getUser(). getUser() is an HTTP request to the
+ * Supabase Auth server on every render; getClaims() verifies the access token's
+ * signature locally via WebCrypto against the project's cached public JWKS.
+ * This project signs with ES256 (EC P-256), confirmed at
+ * /auth/v1/.well-known/jwks.json, so the local path is the one that runs. On a
+ * project still using the legacy shared HS256 secret getClaims() cannot verify
+ * locally and falls back to calling getUser() internally, which is correct but
+ * no faster.
+ *
+ * Safe on the server, unlike a bare getSession(): the signature is verified
+ * rather than trusted.
+ *
+ * The tradeoff is staleness. These values come from the token, so they reflect
+ * whatever was true when it was last issued — up to one refresh interval behind.
+ * That only affects `email` here; every profile field the app displays (name,
+ * bio, location, occupation, birthday, phone) is read from the `users` table by
+ * getCurrentProfile() below, not from the token.
+ */
 export const getCurrentUser = cache(async () => {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  const { data, error } = await supabase.auth.getClaims()
+
+  if (error || !data?.claims?.sub) return null
+
+  return {
+    id: data.claims.sub,
+    email: data.claims.email,
+  }
 })
 
 /**
