@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentProfile, getCurrentUser } from '@/lib/supabase/queries'
 import { BottomNav } from '@/components/bottom-nav'
 import { FloatingActionButton } from '@/components/floating-action-button'
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop'
@@ -10,19 +10,15 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Both of these are request-cached, so the pages nested below reuse these
+  // exact results rather than re-fetching the user and profile themselves.
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  // Check if user has a family
-  const { data: profile } = await supabase
-    .from('users')
-    .select('family_id')
-    .eq('id', user.id)
-    .single()
+  const profile = await getCurrentProfile()
 
   if (!profile?.family_id) {
     redirect('/create-family')

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/supabase/queries'
 import { NotificationSettingsContent } from './notification-settings-content'
 
 export const dynamic = 'force-dynamic'
@@ -7,9 +8,8 @@ export const dynamic = 'force-dynamic'
 export default async function NotificationSettingsPage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Already resolved by the (app) layout.
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect('/login')

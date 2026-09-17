@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, PickWithUser } from '@/types/database'
+import { User, PickWithUser, InterestCard, UserPick } from '@/types/database'
 import { FamilyMemberCard } from '@/components/family-member-card'
 import { PickCard } from '@/components/pick-card'
 import { SectionHeader } from '@/components/ui/surface'
@@ -11,12 +11,17 @@ interface FamilyContentProps {
   familyName: string
   members: User[]
   recentPicks: PickWithUser[]
+  /** Preloaded on the server, keyed by user id — see page.tsx. */
+  interestsByMember: Record<string, InterestCard[]>
+  picksByMember: Record<string, UserPick[]>
 }
 
 export function FamilyContent({
   familyName,
   members,
   recentPicks,
+  interestsByMember,
+  picksByMember,
 }: FamilyContentProps) {
   const [selectedMember, setSelectedMember] = useState<User | null>(null)
 
@@ -24,6 +29,8 @@ export function FamilyContent({
     return (
       <MemberDetailView
         member={selectedMember}
+        interests={interestsByMember[selectedMember.id] ?? []}
+        picks={picksByMember[selectedMember.id] ?? []}
         onBack={() => setSelectedMember(null)}
       />
     )

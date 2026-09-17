@@ -3,6 +3,11 @@ import { Fraunces, Nunito } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
 
+// main removed the Geist fonts because they were loaded and never applied —
+// nothing read --font-geist-sans, so 134 kB was preloaded and thrown away on
+// every page. These two replace them and are genuinely wired up:
+// tailwind.config.ts maps font-display and font-body onto these variables.
+//
 // Fraunces carries the things people wrote — activity titles, questions,
 // answers. Nunito handles chrome, meta and controls.
 const fraunces = Fraunces({
@@ -64,6 +69,7 @@ export default function RootLayout({
             app never flashes the wrong paper colour. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
+      {/* `antialiased` now comes from the body rule in globals.css. */}
       <body className={`${fraunces.variable} ${nunito.variable}`}>
         {children}
       </body>
