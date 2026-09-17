@@ -51,5 +51,14 @@ export const es: Dictionary = {
 
     feedAnswered: 'contestó',
     feedChanged: 'cambió una respuesta',
+
+    familyTitle: 'Cosas que nos gustan',
+    answeredOf: '{answered} de {total}',
+    notAnsweredYet: 'No ha contestado',
+    browseEmpty: 'Todavía no hay respuestas',
+    browseEmptyHint: 'Cuando empiecen a contestar, aquí van a aparecer sus respuestas juntas.',
+    previousQuestion: 'Pregunta anterior',
+    nextQuestion: 'Siguiente pregunta',
+    mine: 'Tú',
   },
 }

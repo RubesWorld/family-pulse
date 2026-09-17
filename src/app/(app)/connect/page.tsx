@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getCurrentUser } from '@/lib/supabase/queries'
+import {
+  getCurrentProfile,
+  getCurrentUser,
+  getFamilyMemberIds,
+} from '@/lib/supabase/queries'
 import { ConnectContent } from './connect-content'
 import { getCurrentWeekNumber } from '@/lib/connect-utils'
 
@@ -22,6 +26,7 @@ export default async function ConnectPage() {
 
   const familyId = profile.family_id
   const currentWeekNumber = getCurrentWeekNumber()
+  const familyMemberIds = await getFamilyMemberIds(familyId)
 
   // Four independent reads. Previously each waited on the one before it, so the
   // page cost the sum of four round-trips rather than the slowest of them.
@@ -70,10 +75,11 @@ export default async function ConnectPage() {
       .order('week_number', { ascending: false })
       .limit(10),
 
+    // Everyone's current answers — the browse view compares them side by side.
     supabase
       .from('picks')
-      .select('*')
-      .eq('user_id', user.id)
+      .select('user_id, category, value')
+      .in('user_id', familyMemberIds)
       .eq('is_current', true),
   ])
 
@@ -83,7 +89,7 @@ export default async function ConnectPage() {
       familyMembers={members || []}
       currentQuestion={currentQuestion}
       pastQuestions={pastQuestions || []}
-      currentPicks={currentPicks || []}
+      familyPicks={currentPicks || []}
     />
   )
 }

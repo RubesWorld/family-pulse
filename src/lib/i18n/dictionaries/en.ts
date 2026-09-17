@@ -55,6 +55,16 @@ export const en = {
     // Feed entries for answers other people gave
     feedAnswered: 'answered',
     feedChanged: 'changed an answer',
+
+    // Question-first browse
+    familyTitle: 'Things we like',
+    answeredOf: '{answered} of {total}',
+    notAnsweredYet: 'Has not answered',
+    browseEmpty: 'Nothing answered yet',
+    browseEmptyHint: 'Once people start answering, their answers show up here side by side.',
+    previousQuestion: 'Previous question',
+    nextQuestion: 'Next question',
+    mine: 'You',
   },
 }
 

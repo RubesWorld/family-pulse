@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { QuestionWithAnswers, User, UserPick } from '@/types/database'
+import { QuestionWithAnswers, User } from '@/types/database'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CurrentQuestionCard } from '@/components/connect/current-question-card'
 import { AnswerForm } from '@/components/connect/answer-form'
 import { AnswersList } from '@/components/connect/answers-list'
 import { QuestionSelector } from '@/components/connect/question-selector'
-import { MyPicks } from '@/components/connect/my-picks'
+import { FamilyPicksBrowser } from '@/components/picks/family-picks-browser'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/surface'
 import { useI18n } from '@/components/i18n-provider'
@@ -27,7 +27,8 @@ interface ConnectContentProps {
   familyMembers: Pick<User, 'id' | 'name' | 'avatar_url'>[]
   currentQuestion: QuestionWithAnswers | null
   pastQuestions: PastQuestion[]
-  currentPicks: UserPick[]
+  /** Every family member's current answers, for the side-by-side browse. */
+  familyPicks: Array<{ user_id: string; category: string; value: string }>
 }
 
 export function ConnectContent({
@@ -35,13 +36,11 @@ export function ConnectContent({
   familyMembers,
   currentQuestion,
   pastQuestions,
-  currentPicks,
+  familyPicks,
 }: ConnectContentProps) {
   const router = useRouter()
   const { dict } = useI18n()
   const [initializing, setInitializing] = useState(false)
-
-  const currentUser = familyMembers.find((member) => member.id === currentUserId)
 
   const handleAnswerSubmit = () => {
     // Placeholder for future optimistic updates
@@ -103,7 +102,7 @@ export function ConnectContent({
         <div className="px-5">
           <TabsList className="w-full">
             <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="picks">{dict.picks.title}</TabsTrigger>
+            <TabsTrigger value="picks">{dict.picks.familyTitle}</TabsTrigger>
           </TabsList>
         </div>
 
@@ -195,16 +194,11 @@ export function ConnectContent({
         </TabsContent>
 
         <TabsContent value="picks">
-          {currentUser && (
-            <MyPicks
-              currentPicks={currentPicks}
-              userId={currentUserId}
-              currentUser={{
-                name: currentUser.name,
-                avatar_url: currentUser.avatar_url,
-              }}
-            />
-          )}
+          <FamilyPicksBrowser
+            members={familyMembers}
+            picks={familyPicks}
+            currentUserId={currentUserId}
+          />
         </TabsContent>
       </Tabs>
     </div>
