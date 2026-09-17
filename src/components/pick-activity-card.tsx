@@ -2,7 +2,8 @@
 
 import { formatDistanceToNow } from 'date-fns'
 import { PickWithUser } from '@/types/database'
-import { getPickCategory } from '@/lib/pick-categories'
+import { getPrompt, isSkipped, promptLabel } from '@/lib/pick-prompts'
+import { useI18n } from '@/components/i18n-provider'
 import { PickSticker } from '@/components/ui/pick-sticker'
 import { Surface } from '@/components/ui/surface'
 
@@ -12,8 +13,12 @@ interface PickActivityCardProps {
 }
 
 export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
-  const category = getPickCategory(pick.category)
+  const { dict, locale } = useI18n()
+  const prompt = getPrompt(pick.category)
   const userName = pick.users?.name || 'Someone'
+
+  // Unknown prompt or an explicit "not for me" — neither belongs in the feed.
+  if (!prompt || isSkipped(pick.value)) return null
 
   return (
     <Surface tilt={tilt}>
@@ -23,11 +28,11 @@ export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
         <div className="min-w-0 flex-1">
           <p className="text-[12.5px] font-bold text-ink-soft">
             <span className="font-extrabold text-ink">{userName}</span>{' '}
-            {pick.previous_value ? 'switched it up' : 'just added'}
+            {pick.previous_value ? dict.picks.feedChanged : dict.picks.feedAnswered}
           </p>
 
           <p className="mt-0.5 font-display text-[17px] font-bold text-ink">
-            {category?.label || pick.category}
+            {promptLabel(prompt, locale)}
           </p>
 
           {pick.previous_value ? (

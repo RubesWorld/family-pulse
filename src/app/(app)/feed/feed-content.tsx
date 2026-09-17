@@ -7,6 +7,7 @@ import { PickActivityCard } from '@/components/pick-activity-card'
 import { CalendarView } from '@/components/calendar-view'
 import { FeedHeader, FeedFilter } from './feed-header'
 import { SectionHeader } from '@/components/ui/surface'
+import { PromptCard } from '@/components/picks/prompt-card'
 import type { ActivityWithUser, PickWithUser } from '@/types/database'
 
 interface FeedContentProps {
@@ -14,6 +15,9 @@ interface FeedContentProps {
   inviteCode: string
   activities: ActivityWithUser[]
   recentPicks: PickWithUser[]
+  currentUserId: string
+  /** One unanswered prompt, chosen server-side. Null when there are none left. */
+  openPromptId: string | null
 }
 
 type FeedItem =
@@ -59,6 +63,8 @@ export function FeedContent({
   inviteCode,
   activities,
   recentPicks,
+  currentUserId,
+  openPromptId,
 }: FeedContentProps) {
   const [view, setView] = useState<'feed' | 'calendar'>('feed')
   const [filter, setFilter] = useState<FeedFilter>('all')
@@ -104,8 +110,8 @@ export function FeedContent({
     if (filter === 'picks') {
       return {
         emoji: '💭',
-        title: 'No picks',
-        subtitle: 'Try switching to All, or add your favorites in your profile.',
+        title: 'Nothing here',
+        subtitle: 'Try switching to All, or answer a question about yourself.',
       }
     }
     return {
@@ -125,6 +131,12 @@ export function FeedContent({
         filter={filter}
         onFilterChange={setFilter}
       />
+
+      {view === 'feed' && openPromptId && currentUserId && (
+        <div className="pt-4">
+          <PromptCard userId={currentUserId} promptId={openPromptId} />
+        </div>
+      )}
 
       {view === 'feed' ? (
         !hasFilteredContent ? (

@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/button'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { CollapsibleSection } from '@/components/ui/collapsible-section'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageToggle } from '@/components/language-toggle'
+import { useI18n } from '@/components/i18n-provider'
+import { plural } from '@/lib/i18n'
+import { isSkipped } from '@/lib/pick-prompts'
 import { InterestCardEditor } from '@/components/interest-card-editor'
 import { PickEditor } from '@/components/pick-editor'
 import { PickCard } from '@/components/pick-card'
@@ -68,6 +72,7 @@ export function ProfileContent({
   const [isEditingInterests, setIsEditingInterests] = useState(false)
   const [isEditingPicks, setIsEditingPicks] = useState(false)
   const router = useRouter()
+  const { dict } = useI18n()
 
   const handleLogout = async () => {
     setLoggingOut(true)
@@ -102,7 +107,9 @@ export function ProfileContent({
   }
 
   const hasBioInfo = !!(user.location || user.occupation || user.birthday || user.bio)
-  const filledPicks = picks.filter((p) => p.value && p.value.trim())
+  const filledPicks = picks.filter(
+    (p) => p.value && p.value.trim() && !isSkipped(p.value)
+  )
 
   return (
     <div className="mx-auto max-w-lg">
@@ -127,9 +134,14 @@ export function ProfileContent({
         {/* Appearance — the night/day switch lives here */}
         <div className="rounded-card border-card border-edge bg-card p-4 shadow-card backdrop-blur-card">
           <div className="mb-2.5 font-display text-[17px] font-bold text-ink">
-            Appearance
+            {dict.settings.appearance}
           </div>
           <ThemeToggle />
+
+          <div className="mb-2.5 mt-4 font-display text-[17px] font-bold text-ink">
+            {dict.settings.language}
+          </div>
+          <LanguageToggle />
         </div>
 
         <CollapsibleSection
@@ -236,13 +248,13 @@ export function ProfileContent({
         </CollapsibleSection>
 
         <CollapsibleSection
-          title="My picks"
+          title={dict.picks.title}
           emoji="⭐"
-          summary={
-            filledPicks.length > 0
-              ? `${filledPicks.length} ${filledPicks.length === 1 ? 'favorite' : 'favorites'}`
-              : 'Nothing added yet'
-          }
+          summary={plural(filledPicks.length, {
+            none: dict.picks.summaryNone,
+            one: dict.picks.summaryOne,
+            many: dict.picks.summaryMany,
+          })}
           forceOpen={isEditingPicks}
           action={
             !isEditingPicks ? (
@@ -266,7 +278,7 @@ export function ProfileContent({
             />
           ) : filledPicks.length === 0 ? (
             <p className="py-4 text-center text-[13px] font-semibold text-ink-soft">
-              No picks yet. Tap Edit to add your favorites.
+              {dict.picks.emptyMine}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3">

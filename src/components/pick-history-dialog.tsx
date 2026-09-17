@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { History, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getPickCategory } from '@/lib/pick-categories'
+import { isSkipped } from '@/lib/pick-prompts'
 import { PickSticker } from '@/components/ui/pick-sticker'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,8 +18,12 @@ import {
 
 interface PickHistoryDialogProps {
   userId: string
+  /** Stored picks.category value — a prompt id, or a legacy category. */
   category: string
   currentValue: string
+  /** Already resolved and localised by the caller. */
+  label: string
+  historyLabel?: string
 }
 
 interface PickHistory {
@@ -34,13 +38,11 @@ export function PickHistoryDialog({
   userId,
   category,
   currentValue,
+  label,
 }: PickHistoryDialogProps) {
   const [history, setHistory] = useState<PickHistory[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-
-  const categoryData = getPickCategory(category)
-  const label = categoryData?.label || category
 
   const fetchHistory = useCallback(async () => {
     setLoading(true)
@@ -55,7 +57,7 @@ export function PickHistoryDialog({
         .order('archived_at', { ascending: false })
 
       if (error) throw error
-      setHistory(data || [])
+      setHistory((data || []).filter((row) => !isSkipped(row.value)))
     } catch (err) {
       console.error('Failed to fetch pick history:', err)
     } finally {

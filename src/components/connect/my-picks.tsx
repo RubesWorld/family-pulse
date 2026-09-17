@@ -5,6 +5,7 @@ import { UserPick, User } from '@/types/database'
 import { PickCard } from '@/components/pick-card'
 import { Button } from '@/components/ui/button'
 import { Edit, Sparkles } from 'lucide-react'
+import { useI18n } from '@/components/i18n-provider'
 
 interface MyPicksProps {
   currentPicks: UserPick[]
@@ -14,13 +15,14 @@ interface MyPicksProps {
 
 export function MyPicks({ currentPicks, userId, currentUser }: MyPicksProps) {
   const router = useRouter()
+  const { dict } = useI18n()
 
   if (currentPicks.length === 0) {
     return (
       <div className="px-8 py-16 text-center">
         <div className="text-4xl">✨</div>
         <p className="mt-4 font-display text-xl font-bold text-ink">
-          Share your favorites
+          {dict.picks.title}
         </p>
         <p className="mx-auto mt-1.5 max-w-xs text-[13.5px] font-medium text-ink-soft">
           Let your family know what you love — food, movies, music, and more.

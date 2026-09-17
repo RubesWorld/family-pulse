@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { getPickCategory } from '@/lib/pick-categories'
+import { promptEmoji, promptGradient } from '@/lib/pick-prompts'
 
 const SIZES = {
   sm: { box: 'h-[42px] w-[42px]', radius: 'rounded-[14px]', text: 'text-[21px]', bloom: '-inset-2' },
@@ -8,32 +8,29 @@ const SIZES = {
 
 /**
  * A pick rendered as a tilted sticker that spills its gradient onto the
- * surface beneath it. The bloom is a blurred copy of the same gradient,
- * scaled by --glow so day mode stays subtle.
+ * surface beneath it. Colour and emoji now come from the interest behind the
+ * prompt, so a hiking pick looks like nature rather than like a fixed
+ * category. The bloom scales with --glow so day mode stays subtle.
  */
 export function PickSticker({
   category,
   size = 'md',
   className,
 }: {
+  /** The stored picks.category value — a prompt id, or a legacy category. */
   category: string
   size?: keyof typeof SIZES
   className?: string
 }) {
-  const cat = getPickCategory(category)
-  if (!cat) return null
-
   const s = SIZES[size]
+  const gradient = promptGradient(category)
 
   return (
     <span className={cn('relative flex-none', s.box, className)}>
       <span
         aria-hidden
         className={cn('absolute rounded-[18px] blur-[14px]', s.bloom)}
-        style={{
-          backgroundImage: cat.gradient,
-          opacity: 'calc(0.8 * var(--glow))',
-        }}
+        style={{ backgroundImage: gradient, opacity: 'calc(0.8 * var(--glow))' }}
       />
       <span
         className={cn(
@@ -42,13 +39,13 @@ export function PickSticker({
           s.text
         )}
         style={{
-          backgroundImage: cat.gradient,
+          backgroundImage: gradient,
           boxShadow:
             '0 5px 14px -4px rgb(0 0 0 / 0.55), inset 0 0 0 2px rgb(255 255 255 / 0.4)',
         }}
       >
-        <span role="img" aria-label={cat.label}>
-          {cat.emoji}
+        <span role="img" aria-hidden>
+          {promptEmoji(category)}
         </span>
       </span>
     </span>

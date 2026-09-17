@@ -11,6 +11,7 @@ import { QuestionSelector } from '@/components/connect/question-selector'
 import { MyPicks } from '@/components/connect/my-picks'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/surface'
+import { useI18n } from '@/components/i18n-provider'
 import { History } from 'lucide-react'
 
 interface PastQuestion {
@@ -37,6 +38,7 @@ export function ConnectContent({
   currentPicks,
 }: ConnectContentProps) {
   const router = useRouter()
+  const { dict } = useI18n()
   const [initializing, setInitializing] = useState(false)
 
   const currentUser = familyMembers.find((member) => member.id === currentUserId)
@@ -101,7 +103,7 @@ export function ConnectContent({
         <div className="px-5">
           <TabsList className="w-full">
             <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="picks">My Picks</TabsTrigger>
+            <TabsTrigger value="picks">{dict.picks.title}</TabsTrigger>
           </TabsList>
         </div>
 

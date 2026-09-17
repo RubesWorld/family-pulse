@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getFamilyMemberIds } from '@/lib/supabase/queries'
+import { getCurrentProfile, getCurrentUser, getFamilyMemberIds } from '@/lib/supabase/queries'
+import { chooseOpenPrompt } from '@/lib/pick-prompts'
 import { ActivityWithUser, PickWithUser } from '@/types/database'
 import { FeedContent } from './feed-content'
 
@@ -14,7 +15,10 @@ export default async function FeedPage() {
   const supabase = await createClient()
 
   // Already resolved by the (app) layout — free here.
-  const profile = await getCurrentProfile()
+  const [profile, user] = await Promise.all([
+    getCurrentProfile(),
+    getCurrentUser(),
+  ])
   const familyId = profile?.family_id
 
   if (!familyId) {
@@ -24,6 +28,8 @@ export default async function FeedPage() {
         inviteCode=""
         activities={[]}
         recentPicks={[]}
+        currentUserId={user?.id ?? ''}
+        openPromptId={null}
       />
     )
   }
@@ -35,7 +41,12 @@ export default async function FeedPage() {
 
   // These two do not depend on each other, so they go out together instead of
   // one waiting on the other.
-  const [{ data: activities }, { data: recentPicks }] = await Promise.all([
+  const [
+    { data: activities },
+    { data: recentPicks },
+    { data: myInterests },
+    { data: myPicks },
+  ] = await Promise.all([
     supabase
       .from('activities')
       .select(`*, users (name, avatar_url, phone_number)`)
@@ -50,7 +61,26 @@ export default async function FeedPage() {
       .eq('is_current', true)
       .gte('created_at', last24Hours.toISOString())
       .order('created_at', { ascending: false }),
+
+    // Drives the feed prompt card: which interests this person claimed, and
+    // which prompts they have already dealt with.
+    supabase
+      .from('interest_cards')
+      .select('category')
+      .eq('user_id', user?.id ?? ''),
+
+    supabase
+      .from('picks')
+      .select('category, value')
+      .eq('user_id', user?.id ?? '')
+      .eq('is_current', true),
   ])
+
+  const openPrompt = chooseOpenPrompt(
+    (myInterests ?? []).map((i) => i.category),
+    myPicks ?? [],
+    new Date()
+  )
 
   const picksWithHistory = await attachPreviousValues(
     supabase,
@@ -70,6 +100,8 @@ export default async function FeedPage() {
       }
       activities={typedActivities}
       recentPicks={typedPicks}
+      currentUserId={user?.id ?? ''}
+      openPromptId={openPrompt?.id ?? null}
     />
   )
 }
