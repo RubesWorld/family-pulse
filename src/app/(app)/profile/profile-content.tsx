@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { Settings, Edit2 } from 'lucide-react'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { CollapsibleSection } from '@/components/ui/collapsible-section'
-import { ThemeToggle } from '@/components/theme-toggle'
-import { LanguageToggle } from '@/components/language-toggle'
+import { BioRows, hasAnyBio } from '@/components/person/bio-rows'
 import { useI18n } from '@/components/i18n-provider'
 import { plural } from '@/lib/i18n'
 import { isSkipped } from '@/lib/pick-prompts'
@@ -17,8 +16,6 @@ import { PickEditor } from '@/components/pick-editor'
 import { PickCard } from '@/components/pick-card'
 import { InterestCard as InterestCardView } from '@/components/interest-card'
 import { ProfileBioEditor } from '@/components/profile-bio-editor'
-import { NotificationsGuide } from '@/components/profile/notifications-guide'
-import { LogOut, Copy, Check, Edit2 } from 'lucide-react'
 import type { Activity, InterestCard, UserPick } from '@/types/database'
 
 interface ProfileContentProps {
@@ -40,14 +37,7 @@ interface ProfileContentProps {
   picks: UserPick[]
 }
 
-const BIO_ROWS: { key: 'location' | 'occupation' | 'birthday' | 'bio'; emoji: string; label: string }[] = [
-  { key: 'location', emoji: '📍', label: 'Location' },
-  { key: 'occupation', emoji: '💼', label: 'Work' },
-  { key: 'birthday', emoji: '🎂', label: 'Birthday' },
-  { key: 'bio', emoji: '✍️', label: 'Bio' },
-]
-
-function EditButton({ onClick }: { onClick: () => void }) {
+function EditButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       type="button"
@@ -55,49 +45,30 @@ function EditButton({ onClick }: { onClick: () => void }) {
       className="inline-flex flex-none items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11.5px] font-extrabold text-ink-faint transition-colors hover:bg-paper-2 hover:text-ink"
     >
       <Edit2 className="h-3 w-3" />
-      Edit
+      {label}
     </button>
   )
 }
 
+/**
+ * Your own page — the same three things Family shows about anyone else
+ * (bio, interests, answers), with editing attached.
+ *
+ * Appearance, language, notifications, the invite link and logout used to sit
+ * underneath all of this. They are preferences, not facts about you, and they
+ * now live behind the gear in the header.
+ */
 export function ProfileContent({
   user,
   recentActivities,
   interestCards,
   picks,
 }: ProfileContentProps) {
-  const [copied, setCopied] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
   const [isEditingBio, setIsEditingBio] = useState(false)
   const [isEditingInterests, setIsEditingInterests] = useState(false)
   const [isEditingPicks, setIsEditingPicks] = useState(false)
   const router = useRouter()
   const { dict } = useI18n()
-
-  const handleLogout = async () => {
-    setLoggingOut(true)
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
-  const copyInviteLink = async () => {
-    const inviteUrl = `${window.location.origin}/join/${user.inviteCode}`
-    try {
-      await navigator.clipboard.writeText(inviteUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      const textarea = document.createElement('textarea')
-      textarea.value = inviteUrl
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
 
   const handleSaveComplete = () => {
     setIsEditingBio(false)
@@ -106,21 +77,16 @@ export function ProfileContent({
     router.refresh()
   }
 
-  const hasBioInfo = !!(user.location || user.occupation || user.birthday || user.bio)
+  const hasBioInfo = hasAnyBio(user)
   const filledPicks = picks.filter(
     (p) => p.value && p.value.trim() && !isSkipped(p.value)
   )
 
   return (
     <div className="mx-auto max-w-lg">
-      {/* hero */}
       <header className="flex items-center gap-4 px-5 pb-2 pt-14">
-        <GlowAvatar
-          name={user.name}
-          userId={user.id}
-          size="xl"
-        />
-        <div className="min-w-0">
+        <GlowAvatar name={user.name} userId={user.id} size="xl" />
+        <div className="min-w-0 flex-1">
           <h1 className="truncate font-display text-[26px] font-black leading-tight tracking-tight text-ink">
             {user.name}
           </h1>
@@ -128,30 +94,28 @@ export function ProfileContent({
             {user.email}
           </p>
         </div>
+
+        <Link
+          href="/settings"
+          aria-label={dict.settings.title}
+          className="grid h-11 w-11 flex-none place-items-center rounded-full border-card border-edge bg-card text-ink-soft backdrop-blur-card transition-transform active:scale-95"
+        >
+          <Settings className="h-5 w-5" />
+        </Link>
       </header>
 
       <div className="mt-5 flex flex-col gap-3 px-5">
-        {/* Appearance — the night/day switch lives here */}
-        <div className="rounded-card border-card border-edge bg-card p-4 shadow-card backdrop-blur-card">
-          <div className="mb-2.5 font-display text-[17px] font-bold text-ink">
-            {dict.settings.appearance}
-          </div>
-          <ThemeToggle />
-
-          <div className="mb-2.5 mt-4 font-display text-[17px] font-bold text-ink">
-            {dict.settings.language}
-          </div>
-          <LanguageToggle />
-        </div>
-
         <CollapsibleSection
-          title="About me"
+          title={dict.person.aboutMe}
           emoji="✍️"
-          summary={hasBioInfo ? 'Location, work, birthday, bio' : 'Nothing added yet'}
+          summary={hasBioInfo ? dict.person.bioSummary : dict.person.nothingAdded}
           forceOpen={isEditingBio || !hasBioInfo}
           action={
             hasBioInfo && !isEditingBio ? (
-              <EditButton onClick={() => setIsEditingBio(true)} />
+              <EditButton
+                onClick={() => setIsEditingBio(true)}
+                label={dict.common.edit}
+              />
             ) : null
           }
         >
@@ -168,56 +132,25 @@ export function ProfileContent({
               onSave={handleSaveComplete}
             />
           ) : (
-            <div className="-my-1">
-              {BIO_ROWS.map(({ key, emoji, label }) => {
-                const value = user[key]
-                if (!value) return null
-                return (
-                  <div
-                    key={key}
-                    className="flex items-start gap-3 border-b border-dashed border-edge py-2.5 last:border-b-0"
-                  >
-                    <span className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-paper-2 text-sm">
-                      {emoji}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
-                        {label}
-                      </div>
-                      <div
-                        className={
-                          key === 'bio'
-                            ? 'mt-0.5 text-[13px] font-medium leading-relaxed text-ink-soft'
-                            : 'mt-0.5 text-[13.5px] font-bold text-ink'
-                        }
-                      >
-                        {key === 'birthday'
-                          ? new Date(value).toLocaleDateString('en-US', {
-                              month: 'long',
-                              day: 'numeric',
-                            })
-                          : value}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <BioRows person={user} />
           )}
         </CollapsibleSection>
 
         <CollapsibleSection
-          title="Interests"
+          title={dict.person.interests}
           emoji="🎨"
-          summary={
-            interestCards.length > 0
-              ? `${interestCards.length} ${interestCards.length === 1 ? 'interest' : 'interests'}`
-              : 'Nothing added yet'
-          }
+          summary={plural(interestCards.length, {
+            none: dict.person.nothingAdded,
+            one: dict.person.interestOne,
+            many: dict.person.interestCount,
+          })}
           forceOpen={isEditingInterests || interestCards.length === 0}
           action={
             interestCards.length > 0 && !isEditingInterests ? (
-              <EditButton onClick={() => setIsEditingInterests(true)} />
+              <EditButton
+                onClick={() => setIsEditingInterests(true)}
+                label={dict.common.edit}
+              />
             ) : null
           }
         >
@@ -258,7 +191,10 @@ export function ProfileContent({
           forceOpen={isEditingPicks}
           action={
             !isEditingPicks ? (
-              <EditButton onClick={() => setIsEditingPicks(true)} />
+              <EditButton
+                onClick={() => setIsEditingPicks(true)}
+                label={dict.common.edit}
+              />
             ) : null
           }
         >
@@ -296,11 +232,13 @@ export function ProfileContent({
 
         {recentActivities.length > 0 && (
           <CollapsibleSection
-            title="Recent activity"
+            title={dict.person.recentActivity}
             emoji="📅"
-            summary={`${recentActivities.length} recent ${
-              recentActivities.length === 1 ? 'post' : 'posts'
-            }`}
+            summary={plural(recentActivities.length, {
+              none: dict.person.nothingAdded,
+              one: dict.person.postOne,
+              many: dict.person.postCount,
+            })}
           >
             <div className="flex flex-col gap-3">
               {recentActivities.map((activity) => (
@@ -326,51 +264,6 @@ export function ProfileContent({
             </div>
           </CollapsibleSection>
         )}
-
-        <CollapsibleSection
-          title="Notifications"
-          emoji="🔔"
-          summary="Push setup and troubleshooting"
-        >
-          <NotificationsGuide />
-        </CollapsibleSection>
-
-        {/* Family + invite stays visible — it is the main thing people come here to do */}
-        <div className="rounded-card border-card border-edge bg-card p-4 shadow-card backdrop-blur-card">
-          <div className="font-display text-[17px] font-bold text-ink">
-            {user.familyName}
-          </div>
-          <p className="mt-0.5 text-[12px] font-bold text-ink-faint">
-            Your family group
-          </p>
-          <Button
-            variant="outline"
-            onClick={copyInviteLink}
-            className="mt-3 w-full"
-          >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4" />
-                Link copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4" />
-                Copy invite link
-              </>
-            )}
-          </Button>
-        </div>
-
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="h-4 w-4" />
-          {loggingOut ? 'Logging out…' : 'Log out'}
-        </Button>
       </div>
     </div>
   )

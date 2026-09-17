@@ -7,6 +7,9 @@ import { PickCard } from '@/components/pick-card'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/surface'
+import { BioRows, hasAnyBio } from '@/components/person/bio-rows'
+import { useI18n } from '@/components/i18n-provider'
+import { t } from '@/lib/i18n'
 import { ArrowLeft, MessageCircle } from 'lucide-react'
 import { openSMS } from '@/lib/sms'
 
@@ -23,17 +26,6 @@ interface MemberDetailViewProps {
   onBack: () => void
 }
 
-const BIO_ROWS: {
-  key: keyof Pick<User, 'location' | 'occupation' | 'birthday' | 'bio'>
-  emoji: string
-  label: string
-}[] = [
-  { key: 'location', emoji: '📍', label: 'Location' },
-  { key: 'occupation', emoji: '💼', label: 'Work' },
-  { key: 'birthday', emoji: '🎂', label: 'Birthday' },
-  { key: 'bio', emoji: '✍️', label: 'Bio' },
-]
-
 export function MemberDetailView({
   member,
   interests,
@@ -41,28 +33,17 @@ export function MemberDetailView({
   onBack,
 }: MemberDetailViewProps) {
   const [selectedInterest, setSelectedInterest] = useState<string | null>(null)
+  const { dict } = useI18n()
 
   const filteredPicks = selectedInterest
     ? picks.filter((p) => p.interest_tag === selectedInterest)
     : picks
 
-  const hasBioInfo =
-    member.location || member.occupation || member.birthday || member.bio
+  const hasBioInfo = hasAnyBio(member)
 
   const handleTextClick = () => {
     if (!member.phone_number) return
     openSMS(member.phone_number, `Hey ${member.name}!`)
-  }
-
-  const formatValue = (
-    key: (typeof BIO_ROWS)[number]['key'],
-    value: string
-  ) => {
-    if (key !== 'birthday') return value
-    return new Date(value).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-    })
   }
 
   return (
@@ -96,37 +77,12 @@ export function MemberDetailView({
 
       {hasBioInfo && (
         <>
-          <SectionHeader>About {member.name.split(' ')[0]}</SectionHeader>
+          <SectionHeader>
+            {t(dict.person.aboutSomeone, { name: member.name.split(' ')[0] })}
+          </SectionHeader>
           <div className="px-5">
             <div className="rounded-card border-card border-edge bg-card px-4 shadow-card backdrop-blur-card">
-              {BIO_ROWS.map(({ key, emoji, label }) => {
-                const value = member[key]
-                if (!value) return null
-                return (
-                  <div
-                    key={key}
-                    className="flex items-start gap-3 border-b border-dashed border-edge py-3 last:border-b-0"
-                  >
-                    <span className="grid h-8 w-8 flex-none place-items-center rounded-xl bg-paper-2 text-sm">
-                      {emoji}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
-                        {label}
-                      </div>
-                      <div
-                        className={
-                          key === 'bio'
-                            ? 'mt-0.5 text-[13px] font-medium leading-relaxed text-ink-soft'
-                            : 'mt-0.5 text-[13.5px] font-bold text-ink'
-                        }
-                      >
-                        {formatValue(key, value)}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              <BioRows person={member} />
             </div>
           </div>
         </>
@@ -134,7 +90,7 @@ export function MemberDetailView({
 
       {interests.length > 0 && (
         <>
-          <SectionHeader>Interests</SectionHeader>
+          <SectionHeader>{dict.person.interests}</SectionHeader>
           <div className="flex flex-col gap-3 px-5">
             {interests.map((interest) => (
               <InterestCardComponent
@@ -159,9 +115,7 @@ export function MemberDetailView({
 
       {filteredPicks.length > 0 && (
         <>
-          <SectionHeader>
-            {selectedInterest ? 'Related picks' : 'Picks'}
-          </SectionHeader>
+          <SectionHeader>{dict.picks.title}</SectionHeader>
           <div className="grid grid-cols-2 gap-3 px-5">
             {filteredPicks.map((pick) => (
               <PickCard
