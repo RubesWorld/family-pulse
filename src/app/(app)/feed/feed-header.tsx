@@ -69,48 +69,55 @@ export function FeedHeader({
   }
 
   return (
-    <header className="relative px-5 pb-1 pt-14">
-      <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
-        Family Pulse
+    <header className="px-5 pb-1 pt-screen">
+      {/* Laid out as a row rather than absolutely positioning the button:
+          the top padding is now a safe-area calc, so a hardcoded offset
+          would drift on any device with an inset. */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
+            Family Pulse
+          </div>
+
+          <h1 className="mt-1 truncate font-display text-[30px] font-black leading-[1.06] tracking-tight text-ink">
+            {familyName}
+          </h1>
+
+          {/* hand-drawn swash under the family name */}
+          <svg
+            aria-hidden
+            viewBox="0 0 132 9"
+            fill="none"
+            className="mt-0.5 block h-2 w-32 text-marigold"
+            style={{ filter: 'drop-shadow(0 0 8px hsl(var(--marigold) / var(--glow)))' }}
+          >
+            <path
+              d="M2 6.2c22-4.4 44-5.2 66-3.1 21 2 42 2.4 63-.6"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="mt-1 inline-flex flex-none items-center gap-1.5 rounded-full border-card border-edge bg-card px-3.5 py-2 text-[13px] font-extrabold text-ink backdrop-blur-card transition-transform active:scale-95"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Share2 className="h-3.5 w-3.5" />
+              Invite
+            </>
+          )}
+        </button>
       </div>
-
-      <h1 className="mt-1 font-display text-[30px] font-black leading-[1.06] tracking-tight text-ink">
-        {familyName}
-      </h1>
-
-      {/* hand-drawn swash under the family name */}
-      <svg
-        aria-hidden
-        viewBox="0 0 132 9"
-        fill="none"
-        className="mt-0.5 block h-2 w-32 text-marigold"
-        style={{ filter: 'drop-shadow(0 0 8px hsl(var(--marigold) / var(--glow)))' }}
-      >
-        <path
-          d="M2 6.2c22-4.4 44-5.2 66-3.1 21 2 42 2.4 63-.6"
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      </svg>
-
-      <button
-        type="button"
-        onClick={handleShare}
-        className="absolute right-5 top-[3.4rem] inline-flex items-center gap-1.5 rounded-full border-card border-edge bg-card px-3.5 py-2 text-[13px] font-extrabold text-ink backdrop-blur-card transition-transform active:scale-95"
-      >
-        {copied ? (
-          <>
-            <Check className="h-3.5 w-3.5" />
-            Copied!
-          </>
-        ) : (
-          <>
-            <Share2 className="h-3.5 w-3.5" />
-            Invite
-          </>
-        )}
-      </button>
 
       {/* view switch */}
       <div className="mt-4 flex gap-2">

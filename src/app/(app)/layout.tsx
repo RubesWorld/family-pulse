@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getCurrentProfile, getCurrentUser } from '@/lib/supabase/queries'
 import { BottomNav } from '@/components/bottom-nav'
-import { FloatingActionButton } from '@/components/floating-action-button'
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop'
 import { ThemeProvider } from '@/components/theme-provider'
 import { I18nProvider } from '@/components/i18n-provider'
@@ -37,7 +36,6 @@ export default async function AppLayout({
           <AmbientBackdrop />
           {/* pb clears the floating nav plus the iOS home indicator */}
           <div className="relative z-10 pb-32">{children}</div>
-          <FloatingActionButton />
           <BottomNav />
         </div>
       </ThemeProvider>

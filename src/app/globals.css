@@ -196,6 +196,14 @@
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* Screen headers. In a browser the inset is 0, so this is just 12px of
+     breathing room; installed on iOS the status bar overlays the page and
+     the inset supplies the clearance. The old fixed pt-14 did both jobs
+     badly — too much padding in a browser, too little under a notch. */
+  .pt-screen {
+    padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

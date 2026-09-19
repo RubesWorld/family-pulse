@@ -84,7 +84,7 @@ export function ProfileContent({
 
   return (
     <div className="mx-auto max-w-lg">
-      <header className="flex items-center gap-4 px-5 pb-2 pt-14">
+      <header className="flex items-center gap-4 px-5 pb-2 pt-screen">
         <GlowAvatar name={user.name} userId={user.id} size="xl" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-display text-[26px] font-black leading-tight tracking-tight text-ink">

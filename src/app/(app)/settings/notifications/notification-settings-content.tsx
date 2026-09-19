@@ -72,7 +72,7 @@ export function NotificationSettingsContent({
 
   return (
     <div className="min-h-screen bg-paper pb-20">
-      <div className="mx-auto max-w-2xl p-4 pt-12">
+      <div className="mx-auto max-w-2xl p-4 pt-screen">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <Button

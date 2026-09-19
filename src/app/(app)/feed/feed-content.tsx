@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { format, isToday, isYesterday } from 'date-fns'
+import { format, isToday, isYesterday, startOfDay } from 'date-fns'
 import { ActivityCard } from '@/components/activity-card'
 import { PickActivityCard } from '@/components/pick-activity-card'
 import { CalendarView } from '@/components/calendar-view'
@@ -70,7 +70,10 @@ function groupFeedItemsByDate(
   return Array.from(grouped.entries())
     .map(([dateKey, items]) => ({
       dateKey,
-      date: new Date(dateKey),
+      // startOfDay on a real timestamp, NOT new Date(dateKey). Parsing
+      // "2026-09-19" yields UTC midnight, which is the previous evening
+      // anywhere west of UTC — so every header read a day early.
+      date: startOfDay(new Date(items[0].data.created_at)),
       items: items.sort(
         (a, b) =>
           new Date(b.data.created_at).getTime() -

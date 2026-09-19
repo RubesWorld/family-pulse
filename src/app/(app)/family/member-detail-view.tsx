@@ -48,7 +48,7 @@ export function MemberDetailView({
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="px-5 pt-12">
+      <div className="px-5 pt-screen">
         <Button variant="ghost" size="sm" onClick={onBack} className="-ml-3">
           <ArrowLeft className="h-4 w-4" />
           Family

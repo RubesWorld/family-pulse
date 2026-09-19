@@ -59,7 +59,7 @@ export default function AddActivityPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <header className="relative px-5 pb-2 pt-14">
+      <header className="relative px-5 pb-2 pt-screen">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
