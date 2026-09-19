@@ -1,4 +1,4 @@
--- Migration 11a: the join/create RPCs
+-- Migration 11: the join/create RPCs
 --
 -- ---------------------------------------------------------------------------
 -- SAFE TO APPLY TO PRODUCTION AT ANY TIME. Nothing calls these yet, and they
@@ -8,22 +8,22 @@
 -- This is the first half of what was one migration. It was split because the
 -- two halves break each other if deployed out of order:
 --
---   11a (this file)  adds the RPCs.          Additive. No behaviour change.
---   [deploy client]  switches to the RPCs.   Works under 10's policies AND 11b's.
---   11b              tightens the policies.  Breaks any client still writing
+--   11 (this file)  adds the RPCs.          Additive. No behaviour change.
+--   [deploy client]  switches to the RPCs.   Works under 10's policies AND 12's.
+--   12              tightens the policies.  Breaks any client still writing
 --                                            users.family_id directly.
 --
--- Applying 11a first means the client has somewhere to land before 11b removes
+-- Applying 11 first means the client has somewhere to land before 12 removes
 -- the old path, so there is no window in which joining or onboarding is broken.
 --
 -- These are all SECURITY DEFINER and therefore bypass RLS, which is why they
--- work identically before and after 11b.
+-- work identically before and after 12.
 --
 -- Verified against production's dump (2026-09-19): prod's policy set is
--- byte-for-byte 10_performance.sql, so the names 11b drops are the names that
+-- byte-for-byte 10_performance.sql, so the names 12 drops are the names that
 -- are actually there.
 --
--- Rollback: supabase/rollback_11a.sql
+-- Rollback: supabase/rollback_11.sql
 --
 -- Idempotent: CREATE OR REPLACE throughout.
 
@@ -49,7 +49,7 @@ BEGIN;
 -- all — it needs a function that takes the code as an argument, which is not
 -- something a caller can turn into a listing.
 --
--- 11b is what removes the old path. This file only builds the new one.
+-- 12 is what removes the old path. This file only builds the new one.
 
 -- Look up one family by invite code, without granting the ability to browse.
 --

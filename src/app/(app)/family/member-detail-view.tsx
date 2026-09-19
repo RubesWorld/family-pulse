@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { User, InterestCard, UserPick } from '@/types/database'
+import type { FamilyMember } from '@/lib/queries/family'
 import { InterestCard as InterestCardComponent } from '@/components/interest-card'
 import { PickCard } from '@/components/pick-card'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
@@ -11,12 +12,14 @@ import { ArrowLeft, MessageCircle } from 'lucide-react'
 import { openSMS } from '@/lib/sms'
 
 interface MemberDetailViewProps {
-  member: User
+  member: FamilyMember
   /**
-   * Preloaded by the family page rather than fetched here on mount. This used to
-   * run two sequential queries inside a useEffect, so tapping a member showed a
-   * skeleton while two more round-trips completed. The server already knows the
-   * family, so it fetches everyone's cards alongside the member list.
+   * Read from the cache by `family-content.tsx` rather than fetched here on
+   * mount. This used to run two sequential queries inside a useEffect, so
+   * tapping a member showed a skeleton while two more round-trips completed;
+   * then the server preloaded every member's cards alongside the member list.
+   * Now the same rows are already in the query cache, so a tap — and backing
+   * out and tapping someone else — costs no request at all.
    */
   interests: InterestCard[]
   picks: UserPick[]

@@ -5,6 +5,7 @@ import { PickWithUser } from '@/types/database'
 import { getPickCategory } from '@/lib/pick-categories'
 import { PickSticker } from '@/components/ui/pick-sticker'
 import { Surface } from '@/components/ui/surface'
+import { useTheme } from '@/components/theme-provider'
 
 interface PickActivityCardProps {
   pick: PickWithUser & { previous_value?: string | null }
@@ -14,6 +15,7 @@ interface PickActivityCardProps {
 export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
   const category = getPickCategory(pick.category)
   const userName = pick.users?.name || 'Someone'
+  const { glowColor } = useTheme()
 
   return (
     <Surface tilt={tilt}>
@@ -39,8 +41,7 @@ export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
                 aria-hidden
                 className="font-black text-marigold"
                 style={{
-                  textShadow:
-                    '0 0 12px hsl(var(--marigold) / calc(1 * var(--glow)))',
+                  textShadow: `0 0 12px ${glowColor('marigold', 1)}`,
                 }}
               >
                 →

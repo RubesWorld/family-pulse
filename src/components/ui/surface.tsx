@@ -1,5 +1,9 @@
 import { cn } from '@/lib/utils'
 
+// Lives in its own file because it needs the theme's glow multiplier,
+// and therefore the client, which Surface and SectionHeader do not.
+export { NoteCallout } from '@/components/ui/note-callout'
+
 /**
  * The base frosted/solid card used everywhere. Night renders it as
  * translucent glass over the mesh; day renders it solid cream. Both
@@ -49,7 +53,7 @@ export function SectionHeader({
         className="h-0.5 flex-1"
         style={{
           backgroundImage:
-            'repeating-linear-gradient(90deg, hsl(var(--edge) / var(--edge-alpha)) 0 7px, transparent 7px 13px)',
+            'repeating-linear-gradient(90deg, var(--edge) 0 7px, transparent 7px 13px)',
         }}
       />
       {action}
@@ -77,31 +81,5 @@ export function MetaChip({
       {Icon ? <Icon className="h-3 w-3 flex-none" /> : null}
       {children}
     </span>
-  )
-}
-
-/** The marigold-bordered aside used for "notes for family". */
-export function NoteCallout({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    // Square-ish left edge so the marigold rule reads as a margin note.
-    // A fully-rounded pill made this look like an empty text input.
-    <p
-      className={cn(
-        'rounded-l-[4px] rounded-r-2xl border-l-[3px] border-marigold/75 bg-marigold/[0.11] px-3.5 py-2.5 font-display text-[14px] italic leading-relaxed text-ink-soft',
-        className
-      )}
-      style={{
-        boxShadow:
-          '0 4px 22px -8px hsl(var(--marigold) / calc(0.55 * var(--glow)))',
-      }}
-    >
-      {children}
-    </p>
   )
 }

@@ -1,6 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  interestCardKeys,
+  saveInterestCards,
+  type InterestCardDraft,
+} from '@/lib/queries/interest-cards'
+import { pickKeys } from '@/lib/queries/picks'
+import { useSession } from '@/lib/supabase/session-context'
 import { PRESET_INTERESTS } from '@/lib/interests'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,23 +19,19 @@ import { Plus, X } from 'lucide-react'
 
 interface InterestCardEditorProps {
   userId: string
-  existingCards: Array<{
-    category: string
-    description: string
-    is_custom: boolean
-    tags: string[]
-  }>
-  onSave: () => void
+  existingCards: InterestCardDraft[]
+  /** Called once the save has landed *and* the cache reflects it. */
+  onSaved: () => void
 }
 
-export function InterestCardEditor({ userId, existingCards, onSave }: InterestCardEditorProps) {
+export function InterestCardEditor({ userId, existingCards, onSaved }: InterestCardEditorProps) {
+  const { supabase } = useSession()
+  const queryClient = useQueryClient()
   const [cards, setCards] = useState(existingCards)
   const [showAddPreset, setShowAddPreset] = useState(false)
   const [showAddCustom, setShowAddCustom] = useState(false)
   const [customName, setCustomName] = useState('')
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({}) // Track tag input for each card
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Get preset interests not yet added
   const availablePresets = PRESET_INTERESTS.filter(
@@ -90,45 +94,37 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
     setCards(prev => prev.filter(card => card.category !== category))
   }
 
-  const handleSave = async () => {
-    setSaving(true)
-    setError(null)
+  const save = useMutation({
+    mutationFn: () => {
+      // The categories that were on file when this editor opened and are no
+      // longer in `cards` — the only rows the save is allowed to delete. The
+      // previous version deleted everything the user had and then re-inserted,
+      // which meant a failed insert wiped the lot.
+      const kept = new Set(cards.map((card) => card.category))
+      const removed = existingCards
+        .map((card) => card.category)
+        .filter((category) => !kept.has(category))
 
-    try {
-      const supabase = (await import('@/lib/supabase/client')).createClient()
+      return saveInterestCards(supabase, userId, cards, removed)
+    },
+    onSuccess: async () => {
+      // Interests are read on Profile and on Family, and picks carry an
+      // `interest_tag` naming one — a renamed or removed interest changes what
+      // a pick card displays, so both prefixes go.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: interestCardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: pickKeys.all }),
+      ])
+      onSaved()
+    },
+  })
 
-      // Delete existing cards
-      const { error: deleteError } = await supabase
-        .from('interest_cards')
-        .delete()
-        .eq('user_id', userId)
-
-      if (deleteError) throw deleteError
-
-      // Insert new cards
-      if (cards.length > 0) {
-        const { error: insertError } = await supabase
-          .from('interest_cards')
-          .insert(
-            cards.map(card => ({
-              user_id: userId,
-              category: card.category,
-              is_custom: card.is_custom,
-              description: card.description,
-              tags: card.tags
-            }))
-          )
-
-        if (insertError) throw insertError
-      }
-
-      onSave()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save interests')
-    } finally {
-      setSaving(false)
-    }
-  }
+  const saving = save.isPending
+  const error = save.error
+    ? save.error instanceof Error
+      ? save.error.message
+      : 'Failed to save interests'
+    : null
 
   return (
     <div className="space-y-4">
@@ -295,7 +291,12 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
       )}
 
       {/* Save button */}
-      <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
+      <Button
+        onClick={() => save.mutate()}
+        className="w-full"
+        size="lg"
+        disabled={saving}
+      >
         {saving ? 'Saving...' : 'Save Interests'}
       </Button>
     </div>

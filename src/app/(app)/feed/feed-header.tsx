@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Share2, Check, List, Calendar, Activity, Heart } from 'lucide-react'
+import { Swash } from '@/components/ui/swash'
+import { useTheme } from '@/components/theme-provider'
 import { cn } from '@/lib/utils'
 
 export type FeedFilter = 'all' | 'activities' | 'picks'
@@ -30,6 +32,7 @@ export function FeedHeader({
   onFilterChange,
 }: FeedHeaderProps) {
   const [copied, setCopied] = useState(false)
+  const { glowColor } = useTheme()
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -79,20 +82,7 @@ export function FeedHeader({
       </h1>
 
       {/* hand-drawn swash under the family name */}
-      <svg
-        aria-hidden
-        viewBox="0 0 132 9"
-        fill="none"
-        className="mt-0.5 block h-2 w-32 text-marigold"
-        style={{ filter: 'drop-shadow(0 0 8px hsl(var(--marigold) / var(--glow)))' }}
-      >
-        <path
-          d="M2 6.2c22-4.4 44-5.2 66-3.1 21 2 42 2.4 63-.6"
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      </svg>
+      <Swash profile="header" className="w-32" />
 
       <button
         type="button"
@@ -126,7 +116,7 @@ export function FeedHeader({
               className={cn(
                 'flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-[13.5px] font-extrabold capitalize transition-all',
                 active
-                  ? 'bg-gradient-to-br from-coral to-marigold text-on-ink shadow-[0_6px_22px_-5px_hsl(var(--coral)/calc(0.85*var(--glow)))]'
+                  ? 'bg-gradient-to-br from-coral to-marigold text-on-ink shadow-[0_6px_22px_-5px_rgb(var(--coral)/calc(0.85*var(--glow)))]'
                   : 'border-card border-edge bg-card text-ink-soft backdrop-blur-card'
               )}
             >
@@ -157,8 +147,10 @@ export function FeedHeader({
                 style={
                   active
                     ? {
-                        boxShadow:
-                          '0 5px 20px -5px hsl(var(--marigold) / calc(0.75 * var(--glow)))',
+                        boxShadow: `0 5px 20px -5px ${glowColor(
+                          'marigold',
+                          0.75
+                        )}`,
                       }
                     : undefined
                 }

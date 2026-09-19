@@ -62,15 +62,17 @@ export const getCurrentProfile = cache(async () => {
   return data
 })
 
-/**
- * IDs of everyone in the caller's family. Used to scope picks and activities.
- */
-export const getFamilyMemberIds = cache(async (familyId: string) => {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id')
-    .eq('family_id', familyId)
-
-  return (data ?? []).map((m) => m.id)
-})
+// `getFamilyMemberIds` lived here. It resolved the caller's family members so
+// the server components could pass `.in('user_id', memberIds)` into every picks,
+// activities and interest-cards query.
+//
+// It is gone because that filter was never the boundary. The RLS policies scope
+// those three tables to `current_family_member_ids()` on their own, and once the
+// queries moved into the browser the id list became a parameter the caller
+// chooses — which cannot be a security control. Keeping it would have left
+// something that looks like a boundary sitting where the real one is.
+//
+// supabase/verify_isolation.sql is what actually asserts the scoping now: 49
+// checks run as the `authenticated` role with a real JWT, including unfiltered
+// `select * from picks / activities / interest_cards` that must return only the
+// caller's family.

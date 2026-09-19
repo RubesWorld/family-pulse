@@ -1,15 +1,15 @@
--- Emergency rollback for 11b_rls_hardening.sql.
+-- Emergency rollback for 12_rls_hardening.sql.
 --
 -- Restores 10_performance.sql's policy set exactly, by recreating it from
 -- source rather than from a log. That is possible here — and it is why this
--- file is so much simpler than rollback_10.sql — because migration 11b only
+-- file is so much simpler than rollback_10.sql — because migration 12 only
 -- ever runs AFTER migration 10, so the state it replaced is known: it is
 -- whatever 10_performance.sql section 4 creates. No drift to reconstruct.
 --
 -- ---------------------------------------------------------------------------
 -- WHAT THIS GIVES YOU BACK, INCLUDING THE BAD PARTS
 -- ---------------------------------------------------------------------------
--- migration 11b closed eight defects. Running this REOPENS ALL OF THEM:
+-- migration 12 closed eight defects. Running this REOPENS ALL OF THEM:
 --
 --   * every family's invite_code becomes readable with the bare anon key
 --   * any authenticated user can move themselves into any family
@@ -20,12 +20,12 @@
 --
 -- This is a get-the-app-working-again lever for the case where migration 11
 -- broke a flow in production and the fix is not obvious at 11pm. It is not a
--- resting place. If you run it, the client changes migration 11b required
+-- resting place. If you run it, the client changes migration 12 required
 -- (join/[code] and create-family calling the RPCs) must be reverted too, or
 -- joining a family stops working entirely — those pages will be calling
 -- functions that this file leaves in place but that nothing grants meaning to.
 --
--- More likely than a rollback: migration 11b did exactly what it says and a
+-- More likely than a rollback: migration 12 did exactly what it says and a
 -- client page was not updated alongside it. Check that first.
 --
 -- Safe to re-run. Runs in one transaction.
@@ -120,7 +120,7 @@ CREATE POLICY "Users can update own answers"
 DROP POLICY IF EXISTS "Users can update own push subscriptions" ON push_subscriptions;
 
 -- --- helper function grants ------------------------------------------------
--- migration 11b revoked EXECUTE from anon by name (REVOKE FROM PUBLIC alone did
+-- migration 12 revoked EXECUTE from anon by name (REVOKE FROM PUBLIC alone did
 -- not do it, because Supabase's default privileges grant anon explicitly).
 -- Restoring migration 10's state means putting that grant back.
 GRANT EXECUTE ON FUNCTION public.current_family_id()         TO anon;
@@ -128,10 +128,10 @@ GRANT EXECUTE ON FUNCTION public.current_family_member_ids() TO anon;
 
 COMMIT;
 
--- The three RPCs migration 11b added are deliberately LEFT IN PLACE:
+-- The three RPCs migration 12 added are deliberately LEFT IN PLACE:
 -- family_by_invite_code, join_family_by_invite_code, create_family_with_owner.
 -- Nothing breaks by keeping them — with `families` readable again the client
--- does not need them — and keeping them means re-applying migration 11b later
+-- does not need them — and keeping them means re-applying migration 12 later
 -- does not have to recreate them. To remove:
 --   DROP FUNCTION IF EXISTS public.create_family_with_owner(text, text);
 --   DROP FUNCTION IF EXISTS public.join_family_by_invite_code(text);

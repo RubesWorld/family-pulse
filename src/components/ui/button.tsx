@@ -12,7 +12,7 @@ const buttonVariants = cva(
         // The warm gradient with its own bloom — used for the one real
         // action on a screen.
         default:
-          "bg-gradient-to-br from-coral to-marigold text-on-ink shadow-[0_8px_24px_-6px_hsl(var(--coral)/calc(0.9*var(--glow))),inset_0_1px_0_rgb(255_255_255_/_0.4)] hover:brightness-105",
+          "bg-gradient-to-br from-coral to-marigold text-on-ink shadow-[0_8px_24px_-6px_rgb(var(--coral)/calc(0.9*var(--glow))),inset_0_1px_0_rgb(255_255_255_/_0.4)] hover:brightness-105",
         // Ink-filled. Quieter than default, still clearly a button.
         solid:
           "bg-ink text-paper shadow-[0_8px_20px_-7px_hsl(var(--ink)/0.6)] hover:brightness-110",

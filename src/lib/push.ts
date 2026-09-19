@@ -94,6 +94,29 @@ export async function getCurrentSubscription(): Promise<PushSubscription | null>
 }
 
 /**
+ * Whether an existing subscription was created against the VAPID key this
+ * build is configured with.
+ *
+ * Worth checking on launch because a subscription signed with a rotated-out
+ * key keeps looking perfectly healthy on the client — getSubscription() still
+ * returns it — while every send against it fails server-side. So a mismatch
+ * has to be treated the same as no subscription at all.
+ */
+export function matchesConfiguredVapidKey(
+  subscription: PushSubscription
+): boolean {
+  const applied = subscription.options.applicationServerKey
+  if (!applied) return false
+
+  const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+  const actual = new Uint8Array(applied)
+
+  if (actual.length !== expected.length) return false
+
+  return actual.every((byte, index) => byte === expected[index])
+}
+
+/**
  * Unsubscribe from push notifications
  */
 export async function unsubscribeFromPush(): Promise<boolean> {

@@ -1,69 +1,157 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  ensureNotificationPreferences,
+  fetchNotificationPreferences,
+  notificationKeys,
+  updateNotificationPreferences,
+  type NotificationPreferencesPatch,
+} from '@/lib/queries/notifications'
+import { useSession } from '@/lib/supabase/session-context'
 import type { NotificationPreferences } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { EnablePushCard } from '@/components/notifications/enable-push-card'
 
-interface NotificationSettingsContentProps {
-  preferences: NotificationPreferences | null
-}
-
-export function NotificationSettingsContent({
-  preferences: initialPreferences,
-}: NotificationSettingsContentProps) {
+export function NotificationSettingsContent() {
   const router = useRouter()
-  const supabase = createClient()
-  const [preferences, setPreferences] = useState(initialPreferences)
-  const [isSaving, setIsSaving] = useState(false)
+  const queryClient = useQueryClient()
+  const { supabase, user } = useSession()
 
-  const handleToggle = async (field: keyof NotificationPreferences, value: boolean) => {
-    if (!preferences) return
+  const userId = user?.id ?? ''
+  const preferencesKey = notificationKeys.preferences(userId)
 
-    setIsSaving(true)
+  const preferencesQuery = useQuery({
+    queryKey: preferencesKey,
+    queryFn: () => fetchNotificationPreferences(supabase, userId),
+    enabled: Boolean(userId),
+  })
 
-    const { error } = await supabase
-      .from('notification_preferences')
-      .update({ [field]: value })
-      .eq('user_id', preferences.user_id)
+  /**
+   * The row this screen edits may not exist yet, and something has to create
+   * it. That used to happen in `page.tsx` during render — a GET that wrote,
+   * with `force-dynamic` set so it happened on every visit.
+   *
+   * It is an upsert now, and it is a mutation: it runs from an effect after the
+   * read has settled, not while the tree is rendering. Behaviour is otherwise
+   * the same — opening this screen is still what backfills the row — so this is
+   * not a fourth creation path alongside the migration's backfill and
+   * `api/push/subscribe`, it is the same one made explicit.
+   */
+  const {
+    mutate: ensurePreferences,
+    reset: resetCreation,
+    isPending: isCreating,
+    isError: creationFailed,
+  } = useMutation({
+    mutationFn: () => ensureNotificationPreferences(supabase, userId),
+    onSuccess: (row) => queryClient.setQueryData(preferencesKey, row),
+  })
 
-    if (error) {
-      console.error('Error updating notification preferences:', error)
-    } else {
-      setPreferences({ ...preferences, [field]: value })
-    }
+  // One attempt per mount. Without the latch a failing upsert would retry on
+  // every render for as long as the screen is open.
+  const creationAttempted = useRef(false)
 
-    setIsSaving(false)
-  }
+  const { isPending: isLoadingPreferences, isError: readFailed } =
+    preferencesQuery
+  const preferences = preferencesQuery.data ?? null
 
-  const handleTimeChange = async (field: 'quiet_hours_start' | 'quiet_hours_end', value: string) => {
-    if (!preferences) return
+  useEffect(() => {
+    if (creationAttempted.current) return
+    if (!userId || isLoadingPreferences || readFailed) return
+    if (preferences) return
 
-    setIsSaving(true)
+    creationAttempted.current = true
+    ensurePreferences()
+  }, [
+    userId,
+    isLoadingPreferences,
+    readFailed,
+    preferences,
+    ensurePreferences,
+  ])
 
-    const { error } = await supabase
-      .from('notification_preferences')
-      .update({ [field]: value })
-      .eq('user_id', preferences.user_id)
+  /**
+   * One mutation behind every toggle and both time fields.
+   *
+   * Optimistic, because a switch that waits for a round-trip before moving
+   * reads as broken. On failure the cache is rolled back, which is what makes
+   * the switch visibly snap back instead of the previous behaviour — a
+   * `console.error` and a control that silently disagreed with the database.
+   */
+  const updateMutation = useMutation({
+    mutationFn: (patch: NotificationPreferencesPatch) =>
+      updateNotificationPreferences(supabase, userId, patch),
+    onMutate: async (patch) => {
+      await queryClient.cancelQueries({ queryKey: preferencesKey })
 
-    if (error) {
-      console.error('Error updating quiet hours:', error)
-    } else {
-      setPreferences({ ...preferences, [field]: value })
-    }
+      const previous =
+        queryClient.getQueryData<NotificationPreferences | null>(preferencesKey)
 
-    setIsSaving(false)
-  }
+      if (previous) {
+        queryClient.setQueryData(preferencesKey, { ...previous, ...patch })
+      }
 
-  if (!preferences) {
+      return { previous }
+    },
+    onError: (_error, _patch, context) => {
+      queryClient.setQueryData(preferencesKey, context?.previous ?? null)
+    },
+    // The stored row, not the guess: `updated_at` is set by a trigger, so the
+    // optimistic copy is never quite what the database holds.
+    onSuccess: (row) => queryClient.setQueryData(preferencesKey, row),
+  })
+
+  const isSaving = updateMutation.isPending
+  const savePatch = (patch: NotificationPreferencesPatch) =>
+    updateMutation.mutate(patch)
+
+  // "The read came back empty" is a loading state, not an empty one — the
+  // effect above is about to create the row. Only once that creation has
+  // actually failed does this become something to report.
+  const awaitingCreation =
+    Boolean(userId) && !isLoadingPreferences && !readFailed && !preferences
+
+  if (isLoadingPreferences || isCreating || (awaitingCreation && !creationFailed)) {
     return (
       <div className="min-h-screen bg-paper">
         <div className="mx-auto max-w-2xl p-4">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-coral" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!preferences) {
+    // Previously unreachable as a visible state: a failed read left
+    // `preferences` null and the screen spun forever.
+    return (
+      <div className="min-h-screen bg-paper">
+        <div className="mx-auto max-w-2xl p-4 pt-12">
+          <div className="rounded-card border-card border-edge bg-card px-6 py-12 text-center backdrop-blur-card">
+            <p className="font-display text-lg font-bold text-ink">
+              Couldn&apos;t load your notification settings
+            </p>
+            <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
+              Check your connection and try again.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => {
+                creationAttempted.current = false
+                resetCreation()
+                preferencesQuery.refetch()
+              }}
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </div>
@@ -87,6 +175,12 @@ export function NotificationSettingsContent({
             Notifications
           </h1>
         </div>
+
+        {updateMutation.isError && (
+          <p className="mb-4 text-[12.5px] font-bold text-destructive">
+            That change didn&apos;t save. Please try again.
+          </p>
+        )}
 
         <div className="space-y-6">
           {/* Push Notification Enable/Disable */}
@@ -114,14 +208,14 @@ export function NotificationSettingsContent({
                     label="Your Turn to Ask"
                     description="When it's your turn to choose the weekly question"
                     checked={preferences.notify_your_turn}
-                    onChange={(checked) => handleToggle('notify_your_turn', checked)}
+                    onChange={(checked) => savePatch({ notify_your_turn: checked })}
                     disabled={isSaving}
                   />
                   <NotificationToggle
                     label="Pending Question Reminder"
                     description="Reminder to choose a question when it's pending"
                     checked={preferences.notify_pending_reminder}
-                    onChange={(checked) => handleToggle('notify_pending_reminder', checked)}
+                    onChange={(checked) => savePatch({ notify_pending_reminder: checked })}
                     disabled={isSaving}
                   />
                 </div>
@@ -137,14 +231,14 @@ export function NotificationSettingsContent({
                     label="Last to Answer"
                     description="When you're the last one who hasn't answered"
                     checked={preferences.notify_last_to_answer}
-                    onChange={(checked) => handleToggle('notify_last_to_answer', checked)}
+                    onChange={(checked) => savePatch({ notify_last_to_answer: checked })}
                     disabled={isSaving}
                   />
                   <NotificationToggle
                     label="Weekly Digest"
                     description="Summary of family activity each week"
                     checked={preferences.notify_weekly_digest}
-                    onChange={(checked) => handleToggle('notify_weekly_digest', checked)}
+                    onChange={(checked) => savePatch({ notify_weekly_digest: checked })}
                     disabled={isSaving}
                   />
                 </div>
@@ -160,21 +254,21 @@ export function NotificationSettingsContent({
                     label="New Activities"
                     description="When family members share new activities"
                     checked={preferences.notify_activities}
-                    onChange={(checked) => handleToggle('notify_activities', checked)}
+                    onChange={(checked) => savePatch({ notify_activities: checked })}
                     disabled={isSaving}
                   />
                   <NotificationToggle
                     label="New Answers"
                     description="When family members answer questions"
                     checked={preferences.notify_answers}
-                    onChange={(checked) => handleToggle('notify_answers', checked)}
+                    onChange={(checked) => savePatch({ notify_answers: checked })}
                     disabled={isSaving}
                   />
                   <NotificationToggle
                     label="New Picks"
                     description="When family members update their picks"
                     checked={preferences.notify_picks}
-                    onChange={(checked) => handleToggle('notify_picks', checked)}
+                    onChange={(checked) => savePatch({ notify_picks: checked })}
                     disabled={isSaving}
                   />
                 </div>
@@ -196,7 +290,7 @@ export function NotificationSettingsContent({
                 label="Enable Quiet Hours"
                 description="Pause notifications during your quiet hours"
                 checked={preferences.quiet_hours_enabled}
-                onChange={(checked) => handleToggle('quiet_hours_enabled', checked)}
+                onChange={(checked) => savePatch({ quiet_hours_enabled: checked })}
                 disabled={isSaving}
               />
 
@@ -209,7 +303,7 @@ export function NotificationSettingsContent({
                     <input
                       type="time"
                       value={preferences.quiet_hours_start}
-                      onChange={(e) => handleTimeChange('quiet_hours_start', e.target.value)}
+                      onChange={(e) => savePatch({ quiet_hours_start: e.target.value })}
                       disabled={isSaving}
                       className="w-full rounded-field border-card border-edge bg-field px-3 py-2.5 text-[14px] font-semibold text-ink focus:border-coral focus:outline-none"
                     />
@@ -221,7 +315,7 @@ export function NotificationSettingsContent({
                     <input
                       type="time"
                       value={preferences.quiet_hours_end}
-                      onChange={(e) => handleTimeChange('quiet_hours_end', e.target.value)}
+                      onChange={(e) => savePatch({ quiet_hours_end: e.target.value })}
                       disabled={isSaving}
                       className="w-full rounded-field border-card border-edge bg-field px-3 py-2.5 text-[14px] font-semibold text-ink focus:border-coral focus:outline-none"
                     />
@@ -245,21 +339,21 @@ export function NotificationSettingsContent({
                 label="Push Notifications"
                 description="Browser notifications on this device"
                 checked={preferences.push_enabled}
-                onChange={(checked) => handleToggle('push_enabled', checked)}
+                onChange={(checked) => savePatch({ push_enabled: checked })}
                 disabled={isSaving}
               />
               <NotificationToggle
                 label="Email Notifications"
                 description="Send notifications to your email (coming soon)"
                 checked={preferences.email_enabled}
-                onChange={(checked) => handleToggle('email_enabled', checked)}
+                onChange={(checked) => savePatch({ email_enabled: checked })}
                 disabled={true}
               />
               <NotificationToggle
                 label="SMS Notifications"
                 description="Send notifications via text message (coming soon)"
                 checked={preferences.sms_enabled}
-                onChange={(checked) => handleToggle('sms_enabled', checked)}
+                onChange={(checked) => savePatch({ sms_enabled: checked })}
                 disabled={true}
               />
             </div>

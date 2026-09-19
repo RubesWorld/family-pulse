@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Nunito } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
+import { splashLinks } from "@/lib/ios-splash";
 
 // main removed the Geist fonts because they were loaded and never applied —
 // nothing read --font-geist-sans, so 134 kB was preloaded and thrown away on
@@ -68,6 +69,17 @@ export default function RootLayout({
         {/* Resolves the stored/system theme before first paint so the
             app never flashes the wrong paper colour. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* iOS launch images. The Metadata API has no field for this link
+            type, so they go here. See src/lib/ios-splash.ts for why there
+            are so many and which devices each covers. */}
+        {splashLinks().map(({ media, href }) => (
+          <link
+            key={href + media}
+            rel="apple-touch-startup-image"
+            media={media}
+            href={href}
+          />
+        ))}
       </head>
       {/* `antialiased` now comes from the body rule in globals.css. */}
       <body className={`${fraunces.variable} ${nunito.variable}`}>

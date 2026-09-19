@@ -2,6 +2,8 @@
 
 import { InterestCardWithUser } from '@/types/database'
 import { PRESET_INTERESTS, getInterestById } from '@/lib/interests'
+import { useTheme } from '@/components/theme-provider'
+import type { PersonAccent } from '@/lib/person-color'
 import { cn } from '@/lib/utils'
 
 interface InterestCardProps {
@@ -15,27 +17,27 @@ interface InterestCardProps {
  * radial gradient behind the content rather than a flat background, so
  * it reads as light falling on the card in both themes.
  */
-const INTEREST_TINT: Record<string, string> = {
-  music: 'var(--denim)',
-  movies: 'var(--plum)',
-  reading: 'var(--plum)',
-  books: 'var(--plum)',
-  sports: 'var(--sage)',
-  fitness: 'var(--sage)',
-  nature: 'var(--sage)',
-  gardening: 'var(--sage)',
-  cooking: 'var(--marigold)',
-  art: 'var(--coral)',
-  crafts: 'var(--coral)',
-  pets: 'var(--marigold)',
-  travel: 'var(--denim)',
-  tech: 'var(--denim)',
-  gaming: 'var(--plum)',
-  photography: 'var(--coral)',
+const INTEREST_TINT: Record<string, PersonAccent> = {
+  music: 'denim',
+  movies: 'plum',
+  reading: 'plum',
+  books: 'plum',
+  sports: 'sage',
+  fitness: 'sage',
+  nature: 'sage',
+  gardening: 'sage',
+  cooking: 'marigold',
+  art: 'coral',
+  crafts: 'coral',
+  pets: 'marigold',
+  travel: 'denim',
+  tech: 'denim',
+  gaming: 'plum',
+  photography: 'coral',
 }
 
-function tintFor(category: string): string {
-  return INTEREST_TINT[category.toLowerCase()] ?? 'var(--coral)'
+function tintFor(category: string): PersonAccent {
+  return INTEREST_TINT[category.toLowerCase()] ?? 'coral'
 }
 
 export function InterestCard({
@@ -43,11 +45,12 @@ export function InterestCard({
   onClick,
   isSelected,
 }: InterestCardProps) {
+  const { accents, glow } = useTheme()
   const preset =
     getInterestById(interest.category) ??
     PRESET_INTERESTS.find((p) => p.id === interest.category)
   const label = preset?.label || interest.category
-  const tint = tintFor(interest.category)
+  const tint = accents[tintFor(interest.category)]
 
   const Wrapper = onClick ? 'button' : 'div'
 
@@ -66,8 +69,9 @@ export function InterestCard({
         aria-hidden
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 82% 18%, hsl(${tint}), transparent 62%)`,
-          opacity: 'calc(0.16 * var(--glow) + 0.06)',
+          background: `radial-gradient(circle at 82% 18%, ${tint}, transparent 62%)`,
+          // A floor under the wash so it does not vanish in day.
+          opacity: 0.16 * glow + 0.06,
         }}
       />
 

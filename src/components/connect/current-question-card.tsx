@@ -2,6 +2,8 @@
 
 import { QuestionWithAnswers, User } from '@/types/database'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
+import { useTheme } from '@/components/theme-provider'
+import { withAlpha } from '@/lib/theme-tokens'
 import { formatWeekDisplay } from '@/lib/connect-utils'
 import { CheckCircle2 } from 'lucide-react'
 
@@ -16,6 +18,7 @@ export function CurrentQuestionCard({
   familyMembers,
   totalAnswers,
 }: CurrentQuestionCardProps) {
+  const { accents, glowColor } = useTheme()
   const totalMembers = familyMembers.length
   const isComplete = totalMembers > 0 && totalAnswers === totalMembers
   const pct = totalMembers > 0 ? (totalAnswers / totalMembers) * 100 : 0
@@ -31,11 +34,15 @@ export function CurrentQuestionCard({
     <div
       className="rounded-card border-card p-5 backdrop-blur-card"
       style={{
-        background:
-          'linear-gradient(150deg, hsl(var(--plum) / 0.22), hsl(var(--denim) / 0.12))',
-        borderColor: 'hsl(var(--plum) / 0.34)',
-        boxShadow:
-          '0 14px 40px -16px hsl(var(--plum) / calc(0.85 * var(--glow))), inset 0 1px 0 rgb(255 235 210 / 0.14)',
+        background: `linear-gradient(150deg, ${withAlpha(
+          accents.plum,
+          0.22
+        )}, ${withAlpha(accents.denim, 0.12)})`,
+        borderColor: withAlpha(accents.plum, 0.34),
+        boxShadow: `0 14px 40px -16px ${glowColor(
+          'plum',
+          0.85
+        )}, inset 0 1px 0 rgb(255 235 210 / 0.14)`,
       }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -60,8 +67,7 @@ export function CurrentQuestionCard({
           className="h-full rounded-full bg-gradient-to-r from-coral to-marigold transition-[width] duration-500"
           style={{
             width: `${pct}%`,
-            boxShadow:
-              '0 0 14px hsl(var(--marigold) / calc(0.9 * var(--glow)))',
+            boxShadow: `0 0 14px ${glowColor('marigold', 0.9)}`,
           }}
         />
       </div>

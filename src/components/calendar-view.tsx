@@ -19,7 +19,8 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ActivityCard } from '@/components/activity-card'
 import { SectionHeader } from '@/components/ui/surface'
-import { accentVar, personAccent } from '@/lib/person-color'
+import { useTheme } from '@/components/theme-provider'
+import { personAccent } from '@/lib/person-color'
 import { cn } from '@/lib/utils'
 import type { ActivityWithUser } from '@/types/database'
 
@@ -48,6 +49,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const router = useRouter()
+  const { accents } = useTheme()
 
   const activitiesByDate = useMemo(
     () => groupActivitiesByDate(activities),
@@ -152,9 +154,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
                         key={activity.id}
                         className="block h-1.5 w-1.5 rounded-full"
                         style={{
-                          background: `hsl(${accentVar(
-                            personAccent(activity.user_id)
-                          )})`,
+                          background: accents[personAccent(activity.user_id)],
                         }}
                       />
                     ))}

@@ -15,7 +15,10 @@ export const config = {
      * - manifest.json, sw.js (PWA install + push; the browser may request
      *   these without credentials, and redirecting them to /login breaks
      *   both Home Screen install and service worker registration)
+     * - offline (the worker's navigation fallback. It precaches this at
+     *   install time with no session, so a redirect to /login would be
+     *   cached under /offline and then shown whenever the network drops)
      */
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|offline|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

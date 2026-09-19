@@ -4,6 +4,7 @@ import { formatDistanceToNow, format, isToday, isTomorrow, isYesterday } from 'd
 import { MapPin, Calendar, MessageCircle } from 'lucide-react'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { MetaChip, NoteCallout, Surface } from '@/components/ui/surface'
+import { useTheme } from '@/components/theme-provider'
 import { ActivityWithUser } from '@/types/database'
 import { openSMS } from '@/lib/sms'
 
@@ -33,6 +34,7 @@ function formatActivityTime(date: string | null): string | null {
 export function ActivityCard({ activity, tilt }: ActivityCardProps) {
   const timeAgo = formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })
   const activityTime = formatActivityTime(activity.starts_at)
+  const { glowColor } = useTheme()
 
   const handleTextClick = () => {
     if (!activity.users?.phone_number) return
@@ -90,8 +92,10 @@ export function ActivityCard({ activity, tilt }: ActivityCardProps) {
               onClick={handleTextClick}
               className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-coral to-marigold px-4 py-2.5 text-[12.5px] font-extrabold text-on-ink transition-transform active:scale-95"
               style={{
-                boxShadow:
-                  '0 8px 24px -6px hsl(var(--coral) / calc(0.9 * var(--glow))), inset 0 1px 0 rgb(255 255 255 / 0.45)',
+                boxShadow: `0 8px 24px -6px ${glowColor(
+                  'coral',
+                  0.9
+                )}, inset 0 1px 0 rgb(255 255 255 / 0.45)`,
               }}
             >
               <MessageCircle className="h-3.5 w-3.5" />

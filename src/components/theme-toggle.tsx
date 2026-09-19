@@ -36,7 +36,7 @@ export function ThemeToggle() {
             className={cn(
               'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-extrabold transition-colors',
               active
-                ? 'bg-coral text-on-ink shadow-[0_5px_18px_-4px_hsl(var(--coral)/0.8)]'
+                ? 'bg-coral text-on-ink shadow-[0_5px_18px_-4px_rgb(var(--coral)/0.8)]'
                 : 'text-ink-soft hover:text-ink'
             )}
           >

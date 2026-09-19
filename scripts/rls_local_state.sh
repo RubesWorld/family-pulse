@@ -163,16 +163,19 @@ preflight() {
 
 # Migrations to apply, in numeric order, honouring --through.
 #
-# Prefixes may carry a letter suffix (11a, 11b) for migrations that must be
-# split across deploys. The letter orders them within the number — plain `sort`
-# already does that correctly, since "11a" < "11b" — and is dropped for the
-# --through comparison, so `--through 11` means "all of 11".
+# A letter suffix (11a, 11b) is tolerated: the letter orders within the number,
+# which plain `sort` already gets right, and is dropped for the --through
+# comparison. Nothing uses that form today — an earlier split was named 11a/11b
+# and has since been renumbered to 11/12, because the Supabase CLI does NOT
+# accept it and silently skipped both files on `supabase start`. Prefer plain
+# numbers. The tolerance stays only so this script is not the thing that breaks
+# if someone reaches for a suffix again.
 #
 # An unparseable .sql file is a hard error, not a skip. The earlier version
-# skipped silently, and when 11_rls_hardening.sql was split into 11a/11b it
-# quietly applied neither: the isolation suite then reported the unfixed
-# database as though the fix had been tested. A harness that ignores a
-# migration is worse than one that refuses to run.
+# skipped silently, and during that 11a/11b experiment it quietly applied
+# neither: the isolation suite then reported an unfixed database as though the
+# fix had been tested. That is the failure this `die` exists to prevent — a
+# harness that ignores a migration is worse than one that refuses to run.
 migration_files() {
   local f base num digits
   for f in "$MIGRATIONS_DIR"/*.sql; do

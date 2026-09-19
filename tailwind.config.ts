@@ -7,9 +7,11 @@ import type { Config } from "tailwindcss";
  * so switching `data-theme` on <html> re-themes the whole app without
  * any component knowing which theme it is in.
  *
- * Accents accept Tailwind alpha modifiers (bg-coral/20). Surfaces bake
- * in their own alpha token instead, because night uses translucent
- * frosted cards while day uses solid ones.
+ * Accents are space-separated RGB triples and accept Tailwind alpha
+ * modifiers (bg-coral/20). Surfaces are finished colours with their
+ * alpha already applied, because night uses translucent frosted cards
+ * while day uses solid ones and nothing ever varies that alpha on its
+ * own.
  */
 const config: Config = {
   // Themes are driven entirely by tokens, so `dark:` is rarely needed —
@@ -23,25 +25,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // --- surfaces (alpha baked in per theme) ---
+        // --- surfaces (finished colours, alpha already applied) ---
         paper: "hsl(var(--paper))",
         "paper-2": "hsl(var(--paper-2))",
-        card: "hsl(var(--card) / var(--card-alpha))",
-        edge: "hsl(var(--edge) / var(--edge-alpha))",
-        field: "hsl(var(--field) / var(--field-alpha))",
-        nav: "hsl(var(--nav-bg) / var(--nav-bg-alpha))",
+        card: "var(--card)",
+        edge: "var(--edge)",
+        field: "var(--field)",
+        nav: "var(--nav-bg)",
 
         // --- ink ---
         ink: "hsl(var(--ink))",
-        "ink-soft": "hsl(var(--ink-soft) / var(--ink-soft-alpha))",
-        "ink-faint": "hsl(var(--ink-faint) / var(--ink-faint-alpha))",
+        "ink-soft": "var(--ink-soft)",
+        "ink-faint": "var(--ink-faint)",
 
         // --- person accents (alpha-modifier friendly) ---
-        coral: "hsl(var(--coral) / <alpha-value>)",
-        denim: "hsl(var(--denim) / <alpha-value>)",
-        plum: "hsl(var(--plum) / <alpha-value>)",
-        marigold: "hsl(var(--marigold) / <alpha-value>)",
-        sage: "hsl(var(--sage) / <alpha-value>)",
+        coral: "rgb(var(--coral) / <alpha-value>)",
+        denim: "rgb(var(--denim) / <alpha-value>)",
+        plum: "rgb(var(--plum) / <alpha-value>)",
+        marigold: "rgb(var(--marigold) / <alpha-value>)",
+        sage: "rgb(var(--sage) / <alpha-value>)",
 
         "on-accent": "hsl(var(--on-accent))",
         "on-ink": "hsl(var(--on-ink))",
@@ -49,8 +51,10 @@ const config: Config = {
         // --- shadcn compatibility ---
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        // --primary, --accent and --ring alias accent tokens, so they
+        // carry the accents' RGB-triple shape rather than HSL.
         primary: {
-          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+          DEFAULT: "rgb(var(--primary) / <alpha-value>)",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -59,10 +63,10 @@ const config: Config = {
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground) / var(--ink-soft-alpha))",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent) / <alpha-value>)",
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
           foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
@@ -73,9 +77,9 @@ const config: Config = {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
-        border: "hsl(var(--border) / var(--edge-alpha))",
-        input: "hsl(var(--input) / var(--edge-alpha))",
-        ring: "hsl(var(--ring) / <alpha-value>)",
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "rgb(var(--ring) / <alpha-value>)",
       },
 
       fontFamily: {
@@ -101,27 +105,10 @@ const config: Config = {
       boxShadow: {
         card: "var(--card-shadow)",
         nav: "0 16px 40px -14px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 235 210 / 0.14)",
-        press: "0 3px 0 hsl(var(--edge) / 0.5)",
       },
 
       backdropBlur: {
         card: "24px",
-      },
-
-      keyframes: {
-        "fade-up": {
-          from: { opacity: "0", transform: "translateY(10px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-        drift: {
-          "0%, 100%": { transform: "translate3d(0,0,0) scale(1)" },
-          "50%": { transform: "translate3d(0,-18px,0) scale(1.06)" },
-        },
-      },
-
-      animation: {
-        "fade-up": "fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both",
-        drift: "drift 18s ease-in-out infinite",
       },
     },
   },

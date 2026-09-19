@@ -4,7 +4,12 @@ import { User } from '@/types/database'
 import { GlowAvatar } from '@/components/ui/glow-avatar'
 
 interface FamilyMemberCardProps {
-  user: User
+  /**
+   * Only the three fields the card renders. The family query stopped selecting
+   * `*`, so asking for a whole `User` here would have been asking for columns
+   * nothing on this card displays.
+   */
+  user: Pick<User, 'id' | 'name' | 'avatar_url'>
   interestCount?: number
   pickCount?: number
   onClick: () => void

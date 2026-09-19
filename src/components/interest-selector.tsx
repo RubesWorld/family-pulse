@@ -2,6 +2,7 @@
 
 import { PRESET_INTERESTS } from '@/lib/interests'
 import { Check } from 'lucide-react'
+import { useTheme } from '@/components/theme-provider'
 import { cn } from '@/lib/utils'
 
 interface InterestSelectorProps {
@@ -13,6 +14,8 @@ export function InterestSelector({
   selectedInterests,
   onToggle,
 }: InterestSelectorProps) {
+  const { glowColor } = useTheme()
+
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
       {PRESET_INTERESTS.map((interest) => {
@@ -33,8 +36,7 @@ export function InterestSelector({
             style={
               isSelected
                 ? {
-                    boxShadow:
-                      '0 5px 20px -5px hsl(var(--coral) / calc(0.7 * var(--glow)))',
+                    boxShadow: `0 5px 20px -5px ${glowColor('coral', 0.7)}`,
                   }
                 : undefined
             }

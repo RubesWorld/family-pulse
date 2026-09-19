@@ -369,7 +369,7 @@ END $$;
 --
 -- Getting into this state requires dropping out of RLS: the `users` UPDATE
 -- policy refuses to let a client clear its own family_id, which is the point of
--- step 2 of 11b_rls_hardening.sql. So the fixture is arranged as the table owner
+-- step 2 of 12_rls_hardening.sql. So the fixture is arranged as the table owner
 -- and the role is then handed back. (That refusal is itself asserted as a
 -- check, in section 3.)
 RESET ROLE;

@@ -34,7 +34,7 @@ const TabsTrigger = React.forwardRef<
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-paper',
       'disabled:pointer-events-none disabled:opacity-50',
       'data-[state=active]:bg-gradient-to-br data-[state=active]:from-coral data-[state=active]:to-marigold data-[state=active]:text-on-ink',
-      'data-[state=active]:shadow-[0_6px_22px_-5px_hsl(var(--coral)/calc(0.85*var(--glow)))]',
+      'data-[state=active]:shadow-[0_6px_22px_-5px_rgb(var(--coral)/calc(0.85*var(--glow)))]',
       className
     )}
     {...props}

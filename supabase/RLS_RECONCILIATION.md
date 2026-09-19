@@ -43,7 +43,7 @@ one of them was ever blocked on production — and the dump has now settled it.
 |---|---|---|
 | 1 | **Migrations 01-09 produce a non-functional database.** `01_schema.sql:43-48` defines a self-referential `users` SELECT policy; reading `users` inside the policy *for* `users` aborts with `infinite recursion detected in policy for relation users`, on every table that joins through it. | Known. Fixed by `10_performance.sql`, which replaces the whole policy set and breaks the recursion with two `SECURITY DEFINER` helpers. Confirmed: 01-10 applies cleanly and every table is queryable. |
 | 2 | **Production drifted from the files and was never committed back.** Production's RLS was hand-patched in the Supabase dashboard. Its live policy *names* are unknown, which is why `10_performance.sql` enumerates and drops whatever it finds rather than dropping by name. Nobody can reconstruct prod from this repo. | **Resolved — and it was stale.** The drift predates migration 10, which then replaced the entire policy set. The 2026-09-19 dump matches `10_performance.sql` byte-for-byte across all 26 policies. Section 4 is the runbook that produced this. |
-| 3 | **The canonical set in `10_performance.sql` is itself insecure.** Eight defects, independent of any drift. Present in the files, reproducible from a clean build. | **Fixed and verified, not yet applied.** `11a_rls_rpcs.sql` + `11b_rls_hardening.sql`. Since prod *is* 10, all eight are live in production right now. |
+| 3 | **The canonical set in `10_performance.sql` is itself insecure.** Eight defects, independent of any drift. Present in the files, reproducible from a clean build. | **Fixed and verified, not yet applied.** `11_rls_rpcs.sql` + `12_rls_hardening.sql`. Since prod *is* 10, all eight are live in production right now. |
 
 Problem 3 is the surprise. The reconciliation was expected to be "find out what
 prod has and write it down". It turned out the thing the repo *intends* is also
@@ -498,7 +498,7 @@ having: a suite that passes everywhere detects nothing.
 
 ---
 
-## 6. The fix: `11a_rls_rpcs.sql` + `11b_rls_hardening.sql`
+## 6. The fix: `11_rls_rpcs.sql` + `12_rls_hardening.sql`
 
 Written, applied, verified, and **deliberately not applied to production yet**.
 
@@ -517,7 +517,7 @@ Every policy it creates is role-qualified `TO authenticated`. It is idempotent �
 each section drops both the names it replaces and the names it is about to
 create — verified by applying it three times in a row.
 
-Rollback: `supabase/rollback_11b.sql`, tested. It restores `10_performance.sql`'s
+Rollback: `supabase/rollback_12.sql`, tested. It restores `10_performance.sql`'s
 set exactly, which reopens all eight holes; the file says so at the top.
 
 ### The two reasons it was held back, and where they stand
@@ -530,14 +530,14 @@ settles it: all 26 policy names match `10_performance.sql` exactly, so every dro
 finds its target. This was the trap `10_performance.sql:22-27` describes, and it
 did not materialise.
 
-**2. Client changes — handled by the 11a/11b split.** The `users` UPDATE policy
-in 11b refuses a direct `family_id` write, so the call sites below break once it
-is applied. Rather than coordinating one simultaneous deploy, 11a lands the RPCs
+**2. Client changes — handled by the 11/12 split.** The `users` UPDATE policy
+in 12 refuses a direct `family_id` write, so the call sites below break once it
+is applied. Rather than coordinating one simultaneous deploy, 11 lands the RPCs
 first: they are `SECURITY DEFINER`, so they work identically under migration 10's
-policies and under 11b's. That gives a safe order with no broken window —
+policies and under 12's. That gives a safe order with no broken window —
 
 ```
-apply 11a   ->   deploy the client below   ->   apply 11b
+apply 11   ->   deploy the client below   ->   apply 12
  (additive)       (works either side)            (removes the old path)
 ```
 
@@ -623,10 +623,10 @@ migration.
 | `scripts/rls_local_state.sh` | Builds a throwaway DB from the migrations, dumps it in the same format, optionally diffs and verifies. `--help` for options. |
 | `scripts/supabase_shim.sql` | Roles, `auth` schema and `auth.uid()` for `--mode docker`. Approximates Supabase; see its header for what is and is not comparable. |
 | `supabase/verify_isolation.sql` | **Writes — local only.** 46 isolation checks as the `authenticated` role. Rolls itself back. |
-| `supabase/migrations/11a_rls_rpcs.sql` | Adds the three join/create RPCs. **Additive — safe to apply to production at any time.** Contains no policy or table statement. |
-| `supabase/migrations/11b_rls_hardening.sql` | The policy fix for defects A-H. Apply only after 11a is applied *and* the RPC client is deployed. |
-| `supabase/rollback_11a.sql` | Drops the three RPCs. Run only after `rollback_11b.sql` — see its header. |
-| `supabase/rollback_11b.sql` | Restores migration 10's policy set. Reopens all eight holes. |
+| `supabase/migrations/11_rls_rpcs.sql` | Adds the three join/create RPCs. **Additive — safe to apply to production at any time.** Contains no policy or table statement. |
+| `supabase/migrations/12_rls_hardening.sql` | The policy fix for defects A-H. Apply only after 11 is applied *and* the RPC client is deployed. |
+| `supabase/rollback_11.sql` | Drops the three RPCs. Run only after `rollback_12.sql` — see its header. |
+| `supabase/rollback_12.sql` | Restores migration 10's policy set. Reopens all eight holes. |
 | `supabase/audit_policies.sql` | Pre-existing. Read-only human-readable audit; superseded by `dump_prod_state.sql` for diffing, still handy for eyeballing. |
 | `supabase/rollback_10.sql` | Pre-existing. Rebuilds the pre-migration-10 policy set from `rls_migration_log`. |
 

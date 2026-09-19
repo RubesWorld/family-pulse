@@ -2,11 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { activityKeys, createActivity } from '@/lib/queries/activities'
+import { useSession } from '@/lib/supabase/session-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Swash } from '@/components/ui/swash'
 
 function Optional() {
   return <span className="font-bold text-ink-faint"> · optional</span>
@@ -16,45 +19,52 @@ export default function AddActivityPage() {
   const searchParams = useSearchParams()
   const dateParam = searchParams.get('date')
 
+  const { supabase, user } = useSession()
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [startsAt, setStartsAt] = useState(dateParam ? `${dateParam}T12:00` : '')
   const [locationName, setLocationName] = useState('')
   const [notes, setNotes] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    const supabase = createClient()
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
+  const post = useMutation({
+    mutationFn: () => {
+      // The session context already resolved this; the page used to ask
+      // `auth.getUser()` for it on every submit.
       if (!user) throw new Error('Not authenticated')
 
-      const { error: insertError } = await supabase
-        .from('activities')
-        .insert({
-          user_id: user.id,
-          title,
-          description: description || null,
-          starts_at: startsAt ? new Date(startsAt).toISOString() : null,
-          location_name: locationName || null,
-          notes: notes || null,
-        })
-
-      if (insertError) throw insertError
-
+      return createActivity(supabase, {
+        user_id: user.id,
+        title,
+        description: description || null,
+        starts_at: startsAt ? new Date(startsAt).toISOString() : null,
+        location_name: locationName || null,
+        notes: notes || null,
+      })
+    },
+    onSuccess: async () => {
+      // The feed and the profile's "recent activity" both read `activities`,
+      // so one prefix covers both. Awaited before navigating: this replaces a
+      // `router.refresh()` that fired after `router.push`, which meant the feed
+      // rendered from the old server payload and then swapped.
+      await queryClient.invalidateQueries({ queryKey: activityKeys.all })
       router.push('/feed')
-      router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      setLoading(false)
-    }
+    },
+  })
+
+  // Stays true through the navigation — the form should not become submittable
+  // again while the feed is being routed to.
+  const loading = post.isPending || post.isSuccess
+  const error = post.error
+    ? post.error instanceof Error
+      ? post.error.message
+      : 'An error occurred'
+    : null
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    post.mutate()
   }
 
   return (
@@ -80,22 +90,7 @@ export default function AddActivityPage() {
           </button>
         </div>
 
-        <svg
-          aria-hidden
-          viewBox="0 0 132 9"
-          fill="none"
-          className="mt-0.5 block h-2 w-32 text-marigold"
-          style={{
-            filter: 'drop-shadow(0 0 8px hsl(var(--marigold) / var(--glow)))',
-          }}
-        >
-          <path
-            d="M2 6.2c22-4.4 44-5.2 66-3.1 21 2 42 2.4 63-.6"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
+        <Swash profile="header" className="w-32" />
       </header>
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-4 px-5">

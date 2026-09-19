@@ -1,30 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { pickKeys, savePicks } from '@/lib/queries/picks'
+import { useSession } from '@/lib/supabase/session-context'
 import { PICK_CATEGORIES } from '@/lib/pick-categories'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import type { UserPick } from '@/types/database'
 
 interface PickEditorProps {
   userId: string
-  existingPicks: Array<{
-    category: string
-    value: string
-    interest_tag: string | null
-  }>
+  /**
+   * The caller's current picks, straight from the cache.
+   *
+   * These used to arrive stripped of their ids, so the save had to re-query the
+   * same rows to find out what to archive — a round-trip to fetch data the
+   * parent was already holding. Passing the rows themselves removes it.
+   */
+  existingPicks: readonly UserPick[]
   userInterests: Array<{
     category: string
     is_custom: boolean
   }>
-  onSave: () => void
+  /** Called once the save has landed *and* the cache reflects it. */
+  onSaved: () => void
 }
 
-export function PickEditor({ userId, existingPicks, userInterests, onSave }: PickEditorProps) {
+export function PickEditor({ userId, existingPicks, userInterests, onSaved }: PickEditorProps) {
+  const { supabase } = useSession()
+  const queryClient = useQueryClient()
   const [picks, setPicks] = useState<Record<string, { value: string; interest_tag: string | null }>>({})
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Initialize picks from existing data
@@ -78,85 +86,37 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
     }))
   }
 
-  const handleSave = async () => {
-    setSaving(true)
-    setError(null)
+  const save = useMutation({
+    mutationFn: () =>
+      // `existingPicks` is what the parent already has in cache, so the save no
+      // longer opens with a read. The rest — which rows to archive, which to
+      // insert, which only need a new tag — is worked out once in `planPickSave`
+      // and applied in at most three statements, where the previous version
+      // issued an archive and an insert per category in sequence.
+      savePicks(
+        supabase,
+        userId,
+        Object.entries(picks).map(([category, pick]) => ({
+          category,
+          value: pick.value,
+          interest_tag: pick.interest_tag,
+        })),
+        existingPicks
+      ),
+    onSuccess: async () => {
+      // Picks are on Profile, Family and the Feed, and the history dialog reads
+      // the rows this just archived. One prefix covers all of them.
+      await queryClient.invalidateQueries({ queryKey: pickKeys.all })
+      onSaved()
+    },
+  })
 
-    try {
-      const supabase = (await import('@/lib/supabase/client')).createClient()
-
-      // Fetch current picks
-      const { data: currentPicks, error: fetchError } = await supabase
-        .from('picks')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_current', true)
-
-      if (fetchError) throw fetchError
-
-      // Process each category
-      for (const [category, newPick] of Object.entries(picks)) {
-        const trimmedValue = newPick.value.trim()
-        const currentPick = currentPicks?.find(p => p.category === category)
-
-        if (currentPick) {
-          // There's an existing current pick for this category
-          if (!trimmedValue) {
-            // Value cleared - archive current pick
-            const { error } = await supabase
-              .from('picks')
-              .update({ is_current: false })
-              .eq('id', currentPick.id)
-            if (error) throw error
-          } else if (currentPick.value !== trimmedValue) {
-            // Value changed - archive old and insert new
-            const { error: archiveError } = await supabase
-              .from('picks')
-              .update({ is_current: false })
-              .eq('id', currentPick.id)
-            if (archiveError) throw archiveError
-
-            const { error: insertError } = await supabase
-              .from('picks')
-              .insert({
-                user_id: userId,
-                category,
-                value: trimmedValue,
-                interest_tag: newPick.interest_tag,
-                is_current: true
-              })
-            if (insertError) throw insertError
-          } else if (currentPick.interest_tag !== newPick.interest_tag) {
-            // Only interest tag changed - update in place (no history)
-            const { error } = await supabase
-              .from('picks')
-              .update({ interest_tag: newPick.interest_tag })
-              .eq('id', currentPick.id)
-            if (error) throw error
-          }
-          // If value and interest_tag are the same, do nothing
-        } else if (trimmedValue) {
-          // New pick - insert with is_current = true
-          const { error } = await supabase
-            .from('picks')
-            .insert({
-              user_id: userId,
-              category,
-              value: trimmedValue,
-              interest_tag: newPick.interest_tag,
-              is_current: true
-            })
-          if (error) throw error
-        }
-      }
-
-      onSave()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save picks')
-    } finally {
-      setSaving(false)
-    }
-  }
+  const saving = save.isPending
+  const error = save.error
+    ? save.error instanceof Error
+      ? save.error.message
+      : 'Failed to save picks'
+    : null
 
   return (
     <div className="space-y-4">
@@ -218,7 +178,12 @@ export function PickEditor({ userId, existingPicks, userInterests, onSave }: Pic
         </div>
       )}
 
-      <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
+      <Button
+        onClick={() => save.mutate()}
+        className="w-full"
+        size="lg"
+        disabled={saving}
+      >
         {saving ? 'Saving...' : 'Save Picks'}
       </Button>
     </div>

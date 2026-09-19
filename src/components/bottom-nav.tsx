@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, HeartHandshake, Users, User } from 'lucide-react'
+import { useTheme } from '@/components/theme-provider'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname()
+  const { glowColor } = useTheme()
 
   return (
     <nav className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-md rounded-card border-card border-edge bg-nav px-2 py-2 shadow-nav backdrop-blur-[30px] backdrop-saturate-150 safe-area-pb">
@@ -35,8 +37,7 @@ export function BottomNav() {
               style={
                 isActive
                   ? {
-                      boxShadow:
-                        '0 4px 20px -3px hsl(var(--coral) / calc(0.8 * var(--glow)))',
+                      boxShadow: `0 4px 20px -3px ${glowColor('coral', 0.8)}`,
                     }
                   : undefined
               }

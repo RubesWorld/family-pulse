@@ -1,63 +1,68 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { WeeklyQuestion } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { createClient } from '@/lib/supabase/client'
+import { activateQuestion, questionKeys } from '@/lib/queries/questions'
+import { useSession } from '@/lib/supabase/session-context'
+import { useTheme } from '@/components/theme-provider'
+import { withAlpha } from '@/lib/theme-tokens'
 import { Edit3 } from 'lucide-react'
+
+const ACTIVATE_ERROR = 'Failed to activate question. Please try again.'
 
 interface QuestionSelectorProps {
   question: WeeklyQuestion
-  onQuestionActivated?: () => void
 }
 
-export function QuestionSelector({
-  question,
-  onQuestionActivated,
-}: QuestionSelectorProps) {
+export function QuestionSelector({ question }: QuestionSelectorProps) {
+  const { supabase } = useSession()
+  const queryClient = useQueryClient()
   const [mode, setMode] = useState<'choose' | 'custom'>('choose')
   const [customQuestion, setCustomQuestion] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [emptyError, setEmptyError] = useState<string | null>(null)
+  const { accents, glowColor } = useTheme()
 
-  const activate = async (text: string, isPreset: boolean) => {
-    setLoading(true)
-    setError(null)
+  /**
+   * Setting the week's question used to reload the document. It invalidates
+   * instead — and awaits the refetch, so this card stays in its pending state
+   * until the parent has the activated question and swaps it for the answer
+   * form, rather than briefly re-offering the choice that was just made.
+   */
+  const activateMutation = useMutation({
+    mutationFn: (params: { text: string; isPreset: boolean }) =>
+      activateQuestion(supabase, {
+        questionId: question.id,
+        questionText: params.text,
+        isPreset: params.isPreset,
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: questionKeys.all }),
+  })
 
-    const supabase = createClient()
+  const loading = activateMutation.isPending
+  const error = emptyError ?? (activateMutation.isError ? ACTIVATE_ERROR : null)
 
-    try {
-      const { error: updateError } = await supabase
-        .from('weekly_questions')
-        .update({
-          question_text: text,
-          status: 'active',
-          is_preset: isPreset,
-        })
-        .eq('id', question.id)
-
-      if (updateError) throw updateError
-
-      onQuestionActivated?.()
-      window.location.reload()
-    } catch (err) {
-      console.error('Error activating question:', err)
-      setError('Failed to activate question. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+  const activate = (text: string, isPreset: boolean) => {
+    setEmptyError(null)
+    activateMutation.mutate({ text, isPreset })
   }
 
   return (
     <div
       className="rounded-card border-card p-5 backdrop-blur-card"
       style={{
-        background:
-          'linear-gradient(150deg, hsl(var(--plum) / 0.24), hsl(var(--coral) / 0.12))',
-        borderColor: 'hsl(var(--plum) / 0.38)',
-        boxShadow:
-          '0 14px 40px -16px hsl(var(--plum) / calc(0.85 * var(--glow))), inset 0 1px 0 rgb(255 235 210 / 0.14)',
+        background: `linear-gradient(150deg, ${withAlpha(
+          accents.plum,
+          0.24
+        )}, ${withAlpha(accents.coral, 0.12)})`,
+        borderColor: withAlpha(accents.plum, 0.38),
+        boxShadow: `0 14px 40px -16px ${glowColor(
+          'plum',
+          0.85
+        )}, inset 0 1px 0 rgb(255 235 210 / 0.14)`,
       }}
     >
       <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold">
@@ -131,7 +136,7 @@ export function QuestionSelector({
             <Button
               onClick={() => {
                 if (!customQuestion.trim()) {
-                  setError('Please enter a question')
+                  setEmptyError('Please enter a question')
                   return
                 }
                 activate(customQuestion.trim(), false)
@@ -144,7 +149,8 @@ export function QuestionSelector({
               onClick={() => {
                 setMode('choose')
                 setCustomQuestion('')
-                setError(null)
+                setEmptyError(null)
+                activateMutation.reset()
               }}
               disabled={loading}
               variant="ghost"

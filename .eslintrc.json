@@ -1,4 +1,114 @@
 {
   "root": true,
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@/lib/supabase/admin",
+            "message": "Service-role client \u2014 it ignores every RLS policy and reads SUPABASE_SERVICE_ROLE_KEY. Reaching it from anything that can be bundled puts that key in the browser, and this repo is public. Only src/lib/send-push.ts and the two secret-gated API routes may import it; if a client screen needs this, call an API route."
+          },
+          {
+            "name": "@/lib/send-push",
+            "message": "Imports the service-role client transitively, so the same rule applies: server-only. Call /api/notifications/send or /api/notifications/test instead."
+          }
+        ],
+        "patterns": [
+          {
+            "group": [
+              "**/lib/supabase/admin",
+              "**/supabase/admin",
+              "./admin",
+              "../admin",
+              "**/lib/send-push",
+              "./send-push",
+              "../send-push",
+              "../../send-push"
+            ],
+            "message": "Service-role code (src/lib/supabase/admin.ts and everything importing it) is server-only. The relative spelling is restricted too so the rule cannot be stepped around by accident."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/lib/send-push.ts",
+        "src/app/api/cron/rotate-questions/route.ts",
+        "src/app/api/notifications/send/route.ts",
+        "src/app/api/notifications/test/route.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": [
+        "src/lib/queries/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/supabase/admin",
+                "message": "Service-role client. Never in a queryFn or mutationFn \u2014 it bypasses RLS, and RLS is the only thing scoping these queries to one family."
+              },
+              {
+                "name": "@/lib/send-push",
+                "message": "Pulls in the service-role client. Server-only."
+              },
+              {
+                "name": "@/lib/supabase/server",
+                "message": "Server client \u2014 depends on next/headers. Query functions take their client as an argument so the same module works on the web and in React Native."
+              },
+              {
+                "name": "@/lib/supabase/client",
+                "message": "Do not reach for a particular client here. Take a DbClient argument instead; the web passes the browser client, React Native will pass its own."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "next",
+                  "next/*",
+                  "next/**"
+                ],
+                "message": "src/lib/queries must stay free of next/*: it is the piece that ports unchanged to the React Native client."
+              },
+              {
+                "group": [
+                  "react",
+                  "react-dom",
+                  "@tanstack/react-query"
+                ],
+                "message": "Query functions are plain async functions over a Supabase client. Hooks and key usage belong in the components; keeping them out is what keeps this directory portable and testable without a renderer."
+              },
+              {
+                "group": [
+                  "**/lib/supabase/admin",
+                  "**/supabase/admin",
+                  "./admin",
+                  "../admin",
+                  "**/lib/send-push",
+                  "../send-push",
+                  "../../send-push",
+                  "../supabase/server",
+                  "../supabase/client"
+                ],
+                "message": "Server-only or platform-specific. See the named entries above."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -1,43 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/supabase/queries'
 import { NotificationSettingsContent } from './notification-settings-content'
 
-export const dynamic = 'force-dynamic'
-
-export default async function NotificationSettingsPage() {
-  const supabase = await createClient()
-
-  // Already resolved by the (app) layout.
-  const user = await getCurrentUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Get or create notification preferences
-  let { data: preferences } = await supabase
-    .from('notification_preferences')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  // If no preferences exist, create default ones
-  if (!preferences) {
-    const { data: newPreferences, error } = await supabase
-      .from('notification_preferences')
-      .insert({
-        user_id: user.id,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating notification preferences:', error)
-    } else {
-      preferences = newPreferences
-    }
-  }
-
-  return <NotificationSettingsContent preferences={preferences} />
+/**
+ * No `force-dynamic`. It was here to stop Next caching a server read that also
+ * *inserted* a default preferences row during render — a GET page that wrote,
+ * on every visit. Both now live in `notification-settings-content.tsx`, the read
+ * as a query and the insert as an explicit upsert mutation, so there is no
+ * server-rendered per-user data left for it to protect.
+ */
+export default function NotificationSettingsPage() {
+  return <NotificationSettingsContent />
 }

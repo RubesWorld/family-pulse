@@ -1,8 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/components/theme-provider'
 import {
-  accentVar,
   getInitials,
   personAccent,
   type PersonAccent,
@@ -41,9 +41,10 @@ export function GlowAvatar({
   accent,
   className,
 }: GlowAvatarProps) {
+  const { accents, paper, glowAlpha } = useTheme()
   const tone = accent ?? personAccent(userId)
   const s = SIZES[size]
-  const color = `hsl(${accentVar(tone)})`
+  const color = accents[tone]
 
   return (
     <span
@@ -57,7 +58,7 @@ export function GlowAvatar({
           s.bloom,
           s.blur
         )}
-        style={{ opacity: 'calc(0.72 * var(--glow))' }}
+        style={{ opacity: glowAlpha(0.72) }}
       />
       <span
         className={cn(
@@ -65,7 +66,7 @@ export function GlowAvatar({
           s.text
         )}
         style={{
-          boxShadow: `0 0 0 3px hsl(var(--paper)), 0 0 0 5px ${color}`,
+          boxShadow: `0 0 0 3px ${paper}, 0 0 0 5px ${color}`,
         }}
       >
         {avatarUrl ? (

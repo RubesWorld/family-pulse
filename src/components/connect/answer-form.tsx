@@ -1,72 +1,70 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { QuestionAnswer } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { createClient } from '@/lib/supabase/client'
+import { questionKeys, submitAnswer } from '@/lib/queries/questions'
+import { useSession } from '@/lib/supabase/session-context'
+import { useTheme } from '@/components/theme-provider'
+import { withAlpha } from '@/lib/theme-tokens'
 import { CheckCircle2, Edit2 } from 'lucide-react'
+
+const SUBMIT_ERROR = 'Failed to submit answer. Please try again.'
 
 interface AnswerFormProps {
   questionId: string
   userId: string
   existingAnswer?: QuestionAnswer
-  onSubmit?: () => void
 }
 
 export function AnswerForm({
   questionId,
   userId,
   existingAnswer,
-  onSubmit,
 }: AnswerFormProps) {
+  const { supabase } = useSession()
+  const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(!existingAnswer)
   const [answer, setAnswer] = useState(existingAnswer?.answer_text || '')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [emptyError, setEmptyError] = useState<string | null>(null)
+  const { accents } = useTheme()
 
-  const handleSubmit = async () => {
+  /**
+   * Answering used to end in `window.location.reload()` — a full document
+   * teardown, re-auth and re-render of every tab, to show one new paragraph.
+   * Invalidating the question is the same result without leaving the page.
+   */
+  const submitMutation = useMutation({
+    mutationFn: (answerText: string) =>
+      submitAnswer(supabase, {
+        questionId,
+        userId,
+        answerText,
+        previousAnswerId: existingAnswer?.id,
+      }),
+    // Awaited, so `isPending` stays true until the refetched question is in the
+    // cache. Without that the form would drop back to its editing state for a
+    // frame — the parent still holds the old data, in which this member has not
+    // answered — which is the flicker the reload used to hide.
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: questionKeys.all })
+      setIsEditing(false)
+    },
+  })
+
+  const loading = submitMutation.isPending
+  const error = emptyError ?? (submitMutation.isError ? SUBMIT_ERROR : null)
+
+  const handleSubmit = () => {
     if (!answer.trim()) {
-      setError('Please enter an answer')
+      setEmptyError('Please enter an answer')
       return
     }
 
-    setLoading(true)
-    setError(null)
-
-    const supabase = createClient()
-
-    try {
-      // If there's an existing answer, archive it first
-      if (existingAnswer) {
-        await supabase
-          .from('question_answers')
-          .update({ is_current: false })
-          .eq('id', existingAnswer.id)
-      }
-
-      const { error: insertError } = await supabase
-        .from('question_answers')
-        .insert({
-          question_id: questionId,
-          user_id: userId,
-          answer_text: answer.trim(),
-          is_current: true,
-        })
-
-      if (insertError) throw insertError
-
-      setIsEditing(false)
-      onSubmit?.()
-
-      // Reload the page to get fresh data
-      window.location.reload()
-    } catch (err) {
-      console.error('Error submitting answer:', err)
-      setError('Failed to submit answer. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    setEmptyError(null)
+    submitMutation.mutate(answer.trim())
   }
 
   // Answered and resting — sage-tinted so it reads as settled.
@@ -75,8 +73,8 @@ export function AnswerForm({
       <div
         className="rounded-card border-card p-4 backdrop-blur-card"
         style={{
-          background: 'hsl(var(--sage) / 0.12)',
-          borderColor: 'hsl(var(--sage) / 0.4)',
+          background: withAlpha(accents.sage, 0.12),
+          borderColor: withAlpha(accents.sage, 0.4),
         }}
       >
         <div className="flex items-center justify-between gap-3">
@@ -132,6 +130,8 @@ export function AnswerForm({
             variant="ghost"
             onClick={() => {
               setAnswer(existingAnswer.answer_text)
+              setEmptyError(null)
+              submitMutation.reset()
               setIsEditing(false)
             }}
             disabled={loading}

@@ -11,9 +11,18 @@
    hardcodes a hex or a Tailwind palette class, theme switching
    silently breaks for that element.
 
-   Colours are stored as bare HSL triples so Tailwind can wrap
-   them in hsl(var(--x) / <alpha-value>) and alpha modifiers
-   like bg-card/60 keep working.
+   Two shapes of token live here, and the difference matters.
+
+   Accents are bare space-separated RGB triples, so Tailwind can
+   wrap them in rgb(var(--x) / <alpha-value>) and alpha modifiers
+   like bg-coral/20 keep working. Their resolved values are
+   mirrored in src/lib/theme-tokens.ts, which is what inline
+   `style` props read — keep the two in step.
+
+   Surfaces are finished colours, alpha already applied. Nothing
+   varies their alpha independently, and composing one custom
+   property inside another's alpha channel is what stopped
+   bg-card/60 ever working.
    ============================================================ */
 
 @layer base {
@@ -21,26 +30,21 @@
     /* --- surfaces --- */
     --paper: 30 33% 7%;
     --paper-2: 27 26% 10%;
-    --card: 33 100% 93%;
-    --card-alpha: 0.055;
-    --edge: 33 100% 86%;
-    --edge-alpha: 0.13;
-    --field: 33 100% 92%;
-    --field-alpha: 0.05;
+    --card: rgba(255, 239, 219, 0.055);
+    --edge: rgba(255, 223, 184, 0.13);
+    --field: rgba(255, 237, 214, 0.05);
 
     /* --- ink --- */
     --ink: 35 68% 91%;
-    --ink-soft: 35 68% 91%;
-    --ink-soft-alpha: 0.66;
-    --ink-faint: 35 68% 91%;
-    --ink-faint-alpha: 0.4;
+    --ink-soft: rgba(248, 235, 216, 0.66);
+    --ink-faint: rgba(248, 235, 216, 0.4);
 
-    /* --- person accents --- */
-    --coral: 11 100% 68%;
-    --denim: 205 48% 61%;
-    --plum: 313 37% 66%;
-    --marigold: 36 100% 65%;
-    --sage: 132 30% 65%;
+    /* --- person accents (mirrored in src/lib/theme-tokens.ts) --- */
+    --coral: 255 122 92;
+    --denim: 108 164 203;
+    --plum: 200 136 186;
+    --marigold: 255 184 77;
+    --sage: 139 193 150;
 
     /* text that sits on top of an accent fill */
     --on-accent: 24 45% 12%;
@@ -51,13 +55,16 @@
     --card-blur: blur(24px) saturate(140%);
     --card-shadow: 0 12px 34px -16px rgb(0 0 0 / 0.85),
       inset 0 1px 0 rgb(255 235 210 / 0.11);
-    --nav-bg: 27 26% 11%;
-    --nav-bg-alpha: 0.72;
+    --nav-bg: rgba(35, 27, 21, 0.72);
 
     /* Bloom intensity multiplier — every glow in the app scales off this
        one number, so it is the single dial for "more/less neon".
        1.0 was pushing into neon territory; 0.6 keeps the light without
-       the halos shouting. */
+       the halos shouting.
+
+       Only the glows that live in a class name read this variable.
+       Everything built in an inline style reads THEME_TOKENS.glow in
+       src/lib/theme-tokens.ts — same number, kept in step by hand. */
     --glow: 0.6;
     --grain-opacity: 0.3;
     --grain-blend: overlay;
@@ -89,24 +96,19 @@
   [data-theme="day"] {
     --paper: 35 71% 96%;
     --paper-2: 35 53% 92%;
-    --card: 43 71% 98%;
-    --card-alpha: 1;
-    --edge: 34 42% 86%;
-    --edge-alpha: 1;
-    --field: 35 71% 96%;
-    --field-alpha: 1;
+    --card: rgb(254, 251, 246);
+    --edge: rgb(234, 221, 204);
+    --field: rgb(252, 246, 238);
 
     --ink: 26 28% 13%;
-    --ink-soft: 30 17% 41%;
-    --ink-soft-alpha: 1;
-    --ink-faint: 28 14% 60%;
-    --ink-faint-alpha: 1;
+    --ink-soft: rgb(122, 105, 87);
+    --ink-faint: rgb(167, 152, 139);
 
-    --coral: 9 77% 60%;
-    --denim: 205 38% 39%;
-    --plum: 311 20% 45%;
-    --marigold: 33 86% 56%;
-    --sage: 132 14% 50%;
+    --coral: 232 98 74;
+    --denim: 62 106 137;
+    --plum: 138 92 129;
+    --marigold: 239 152 46;
+    --sage: 110 145 117;
 
     --on-accent: 0 0% 100%;
     --on-ink: 40 100% 95%;
@@ -115,9 +117,9 @@
     --card-blur: none;
     --card-shadow: 0 12px 24px -14px rgb(90 60 25 / 0.45),
       inset 0 1px 0 rgb(255 255 255 / 0.95);
-    --nav-bg: 43 71% 98%;
-    --nav-bg-alpha: 1;
+    --nav-bg: rgb(254, 251, 246);
 
+    /* Mirrored in src/lib/theme-tokens.ts. */
     --glow: 0.3;
     /* Multiply grain over cream desaturates fast — keep it light.
        Likewise the cool blobs (plum, sage) turn the paper grey if the
@@ -168,22 +170,6 @@
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Paper grain. Sits above content, never intercepts taps. */
-  .grain::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 40;
-    pointer-events: none;
-    opacity: var(--grain-opacity);
-    mix-blend-mode: var(--grain-blend);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='2'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
-  }
-
   /* Feed cards tilt a fraction of a degree so the stack reads
      handmade. Anything the user types into must stay square. */
   .tilt-a {

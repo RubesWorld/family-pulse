@@ -1,13 +1,13 @@
--- Migration 11b: RLS hardening — close the family-isolation holes
+-- Migration 12: RLS hardening — close the family-isolation holes
 --
 -- ---------------------------------------------------------------------------
--- DO NOT APPLY UNTIL 11a IS APPLIED *AND* THE CLIENT USING THE RPCs IS
+-- DO NOT APPLY UNTIL 11 IS APPLIED *AND* THE CLIENT USING THE RPCs IS
 -- DEPLOYED. This file removes the old path; the client must already be on the
 -- new one. Read supabase/RLS_RECONCILIATION.md.
 -- ---------------------------------------------------------------------------
 --
--- Second half of the split described in 11a_rls_rpcs.sql. Order:
---   11a -> deploy client -> 11b
+-- Second half of the split described in 11_rls_rpcs.sql. Order:
+--   11 -> deploy client -> 12
 --
 -- Fixes eight defects in the canonical policy set defined by
 -- 10_performance.sql. They are defects in the FILES, not drift: every one was
@@ -25,9 +25,9 @@
 --   * create-family/page.tsx -> create_family_with_owner()
 -- because the `users` UPDATE policy below refuses a direct family_id change.
 --
--- Rollback: supabase/rollback_11b.sql restores 10_performance.sql's policy set,
+-- Rollback: supabase/rollback_12.sql restores 10_performance.sql's policy set,
 -- which reopens every hole. The client on the new RPCs keeps working after a
--- rollback, because 11a's functions stay.
+-- rollback, because 11's functions stay.
 --
 -- Every statement is idempotent: each section drops both the policy names it
 -- replaces AND the names it is about to create, so re-running is a no-op
@@ -38,7 +38,7 @@ BEGIN;
 -- ===========================================================================
 -- 1. Defect A — narrow `families` to the caller's own
 -- ===========================================================================
--- The RPCs from 11a are how a client now reaches a family it does not yet
+-- The RPCs from 11 are how a client now reaches a family it does not yet
 -- belong to. With those in place, the table itself can close.
 
 -- Now narrow the table itself. After this, a client can read exactly one

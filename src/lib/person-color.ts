@@ -50,14 +50,6 @@ const ACCENT_BG: Record<PersonAccent, string> = {
   sage: 'bg-sage',
 }
 
-const ACCENT_VAR: Record<PersonAccent, string> = {
-  coral: 'var(--coral)',
-  denim: 'var(--denim)',
-  plum: 'var(--plum)',
-  marigold: 'var(--marigold)',
-  sage: 'var(--sage)',
-}
-
 export function accentTextClass(accent: PersonAccent) {
   return ACCENT_TEXT[accent]
 }
@@ -66,10 +58,12 @@ export function accentBgClass(accent: PersonAccent) {
   return ACCENT_BG[accent]
 }
 
-/** Raw `H S% L%` triple, for inline colour-mix and box-shadow work. */
-export function accentVar(accent: PersonAccent) {
-  return ACCENT_VAR[accent]
-}
+/**
+ * There is deliberately no `accentVar()` any more. Handing a
+ * `var(--coral)` string to an inline `style` prop only works because a
+ * browser resolves it; read the resolved colour off `useTheme()`
+ * instead — see src/lib/theme-tokens.ts.
+ */
 
 export function getInitials(name: string | null | undefined): string {
   if (!name) return '?'

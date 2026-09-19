@@ -1,6 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { familyKeys } from '@/lib/queries/family'
+import { profileKeys, updateProfileBio } from '@/lib/queries/profile'
+import { useSession } from '@/lib/supabase/session-context'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -15,45 +19,51 @@ interface ProfileBioEditorProps {
     bio: string | null
     phone_number: string | null
   }
-  onSave: () => void
+  /** Called once the save has landed *and* the cache reflects it. */
+  onSaved: () => void
 }
 
-export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEditorProps) {
+export function ProfileBioEditor({ userId, initialData, onSaved }: ProfileBioEditorProps) {
+  const { supabase } = useSession()
+  const queryClient = useQueryClient()
   const [location, setLocation] = useState(initialData.location || '')
   const [occupation, setOccupation] = useState(initialData.occupation || '')
   const [birthday, setBirthday] = useState(initialData.birthday || '')
   const [bio, setBio] = useState(initialData.bio || '')
   const [phoneNumber, setPhoneNumber] = useState(initialData.phone_number || '')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const handleSave = async () => {
-    setSaving(true)
-    setError(null)
+  const save = useMutation({
+    mutationFn: () =>
+      updateProfileBio(supabase, userId, {
+        location: location.trim() || null,
+        occupation: occupation.trim() || null,
+        birthday: birthday || null,
+        bio: bio.trim() || null,
+        phone_number: phoneNumber.trim() || null,
+      }),
+    onSuccess: async () => {
+      // These fields are on the `users` row, so they are read twice: as the
+      // caller's own profile, and as one entry in the family member list the
+      // Family tab renders. Invalidating by prefix reaches both without this
+      // component knowing either screen exists.
+      //
+      // Awaited, so the editor stays in its saving state until the refetch has
+      // landed. Closing first would collapse the section back onto the values
+      // still sitting in the cache.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: profileKeys.all }),
+        queryClient.invalidateQueries({ queryKey: familyKeys.all }),
+      ])
+      onSaved()
+    },
+  })
 
-    try {
-      const supabase = (await import('@/lib/supabase/client')).createClient()
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          location: location.trim() || null,
-          occupation: occupation.trim() || null,
-          birthday: birthday || null,
-          bio: bio.trim() || null,
-          phone_number: phoneNumber.trim() || null,
-        })
-        .eq('id', userId)
-
-      if (updateError) throw updateError
-
-      onSave()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save profile')
-    } finally {
-      setSaving(false)
-    }
-  }
+  const saving = save.isPending
+  const error = save.error
+    ? save.error instanceof Error
+      ? save.error.message
+      : 'Failed to save profile'
+    : null
 
   return (
     <div className="space-y-4">
@@ -135,7 +145,12 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
       )}
 
       {/* Save button */}
-      <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
+      <Button
+        onClick={() => save.mutate()}
+        className="w-full"
+        size="lg"
+        disabled={saving}
+      >
         {saving ? 'Saving…' : 'Save profile'}
       </Button>
     </div>

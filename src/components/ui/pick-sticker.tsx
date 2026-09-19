@@ -1,4 +1,7 @@
+'use client'
+
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/components/theme-provider'
 import { getPickCategory } from '@/lib/pick-categories'
 
 const SIZES = {
@@ -20,6 +23,7 @@ export function PickSticker({
   size?: keyof typeof SIZES
   className?: string
 }) {
+  const { glowAlpha } = useTheme()
   const cat = getPickCategory(category)
   if (!cat) return null
 
@@ -32,7 +36,7 @@ export function PickSticker({
         className={cn('absolute rounded-[18px] blur-[14px]', s.bloom)}
         style={{
           backgroundImage: cat.gradient,
-          opacity: 'calc(0.8 * var(--glow))',
+          opacity: glowAlpha(0.8),
         }}
       />
       <span
