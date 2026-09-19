@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AuthShell, Swash } from '@/components/auth-shell'
+import { useI18n } from '@/components/i18n-provider'
 
 export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState('')
@@ -15,6 +16,7 @@ export default function CreateFamilyPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { dict } = useI18n()
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -95,25 +97,25 @@ export default function CreateFamilyPage() {
   return (
     <AuthShell>
       <h1 className="font-display text-[34px] font-black leading-[1.05] tracking-tight text-ink">
-        Start your
+        {dict.auth.startLine1}
         <br />
-        family
+        {dict.auth.startLine2}
       </h1>
       <Swash className="w-28" />
       <p className="mt-3 max-w-[30ch] text-[14px] font-semibold leading-relaxed text-ink-soft">
         {needsProfile
-          ? "Let's set up your profile and create your family."
-          : "Give it a name. You'll get an invite link to share."}
+          ? dict.auth.setupHint
+          : dict.auth.nameHint}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-3.5">
         {needsProfile && (
           <div>
-            <Label htmlFor="userName">Your name</Label>
+            <Label htmlFor="userName">{dict.auth.yourName}</Label>
             <Input
               id="userName"
               type="text"
-              placeholder="What should we call you?"
+              placeholder={dict.auth.namePlaceholder}
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               required
@@ -123,11 +125,11 @@ export default function CreateFamilyPage() {
         )}
 
         <div>
-          <Label htmlFor="familyName">Family name</Label>
+          <Label htmlFor="familyName">{dict.auth.familyName}</Label>
           <Input
             id="familyName"
             type="text"
-            placeholder="The Smiths, Our Crew, etc."
+            placeholder={dict.auth.familyNamePlaceholder}
             value={familyName}
             onChange={(e) => setFamilyName(e.target.value)}
             required
@@ -147,7 +149,7 @@ export default function CreateFamilyPage() {
           className="w-full"
           disabled={loading || (needsProfile && !userName.trim())}
         >
-          {loading ? 'Creating…' : 'Create family'}
+          {loading ? dict.auth.creating : dict.auth.createFamily}
         </Button>
       </form>
 
@@ -157,7 +159,7 @@ export default function CreateFamilyPage() {
           onClick={handleLogout}
           className="w-full text-[12.5px] font-bold text-ink-faint transition-colors hover:text-ink"
         >
-          Log out and start over
+          {dict.auth.logOutStartOver}
         </button>
       </div>
     </AuthShell>

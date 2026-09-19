@@ -5,6 +5,8 @@ import { formatDistanceToNow } from 'date-fns'
 import { History, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { isSkipped } from '@/lib/pick-prompts'
+import { t } from '@/lib/i18n'
+import { useI18n } from '@/components/i18n-provider'
 import { PickSticker } from '@/components/ui/pick-sticker'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,6 +45,7 @@ export function PickHistoryDialog({
   const [history, setHistory] = useState<PickHistory[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const { dict, dateLocale } = useI18n()
 
   const fetchHistory = useCallback(async () => {
     setLoading(true)
@@ -74,7 +77,7 @@ export function PickHistoryDialog({
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 text-[11.5px]">
           <History className="h-3 w-3" />
-          See history
+          {dict.history.seeHistory}
         </Button>
       </DialogTrigger>
 
@@ -85,7 +88,7 @@ export function PickHistoryDialog({
             {label}
           </DialogTitle>
           <DialogDescription>
-            How this has changed over time
+            {dict.history.description}
           </DialogDescription>
         </DialogHeader>
 
@@ -93,7 +96,7 @@ export function PickHistoryDialog({
           {/* current */}
           <div className="rounded-panel border-[1.5px] border-coral/40 bg-coral/[0.12] p-4">
             <div className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-coral">
-              Now
+              {dict.history.now}
             </div>
             <p className="mt-1 font-display text-[18px] font-bold text-ink">
               {currentValue}
@@ -102,16 +105,16 @@ export function PickHistoryDialog({
 
           {loading ? (
             <p className="py-8 text-center text-[13px] font-semibold text-ink-soft">
-              Loading history…
+              {dict.history.loading}
             </p>
           ) : history.length === 0 ? (
             <div className="py-8 text-center">
               <div className="text-3xl">🌱</div>
               <p className="mt-2.5 text-[13.5px] font-bold text-ink">
-                No previous picks
+                {dict.history.noPrevious}
               </p>
               <p className="mt-1 text-[12px] font-medium text-ink-soft">
-                This is your first one.
+                {dict.history.noPreviousHint}
               </p>
             </div>
           ) : (
@@ -119,7 +122,7 @@ export function PickHistoryDialog({
               <div className="flex items-center gap-2">
                 <span className="h-px flex-1 bg-edge" />
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
-                  Before
+                  {dict.history.before}
                 </span>
                 <span className="h-px flex-1 bg-edge" />
               </div>
@@ -152,9 +155,11 @@ export function PickHistoryDialog({
                       )}
 
                       <p className="mt-2 text-[11px] font-bold text-ink-faint">
-                        Changed{' '}
-                        {formatDistanceToNow(new Date(timestamp), {
-                          addSuffix: true,
+                        {t(dict.history.changed, {
+                          when: formatDistanceToNow(new Date(timestamp), {
+                            addSuffix: true,
+                            locale: dateLocale,
+                          }),
                         })}
                       </p>
                     </div>

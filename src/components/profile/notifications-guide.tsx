@@ -6,11 +6,13 @@ import { InstallSteps } from '@/components/notifications/install-instructions'
 import { useInstallState } from '@/lib/pwa'
 import { Smartphone, Info, ChevronDown, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/components/i18n-provider'
 import { cn } from '@/lib/utils'
 
 export function NotificationsGuide() {
   const [showPWAGuide, setShowPWAGuide] = useState(false)
   const installState = useInstallState()
+  const { dict } = useI18n()
 
   // Open the install section by default for anyone not already running the
   // installed app. On iOS it isn't optional — push doesn't work without it —
@@ -34,17 +36,12 @@ export function NotificationsGuide() {
           <Info className="mt-0.5 h-4 w-4 flex-none text-denim" />
           <div>
             <p className="text-[13px] font-extrabold text-ink">
-              For best results
+              {dict.notify.bestResults}
             </p>
             <ul className="mt-1.5 list-inside list-disc space-y-1 text-[12px] font-medium text-ink-soft">
-              <li>Allow notifications when prompted</li>
-              <li>
-                Install Family Pulse to your home screen — required on iPhone
-                and iPad, recommended everywhere else
-              </li>
-              <li>
-                Once installed, notifications arrive even when the app is closed
-              </li>
+              <li>{dict.notify.tipAllow}</li>
+              <li>{dict.notify.tipInstall}</li>
+              <li>{dict.notify.tipClosed}</li>
             </ul>
           </div>
         </div>
@@ -65,7 +62,7 @@ export function NotificationsGuide() {
               <Smartphone className="h-4 w-4 flex-none text-marigold" />
             )}
             <span className="text-[13px] font-extrabold text-ink">
-              {isInstalled ? 'Installed as an app' : 'Install as app (recommended)'}
+              {isInstalled ? dict.notify.installedAsApp : dict.notify.installPrompt}
             </span>
           </span>
           <ChevronDown
@@ -80,19 +77,18 @@ export function NotificationsGuide() {
           <div className="space-y-3.5 border-t border-edge bg-paper-2 p-4">
             {isInstalled ? (
               <p className="text-[13px] font-medium leading-relaxed text-ink-soft">
-                You&apos;re running the installed app, so notifications can be
-                delivered even when it&apos;s closed. Nothing else to do here.
+{dict.notify.installedHint}
               </p>
             ) : (
               <>
                 <p className="text-[13px] font-medium text-ink-soft">
-                  Installing Family Pulse as an app gives you:
+                  {dict.notify.installBenefits}
                 </p>
                 <ul className="ml-1 list-inside list-disc space-y-1 text-[13px] font-medium text-ink-soft">
-                  <li>A home screen icon for quick access</li>
-                  <li>Full-screen experience (no browser UI)</li>
-                  <li>Reliable notifications even when the browser is closed</li>
-                  <li>Faster loading</li>
+                  <li>{dict.notify.benefitIcon}</li>
+                  <li>{dict.notify.benefitFullscreen}</li>
+                  <li>{dict.notify.benefitReliable}</li>
+                  <li>{dict.notify.benefitFaster}</li>
                 </ul>
               </>
             )}
@@ -103,15 +99,10 @@ export function NotificationsGuide() {
 
             <div className="space-y-2 rounded-panel border border-marigold/30 bg-marigold/[0.12] p-3">
               <p className="text-[12px] font-medium leading-relaxed text-ink-soft">
-                <span className="font-extrabold text-ink">iPhone / iPad:</span>{' '}
-                notifications only work from the installed app. Turning them on
-                in a Safari tab will not work, no matter what the tab says.
+{dict.notify.iosWarning}
               </p>
               <p className="text-[12px] font-medium leading-relaxed text-ink-soft">
-                <span className="font-extrabold text-ink">Heads up:</span> the
-                installed app has its own separate login, so you&apos;ll be asked
-                to sign in once more the first time you open it. Your account and
-                data are unchanged.
+{dict.notify.iosLoginWarning}
               </p>
             </div>
           </div>
@@ -124,7 +115,7 @@ export function NotificationsGuide() {
         onClick={() => (window.location.href = '/settings/notifications')}
         className="w-full"
       >
-        Manage notification preferences →
+        {dict.notify.managePreferences} →
       </Button>
     </div>
   )

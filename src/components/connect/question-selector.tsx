@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
 import { Edit3 } from 'lucide-react'
+import { useI18n } from '@/components/i18n-provider'
 
 interface QuestionSelectorProps {
   question: WeeklyQuestion
@@ -20,6 +21,7 @@ export function QuestionSelector({
   const [customQuestion, setCustomQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { dict } = useI18n()
 
   const activate = async (text: string, isPreset: boolean) => {
     setLoading(true)
@@ -43,7 +45,7 @@ export function QuestionSelector({
       window.location.reload()
     } catch (err) {
       console.error('Error activating question:', err)
-      setError('Failed to activate question. Please try again.')
+      setError(dict.connectUi.activateFailed)
     } finally {
       setLoading(false)
     }
@@ -61,17 +63,17 @@ export function QuestionSelector({
       }}
     >
       <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold">
-        Your turn
+        {dict.connectUi.yourTurn}
       </div>
       <h2 className="mt-1.5 font-display text-[22px] font-bold leading-tight tracking-tight text-ink">
-        Pick this week&apos;s question
+        {dict.connectUi.pickThisWeek}
       </h2>
 
       {mode === 'choose' ? (
         <>
           <div className="mt-4 rounded-panel border-card border-edge bg-card p-4">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
-              Suggested
+              {dict.connectUi.suggested}
             </p>
             <p className="mt-1.5 font-display text-[17px] font-bold leading-snug text-ink">
               {question.suggested_question_text}
@@ -92,7 +94,7 @@ export function QuestionSelector({
               }
               disabled={loading || !question.suggested_question_text}
             >
-              {loading ? 'Setting…' : 'Use this one'}
+              {loading ? dict.connectUi.setting : dict.connectUi.useThisOne}
             </Button>
             <Button
               onClick={() => setMode('custom')}
@@ -100,7 +102,7 @@ export function QuestionSelector({
               variant="outline"
             >
               <Edit3 className="h-4 w-4" />
-              Write my own
+              {dict.connectUi.writeMyOwn}
             </Button>
           </div>
         </>
@@ -108,12 +110,12 @@ export function QuestionSelector({
         <>
           <div className="mt-4">
             <p className="mb-1.5 text-xs font-extrabold text-ink-soft">
-              Your question
+              {dict.connectUi.yourQuestion}
             </p>
             <Textarea
               value={customQuestion}
               onChange={(e) => setCustomQuestion(e.target.value)}
-              placeholder="What would you like to ask your family this week?"
+              placeholder={dict.connectUi.questionPlaceholder}
               rows={4}
               className="resize-none"
               disabled={loading}
@@ -131,14 +133,14 @@ export function QuestionSelector({
             <Button
               onClick={() => {
                 if (!customQuestion.trim()) {
-                  setError('Please enter a question')
+                  setError(dict.connectUi.enterQuestion)
                   return
                 }
                 activate(customQuestion.trim(), false)
               }}
               disabled={loading || !customQuestion.trim()}
             >
-              {loading ? 'Setting…' : 'Ask this'}
+              {loading ? dict.connectUi.setting : dict.connectUi.askThis}
             </Button>
             <Button
               onClick={() => {
@@ -149,7 +151,7 @@ export function QuestionSelector({
               disabled={loading}
               variant="ghost"
             >
-              Back
+              {dict.common.back}
             </Button>
           </div>
         </>

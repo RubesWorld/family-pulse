@@ -32,19 +32,6 @@ export function getCurrentWeekStart(date: Date = new Date()): Date {
 }
 
 /**
- * Format a date as "Month Day, Year" (e.g., "December 29, 2025")
- */
-export function formatWeekDisplay(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-
-  return d.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
-
-/**
  * Get the next user to ask a question using round-robin logic
  * Users are sorted alphabetically by ID, and the next asker is selected
  */
@@ -74,17 +61,3 @@ export function getNextQuestionAsker<T extends { id: string }>(
   return sortedMembers[lastAskerIndex + 1]
 }
 
-/**
- * Calculate time ago from a date
- */
-export function timeAgo(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const now = new Date()
-  const seconds = Math.floor((now.getTime() - d.getTime()) / 1000)
-
-  if (seconds < 60) return 'just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
-  return formatWeekDisplay(d)
-}

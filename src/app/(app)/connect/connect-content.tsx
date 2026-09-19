@@ -171,14 +171,14 @@ export function ConnectContent({
           <div className="mx-5 rounded-card border-card border-edge bg-card px-6 py-10 text-center backdrop-blur-card">
             <div className="text-3xl">🌱</div>
             <p className="mt-3 font-display text-lg font-bold text-ink">
-              No question yet
+              {dict.connectUi.noQuestionYet}
             </p>
             <Button
               onClick={handleInitialize}
               disabled={initializing}
               className="mt-4"
             >
-              {initializing ? dict.common.saving : 'Ask the first question'}
+              {initializing ? dict.common.saving : dict.connectUi.askFirst}
             </Button>
           </div>
         )}
@@ -197,7 +197,7 @@ export function ConnectContent({
               onClick={() => router.push('/connect/history')}
             >
               <History className="h-4 w-4" />
-              View past questions
+              {dict.connectUi.viewPast}
             </Button>
           </div>
         )}

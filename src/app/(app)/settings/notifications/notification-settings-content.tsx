@@ -7,6 +7,7 @@ import type { NotificationPreferences } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { EnablePushCard } from '@/components/notifications/enable-push-card'
+import { useI18n } from '@/components/i18n-provider'
 
 interface NotificationSettingsContentProps {
   preferences: NotificationPreferences | null
@@ -19,6 +20,7 @@ export function NotificationSettingsContent({
   const supabase = createClient()
   const [preferences, setPreferences] = useState(initialPreferences)
   const [isSaving, setIsSaving] = useState(false)
+  const { dict } = useI18n()
 
   const handleToggle = async (field: keyof NotificationPreferences, value: boolean) => {
     if (!preferences) return
@@ -84,7 +86,7 @@ export function NotificationSettingsContent({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-display text-[26px] font-black tracking-tight text-ink">
-            Notifications
+            {dict.notify.title}
           </h1>
         </div>
 
@@ -97,9 +99,9 @@ export function NotificationSettingsContent({
           {/* Notification Types */}
           <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
             <div className="border-b border-edge bg-paper-2 p-4">
-              <h2 className="font-display text-[15px] font-bold text-ink">What to notify me about</h2>
+              <h2 className="font-display text-[15px] font-bold text-ink">{dict.notify.whatAbout}</h2>
               <p className="mt-1 text-[12px] font-medium text-ink-soft">
-                Choose which events you want to be notified about
+                {dict.notify.whatAboutHint}
               </p>
             </div>
 
@@ -107,19 +109,19 @@ export function NotificationSettingsContent({
               {/* Tier 1: Critical */}
               <div className="p-4">
                 <p className="mb-3 text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-coral">
-                  Critical updates
+                  {dict.notify.critical}
                 </p>
                 <div className="space-y-3">
                   <NotificationToggle
-                    label="Your Turn to Ask"
-                    description="When it's your turn to choose the weekly question"
+                    label={dict.notify.yourTurn}
+                    description={dict.notify.yourTurnHint}
                     checked={preferences.notify_your_turn}
                     onChange={(checked) => handleToggle('notify_your_turn', checked)}
                     disabled={isSaving}
                   />
                   <NotificationToggle
-                    label="Pending Question Reminder"
-                    description="Reminder to choose a question when it's pending"
+                    label={dict.notify.pendingReminder}
+                    description={dict.notify.pendingReminderHint}
                     checked={preferences.notify_pending_reminder}
                     onChange={(checked) => handleToggle('notify_pending_reminder', checked)}
                     disabled={isSaving}
@@ -130,19 +132,19 @@ export function NotificationSettingsContent({
               {/* Tier 2: Engagement */}
               <div className="p-4">
                 <p className="mb-3 text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-denim">
-                  Family engagement
+                  {dict.notify.engagement}
                 </p>
                 <div className="space-y-3">
                   <NotificationToggle
-                    label="Last to Answer"
-                    description="When you're the last one who hasn't answered"
+                    label={dict.notify.lastToAnswer}
+                    description={dict.notify.lastToAnswerHint}
                     checked={preferences.notify_last_to_answer}
                     onChange={(checked) => handleToggle('notify_last_to_answer', checked)}
                     disabled={isSaving}
                   />
                   <NotificationToggle
-                    label="Weekly Digest"
-                    description="Summary of family activity each week"
+                    label={dict.notify.weeklyDigest}
+                    description={dict.notify.weeklyDigestHint}
                     checked={preferences.notify_weekly_digest}
                     onChange={(checked) => handleToggle('notify_weekly_digest', checked)}
                     disabled={isSaving}
@@ -153,26 +155,26 @@ export function NotificationSettingsContent({
               {/* Tier 3: Nice-to-have */}
               <div className="p-4">
                 <p className="mb-3 text-[10.5px] font-extrabold uppercase tracking-[0.11em] text-ink-faint">
-                  Optional updates
+                  {dict.notify.optional}
                 </p>
                 <div className="space-y-3">
                   <NotificationToggle
-                    label="New Activities"
-                    description="When family members share new activities"
+                    label={dict.notify.newActivities}
+                    description={dict.notify.newActivitiesHint}
                     checked={preferences.notify_activities}
                     onChange={(checked) => handleToggle('notify_activities', checked)}
                     disabled={isSaving}
                   />
                   <NotificationToggle
-                    label="New Answers"
-                    description="When family members answer questions"
+                    label={dict.notify.newAnswers}
+                    description={dict.notify.newAnswersHint}
                     checked={preferences.notify_answers}
                     onChange={(checked) => handleToggle('notify_answers', checked)}
                     disabled={isSaving}
                   />
                   <NotificationToggle
-                    label="New Picks"
-                    description="When family members update their picks"
+                    label={dict.notify.newPicks}
+                    description={dict.notify.newPicksHint}
                     checked={preferences.notify_picks}
                     onChange={(checked) => handleToggle('notify_picks', checked)}
                     disabled={isSaving}
@@ -185,16 +187,16 @@ export function NotificationSettingsContent({
           {/* Quiet Hours */}
           <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
             <div className="border-b border-edge bg-paper-2 p-4">
-              <h2 className="font-display text-[15px] font-bold text-ink">Quiet hours</h2>
+              <h2 className="font-display text-[15px] font-bold text-ink">{dict.notify.quietHours}</h2>
               <p className="mt-1 text-[12px] font-medium text-ink-soft">
-                Don&apos;t send notifications during these hours
+                {dict.notify.quietHoursHint}
               </p>
             </div>
 
             <div className="p-4 space-y-4">
               <NotificationToggle
-                label="Enable Quiet Hours"
-                description="Pause notifications during your quiet hours"
+                label={dict.notify.enableQuietHours}
+                description={dict.notify.enableQuietHoursHint}
                 checked={preferences.quiet_hours_enabled}
                 onChange={(checked) => handleToggle('quiet_hours_enabled', checked)}
                 disabled={isSaving}
@@ -204,7 +206,7 @@ export function NotificationSettingsContent({
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div>
                     <label className="mb-1 block text-xs font-extrabold text-ink-soft">
-                      Start time
+                      {dict.notify.startTime}
                     </label>
                     <input
                       type="time"
@@ -216,7 +218,7 @@ export function NotificationSettingsContent({
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-extrabold text-ink-soft">
-                      End time
+                      {dict.notify.endTime}
                     </label>
                     <input
                       type="time"
@@ -234,30 +236,30 @@ export function NotificationSettingsContent({
           {/* Notification Methods */}
           <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
             <div className="border-b border-edge bg-paper-2 p-4">
-              <h2 className="font-display text-[15px] font-bold text-ink">How to reach me</h2>
+              <h2 className="font-display text-[15px] font-bold text-ink">{dict.notify.howToReach}</h2>
               <p className="mt-1 text-[12px] font-medium text-ink-soft">
-                Choose how you want to receive notifications
+                {dict.notify.howToReachHint}
               </p>
             </div>
 
             <div className="p-4 space-y-3">
               <NotificationToggle
-                label="Push Notifications"
-                description="Browser notifications on this device"
+                label={dict.notify.pushMethod}
+                description={dict.notify.pushMethodHint}
                 checked={preferences.push_enabled}
                 onChange={(checked) => handleToggle('push_enabled', checked)}
                 disabled={isSaving}
               />
               <NotificationToggle
-                label="Email Notifications"
-                description="Send notifications to your email (coming soon)"
+                label={dict.notify.emailMethod}
+                description={dict.notify.emailMethodHint}
                 checked={preferences.email_enabled}
                 onChange={(checked) => handleToggle('email_enabled', checked)}
                 disabled={true}
               />
               <NotificationToggle
-                label="SMS Notifications"
-                description="Send notifications via text message (coming soon)"
+                label={dict.notify.smsMethod}
+                description={dict.notify.smsMethodHint}
                 checked={preferences.sms_enabled}
                 onChange={(checked) => handleToggle('sms_enabled', checked)}
                 disabled={true}

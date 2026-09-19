@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/components/i18n-provider'
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import {
   enablePushNotifications,
@@ -17,6 +18,7 @@ interface EnablePushCardProps {
 }
 
 export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
+  const { dict } = useI18n()
   const [isSupported, setIsSupported] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -112,10 +114,10 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
           </div>
           <div className="flex-1">
             <p className="text-[13.5px] font-extrabold text-ink">
-              Push notifications not supported
+              {dict.notify.notSupported}
             </p>
             <p className="mt-1 text-[12px] font-medium text-ink-soft">
-              Your browser doesn&apos;t support push notifications
+              {dict.notify.notSupportedHint}
             </p>
           </div>
         </div>
@@ -132,10 +134,10 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
           </div>
           <div className="flex-1">
             <p className="text-[13.5px] font-extrabold text-ink">
-              Notifications blocked
+              {dict.notify.blocked}
             </p>
             <p className="mt-1 text-[12px] font-medium text-ink-soft">
-              You&apos;ve blocked notifications. Please enable them in your browser settings.
+              {dict.notify.blockedHint}
             </p>
           </div>
         </div>
@@ -154,10 +156,10 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
           </div>
           <div>
             <p className="text-[13.5px] font-extrabold text-ink">
-              Push notifications
+              {dict.notify.pushTitle}
             </p>
             <p className="text-[12px] font-medium text-ink-soft">
-              {isSubscribed ? 'Enabled' : 'Get notified of important updates'}
+              {isSubscribed ? dict.notify.pushOn : dict.notify.pushOffHint}
             </p>
           </div>
         </div>
@@ -170,11 +172,11 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              {isSubscribed ? 'Disabling...' : 'Enabling...'}
+              {isSubscribed ? dict.notify.disabling : dict.notify.enabling}
             </>
           ) : (
             <>
-              {isSubscribed ? 'Disable' : 'Enable'}
+              {isSubscribed ? dict.notify.disable : dict.notify.enable}
             </>
           )}
         </Button>
@@ -196,13 +198,10 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
         </div>
         <div className="flex-1">
           <p className="text-[13.5px] font-extrabold text-ink">
-            {isSubscribed ? 'Push Notifications Enabled' : 'Enable Push Notifications'}
+            {isSubscribed ? dict.notify.enabledTitle : dict.notify.disabledTitle}
           </p>
           <p className="mt-1 text-[12px] font-medium leading-relaxed text-ink-soft">
-            {isSubscribed
-              ? 'You\'ll receive notifications for important family updates'
-              : 'Stay updated when it\'s your turn to ask a question, when family members answer, and more'
-            }
+            {isSubscribed ? dict.notify.enabledHint : dict.notify.disabledHint}
           </p>
 
           {error && (
@@ -219,19 +218,19 @@ export function EnablePushCard({ variant = 'card' }: EnablePushCardProps) {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isSubscribed ? 'Disabling...' : 'Enabling...'}
+                  {isSubscribed ? dict.notify.disabling : dict.notify.enabling}
                 </>
               ) : (
                 <>
                   {isSubscribed ? (
                     <>
                       <BellOff className="w-4 h-4 mr-2" />
-                      Disable Notifications
+                      {dict.notify.disable}
                     </>
                   ) : (
                     <>
                       <Bell className="w-4 h-4 mr-2" />
-                      Enable Notifications
+                      {dict.notify.enable}
                     </>
                   )}
                 </>

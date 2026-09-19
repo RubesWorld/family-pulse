@@ -1,5 +1,7 @@
 'use client'
 
+import { useI18n } from '@/components/i18n-provider'
+
 import { Smartphone } from 'lucide-react'
 
 export type InstallPlatform = 'ios' | 'android' | 'desktop'
@@ -39,7 +41,13 @@ const STEPS: Record<InstallPlatform, { label: string; steps: string[] }> = {
 
 /** The ordered install steps for one platform. */
 export function InstallSteps({ platform }: { platform: InstallPlatform }) {
-  const { label, steps } = STEPS[platform]
+  const { dict } = useI18n()
+  const { steps } = STEPS[platform]
+  const label = {
+    ios: dict.notify.iosLabel,
+    android: dict.notify.androidLabel,
+    desktop: dict.notify.desktopLabel,
+  }[platform]
 
   return (
     <div className="space-y-2">
@@ -63,6 +71,8 @@ export function InstallSteps({ platform }: { platform: InstallPlatform }) {
  * produce a failure with no explanation.
  */
 export function IosInstallPrompt() {
+  const { dict } = useI18n()
+
   return (
     <div className="rounded-panel border border-marigold/40 bg-marigold/[0.12] p-4">
       <div className="flex items-start gap-3">
@@ -71,11 +81,10 @@ export function IosInstallPrompt() {
         </div>
         <div className="flex-1">
           <p className="text-[13.5px] font-extrabold text-ink">
-            Add Family Pulse to your Home Screen first
+            {dict.notify.addFirst}
           </p>
           <p className="mt-1 text-[12px] font-medium leading-relaxed text-ink-soft">
-            On iPhone and iPad, notifications only work once the app is installed.
-            They can&apos;t be turned on from a Safari tab.
+{dict.notify.addFirstHint}
           </p>
 
           <div className="mt-3 rounded-panel border border-edge bg-card p-3">
@@ -83,8 +92,7 @@ export function IosInstallPrompt() {
           </div>
 
           <p className="mt-3 text-[12px] font-medium leading-relaxed text-ink-soft">
-            Already added it? Make sure you opened Family Pulse from the Home Screen
-            icon rather than from Safari.
+{dict.notify.alreadyAdded}
           </p>
         </div>
       </div>

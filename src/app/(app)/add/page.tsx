@@ -7,9 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import type { Dictionary } from '@/lib/i18n'
+import { useI18n } from '@/components/i18n-provider'
 
-function Optional() {
-  return <span className="font-bold text-ink-faint"> · optional</span>
+
+
+function Optional({ dict }: { dict: Dictionary }) {
+  return (
+    <span className="font-bold text-ink-faint"> · {dict.add.optional}</span>
+  )
 }
 
 export default function AddActivityPage() {
@@ -24,6 +30,7 @@ export default function AddActivityPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { dict } = useI18n()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,12 +70,12 @@ export default function AddActivityPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
-              Share
+              {dict.add.eyebrow}
             </div>
             <h1 className="mt-1 font-display text-[27px] font-black leading-[1.06] tracking-tight text-ink">
-              What are you
+              {dict.add.titleLine1}
               <br />
-              up to?
+              {dict.add.titleLine2}
             </h1>
           </div>
           <button
@@ -76,7 +83,7 @@ export default function AddActivityPage() {
             onClick={() => router.back()}
             className="mt-7 text-[12.5px] font-extrabold text-ink-faint transition-colors hover:text-ink"
           >
-            Cancel
+            {dict.common.cancel}
           </button>
         </div>
 
@@ -100,11 +107,11 @@ export default function AddActivityPage() {
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-4 px-5">
         <div>
-          <Label htmlFor="title">The thing</Label>
+          <Label htmlFor="title">{dict.add.thing}</Label>
           <Input
             id="title"
             type="text"
-            placeholder="Taking a sewing class, going to a concert…"
+            placeholder={dict.add.thingPlaceholder}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -114,12 +121,12 @@ export default function AddActivityPage() {
 
         <div>
           <Label htmlFor="description">
-            Tell us more
-            <Optional />
+            {dict.add.tellMore}
+            <Optional dict={dict} />
           </Label>
           <Textarea
             id="description"
-            placeholder="What's it about? Why are you doing it?"
+            placeholder={dict.add.tellMorePlaceholder}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
@@ -128,8 +135,8 @@ export default function AddActivityPage() {
 
         <div>
           <Label htmlFor="startsAt">
-            When
-            <Optional />
+            {dict.add.when}
+            <Optional dict={dict} />
           </Label>
           <Input
             id="startsAt"
@@ -141,13 +148,13 @@ export default function AddActivityPage() {
 
         <div>
           <Label htmlFor="location">
-            Where
-            <Optional />
+            {dict.add.where}
+            <Optional dict={dict} />
           </Label>
           <Input
             id="location"
             type="text"
-            placeholder="Downtown, Mom's house, the park…"
+            placeholder={dict.add.wherePlaceholder}
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
           />
@@ -155,12 +162,12 @@ export default function AddActivityPage() {
 
         <div>
           <Label htmlFor="notes">
-            Note for family
-            <Optional />
+            {dict.add.noteForFamily}
+            <Optional dict={dict} />
           </Label>
           <Textarea
             id="notes"
-            placeholder="Call me if you want to join!"
+            placeholder={dict.add.notePlaceholder}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
@@ -180,7 +187,7 @@ export default function AddActivityPage() {
           className="w-full"
           disabled={loading || !title.trim()}
         >
-          {loading ? 'Posting…' : 'Share with family'}
+          {loading ? dict.add.posting : dict.add.share}
         </Button>
       </form>
     </div>

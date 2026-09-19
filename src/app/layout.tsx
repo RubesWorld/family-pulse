@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Nunito } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
+import { I18nProvider } from "@/components/i18n-provider";
+import { getLocale } from "@/lib/i18n/server";
 
 // main removed the Geist fonts because they were loaded and never applied —
 // nothing read --font-geist-sans, so 134 kB was preloaded and thrown away on
@@ -57,13 +59,18 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Read here rather than in the (app) layout so the signed-out screens —
+  // login, create-family, join — can use the dictionary too. They render
+  // outside (app), so a provider mounted there never reached them.
+  const locale = await getLocale();
+
   return (
-    <html lang="en" data-theme="night" suppressHydrationWarning>
+    <html lang={locale} data-theme="night" suppressHydrationWarning>
       <head>
         {/* Resolves the stored/system theme before first paint so the
             app never flashes the wrong paper colour. */}
@@ -71,7 +78,7 @@ export default function RootLayout({
       </head>
       {/* `antialiased` now comes from the body rule in globals.css. */}
       <body className={`${fraunces.variable} ${nunito.variable}`}>
-        {children}
+        <I18nProvider locale={locale}>{children}</I18nProvider>
       </body>
     </html>
   );

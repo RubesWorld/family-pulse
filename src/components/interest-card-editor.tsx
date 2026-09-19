@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/components/i18n-provider'
 import { Badge } from '@/components/ui/badge'
 import { Plus, X } from 'lucide-react'
 
@@ -21,6 +22,7 @@ interface InterestCardEditorProps {
 }
 
 export function InterestCardEditor({ userId, existingCards, onSave }: InterestCardEditorProps) {
+  const { dict } = useI18n()
   const [cards, setCards] = useState(existingCards)
   const [showAddPreset, setShowAddPreset] = useState(false)
   const [showAddCustom, setShowAddCustom] = useState(false)
@@ -169,7 +171,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
                 {/* Tags section */}
                 <div className="space-y-2">
                   <label className="text-xs font-extrabold text-ink-soft">
-                    Specifics (e.g., Claude, Gemini, AI)
+                    {dict.interestsEditor.specifics}
                   </label>
 
                   {/* Display existing tags */}
@@ -196,7 +198,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
                   {/* Add tag input */}
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Add a tag..."
+                      placeholder={dict.interestsEditor.addTag}
                       value={tagInputs[card.category] || ''}
                       onChange={(e) => setTagInputs(prev => ({ ...prev, [card.category]: e.target.value }))}
                       onKeyDown={(e) => {
@@ -233,7 +235,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
             className="flex-1 gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add Interest
+            {dict.interestsEditor.choose}
           </Button>
         )}
         <Button
@@ -242,7 +244,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
           className="flex-1 gap-2"
         >
           <Plus className="w-4 h-4" />
-          Add Custom
+          {dict.interestsEditor.addCustom}
         </Button>
       </div>
 
@@ -250,7 +252,7 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
       {showAddPreset && (
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm font-medium mb-2">Choose an interest:</p>
+            <p className="text-sm font-medium mb-2">{dict.interestsEditor.choose}</p>
             <div className="flex flex-wrap gap-2">
               {availablePresets.map(preset => (
                 <Button
@@ -273,15 +275,15 @@ export function InterestCardEditor({ userId, existingCards, onSave }: InterestCa
       {showAddCustom && (
         <Card>
           <CardContent className="p-4 space-y-2">
-            <p className="text-sm font-medium">Create custom interest:</p>
+            <p className="text-sm font-medium">{dict.interestsEditor.createCustom}</p>
             <Input
-              placeholder="e.g., Baking, Astronomy, Yoga..."
+              placeholder={dict.interestsEditor.customPlaceholderEg}
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddCustom()}
             />
             <Button onClick={handleAddCustom} size="sm" className="w-full">
-              Add Custom Interest
+              {dict.interestsEditor.createCustom}
             </Button>
           </CardContent>
         </Card>

@@ -6,33 +6,39 @@ import { GlowAvatar } from '@/components/ui/glow-avatar'
 import { MetaChip, NoteCallout, Surface } from '@/components/ui/surface'
 import { ActivityWithUser } from '@/types/database'
 import { openSMS } from '@/lib/sms'
+import { useI18n } from '@/components/i18n-provider'
+import { t, type Dictionary } from '@/lib/i18n'
+import type { Locale as DateFnsLocale } from 'date-fns'
 
 interface ActivityCardProps {
   activity: ActivityWithUser
   tilt?: 'a' | 'b'
 }
 
-function formatActivityTime(date: string | null): string | null {
+function formatActivityTime(
+  date: string | null,
+  dict: Dictionary,
+  dateLocale: DateFnsLocale
+): string | null {
   if (!date) return null
 
   const d = new Date(date)
+  const time = format(d, 'p', { locale: dateLocale })
 
-  if (isToday(d)) {
-    return `Today at ${format(d, 'h:mm a')}`
-  }
-  if (isTomorrow(d)) {
-    return `Tomorrow at ${format(d, 'h:mm a')}`
-  }
-  if (isYesterday(d)) {
-    return `Yesterday at ${format(d, 'h:mm a')}`
-  }
+  if (isToday(d)) return t(dict.feed.todayAt, { time })
+  if (isTomorrow(d)) return t(dict.feed.tomorrowAt, { time })
+  if (isYesterday(d)) return t(dict.feed.yesterdayAt, { time })
 
-  return format(d, "EEE, MMM d 'at' h:mm a")
+  return format(d, 'EEE, MMM d', { locale: dateLocale }) + ' · ' + time
 }
 
 export function ActivityCard({ activity, tilt }: ActivityCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })
-  const activityTime = formatActivityTime(activity.starts_at)
+  const { dict, dateLocale } = useI18n()
+  const timeAgo = formatDistanceToNow(new Date(activity.created_at), {
+    addSuffix: true,
+    locale: dateLocale,
+  })
+  const activityTime = formatActivityTime(activity.starts_at, dict, dateLocale)
 
   const handleTextClick = () => {
     if (!activity.users?.phone_number) return
@@ -95,7 +101,7 @@ export function ActivityCard({ activity, tilt }: ActivityCardProps) {
               }}
             >
               <MessageCircle className="h-3.5 w-3.5" />
-              Text {activity.users.name.split(' ')[0]}
+              {dict.family.text} {activity.users.name.split(' ')[0]}
             </button>
           )}
         </div>

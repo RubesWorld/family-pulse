@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { MapPin, Briefcase, Calendar, FileText, Phone } from 'lucide-react'
+import { useI18n } from '@/components/i18n-provider'
 
 interface ProfileBioEditorProps {
   userId: string
@@ -26,6 +27,7 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
   const [phoneNumber, setPhoneNumber] = useState(initialData.phone_number || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { dict } = useI18n()
 
   const handleSave = async () => {
     setSaving(true)
@@ -61,10 +63,10 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
           <MapPin className="h-3.5 w-3.5" />
-          Location
+          {dict.bio.location}
         </label>
         <Input
-          placeholder="e.g., San Francisco, CA"
+          placeholder={dict.bio.locationPlaceholder}
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
@@ -74,10 +76,10 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
           <Briefcase className="h-3.5 w-3.5" />
-          Occupation
+          {dict.bio.occupation}
         </label>
         <Input
-          placeholder="e.g., Software Engineer"
+          placeholder={dict.bio.occupationPlaceholder}
           value={occupation}
           onChange={(e) => setOccupation(e.target.value)}
         />
@@ -87,7 +89,7 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
           <Calendar className="h-3.5 w-3.5" />
-          Birthday
+          {dict.bio.birthday}
         </label>
         <Input
           type="date"
@@ -100,16 +102,16 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
           <Phone className="h-3.5 w-3.5" />
-          Phone Number
+          {dict.bio.phone}
         </label>
         <Input
           type="tel"
-          placeholder="e.g., (555) 123-4567"
+          placeholder={dict.bio.phonePlaceholder}
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
         />
         <p className="text-[11.5px] font-semibold text-ink-faint">
-          Family members can use this to text you from the app
+          {dict.bio.phoneHint}
         </p>
       </div>
 
@@ -117,10 +119,10 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-extrabold text-ink-soft">
           <FileText className="h-3.5 w-3.5" />
-          Bio
+          {dict.bio.bio}
         </label>
         <Textarea
-          placeholder="Tell your family a bit about yourself..."
+          placeholder={dict.bio.bioPlaceholder}
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           className="min-h-[100px]"
@@ -136,7 +138,7 @@ export function ProfileBioEditor({ userId, initialData, onSave }: ProfileBioEdit
 
       {/* Save button */}
       <Button onClick={handleSave} className="w-full" size="lg" disabled={saving}>
-        {saving ? 'Saving…' : 'Save profile'}
+        {saving ? dict.common.saving : dict.bio.saveProfile}
       </Button>
     </div>
   )

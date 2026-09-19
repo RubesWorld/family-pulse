@@ -51,7 +51,7 @@ export function MemberDetailView({
       <div className="px-5 pt-screen">
         <Button variant="ghost" size="sm" onClick={onBack} className="-ml-3">
           <ArrowLeft className="h-4 w-4" />
-          Family
+          {dict.family.back}
         </Button>
       </div>
 
@@ -70,7 +70,7 @@ export function MemberDetailView({
         {member.phone_number && (
           <Button variant="outline" size="sm" onClick={handleTextClick}>
             <MessageCircle className="h-3.5 w-3.5" />
-            Text
+            {dict.family.text}
           </Button>
         )}
       </header>
@@ -135,10 +135,10 @@ export function MemberDetailView({
         <div className="px-8 py-16 text-center">
           <div className="text-4xl">🫥</div>
           <p className="mt-4 font-display text-lg font-bold text-ink">
-            Nothing shared yet
+            {dict.family.nothingShared}
           </p>
           <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
-            {member.name} hasn&apos;t added interests or picks.
+{t(dict.family.nothingSharedHint, { name: member.name })}
           </p>
         </div>
       )}

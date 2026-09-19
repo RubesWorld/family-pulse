@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { FamilyOrbs, Swash } from '@/components/auth-shell'
+import { useI18n } from '@/components/i18n-provider'
 
 export function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -19,6 +20,7 @@ export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteCode = searchParams.get('invite')
+  const { dict } = useI18n()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,17 +95,17 @@ export function LoginForm() {
       </h1>
       <Swash />
       <p className="mt-3 max-w-[26ch] text-[14px] font-semibold leading-relaxed text-ink-soft">
-        See what everyone&apos;s up to — without the group chat.
+{dict.auth.tagline}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-3.5">
         {isSignUp && (
           <div>
-            <Label htmlFor="name">Your name</Label>
+            <Label htmlFor="name">{dict.auth.yourName}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="What should we call you?"
+              placeholder={dict.auth.namePlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required={isSignUp}
@@ -113,7 +115,7 @@ export function LoginForm() {
         )}
 
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{dict.auth.email}</Label>
           <Input
             id="email"
             type="email"
@@ -126,7 +128,7 @@ export function LoginForm() {
         </div>
 
         <div>
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{dict.auth.password}</Label>
           <PasswordInput
             id="password"
             placeholder="••••••••"
@@ -135,6 +137,8 @@ export function LoginForm() {
             required
             minLength={6}
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            showLabel={dict.auth.showPassword}
+            hideLabel={dict.auth.hidePassword}
           />
         </div>
 
@@ -145,12 +149,16 @@ export function LoginForm() {
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
-          {loading ? 'Please wait…' : isSignUp ? 'Create account' : 'Log in'}
+          {loading
+            ? dict.auth.pleaseWait
+            : isSignUp
+              ? dict.auth.createAccount
+              : dict.auth.logIn}
         </Button>
       </form>
 
       <p className="mt-5 text-center text-[12.5px] font-bold text-ink-soft">
-        {isSignUp ? 'Already have an account?' : 'New here?'}{' '}
+        {isSignUp ? dict.auth.alreadyHave : dict.auth.newHere}{' '}
         <button
           type="button"
           onClick={() => {
@@ -159,7 +167,7 @@ export function LoginForm() {
           }}
           className="font-extrabold text-coral hover:underline"
         >
-          {isSignUp ? 'Log in' : 'Create an account'}
+          {isSignUp ? dict.auth.logIn : dict.auth.createAccountLink}
         </button>
       </p>
     </div>

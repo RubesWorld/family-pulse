@@ -4,15 +4,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, HeartHandshake, Users, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/components/i18n-provider'
 
 const LEFT_ITEMS = [
-  { href: '/feed', icon: Home, label: 'Feed' },
-  { href: '/connect', icon: HeartHandshake, label: 'Connect' },
+  { href: '/feed', icon: Home, key: 'feed' as const },
+  { href: '/connect', icon: HeartHandshake, key: 'connect' as const },
 ]
 
 const RIGHT_ITEMS = [
-  { href: '/family', icon: Users, label: 'Family' },
-  { href: '/profile', icon: User, label: 'Profile' },
+  { href: '/family', icon: Users, key: 'family' as const },
+  { href: '/profile', icon: User, key: 'profile' as const },
 ]
 
 function NavItem({
@@ -54,18 +55,25 @@ function NavItem({
  */
 export function BottomNav() {
   const pathname = usePathname()
+  const { dict } = useI18n()
   const onAdd = pathname.startsWith('/add')
 
   return (
     <nav className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-md rounded-card border-card border-edge bg-nav px-2 py-2 shadow-nav backdrop-blur-[30px] backdrop-saturate-150 safe-area-pb">
       <div className="flex items-center justify-around gap-1">
         {LEFT_ITEMS.map((item) => (
-          <NavItem key={item.href} {...item} pathname={pathname} />
+          <NavItem
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={dict.nav[item.key]}
+            pathname={pathname}
+          />
         ))}
 
         <Link
           href="/add"
-          aria-label="Add"
+          aria-label={dict.nav.add}
           aria-current={onAdd ? 'page' : undefined}
           className="grid h-12 w-12 flex-none place-items-center rounded-full transition-transform active:scale-95"
           style={{
@@ -79,7 +87,13 @@ export function BottomNav() {
         </Link>
 
         {RIGHT_ITEMS.map((item) => (
-          <NavItem key={item.href} {...item} pathname={pathname} />
+          <NavItem
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={dict.nav[item.key]}
+            pathname={pathname}
+          />
         ))}
       </div>
     </nav>

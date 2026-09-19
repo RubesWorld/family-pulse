@@ -3,8 +3,6 @@ import { getCurrentProfile, getCurrentUser } from '@/lib/supabase/queries'
 import { BottomNav } from '@/components/bottom-nav'
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop'
 import { ThemeProvider } from '@/components/theme-provider'
-import { I18nProvider } from '@/components/i18n-provider'
-import { getLocale } from '@/lib/i18n/server'
 
 export default async function AppLayout({
   children,
@@ -25,20 +23,14 @@ export default async function AppLayout({
     redirect('/create-family')
   }
 
-  // Read from the cookie during render so the first paint is already in the
-  // right language — no flash of English.
-  const locale = await getLocale()
-
   return (
-    <I18nProvider locale={locale}>
-      <ThemeProvider>
-        <div className="relative min-h-screen bg-paper">
-          <AmbientBackdrop />
-          {/* pb clears the floating nav plus the iOS home indicator */}
-          <div className="relative z-10 pb-32">{children}</div>
-          <BottomNav />
-        </div>
-      </ThemeProvider>
-    </I18nProvider>
+    <ThemeProvider>
+      <div className="relative min-h-screen bg-paper">
+        <AmbientBackdrop />
+        {/* pb clears the floating nav plus the iOS home indicator */}
+        <div className="relative z-10 pb-32">{children}</div>
+        <BottomNav />
+      </div>
+    </ThemeProvider>
   )
 }

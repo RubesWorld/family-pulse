@@ -5,6 +5,8 @@ import { User, PickWithUser, InterestCard, UserPick } from '@/types/database'
 import { FamilyMemberCard } from '@/components/family-member-card'
 import { PickCard } from '@/components/pick-card'
 import { SectionHeader } from '@/components/ui/surface'
+import { plural } from '@/lib/i18n'
+import { useI18n } from '@/components/i18n-provider'
 import { MemberDetailView } from './member-detail-view'
 
 interface FamilyContentProps {
@@ -24,6 +26,7 @@ export function FamilyContent({
   picksByMember,
 }: FamilyContentProps) {
   const [selectedMember, setSelectedMember] = useState<User | null>(null)
+  const { dict } = useI18n()
 
   if (selectedMember) {
     return (
@@ -40,7 +43,11 @@ export function FamilyContent({
     <div className="mx-auto max-w-lg">
       <header className="px-5 pb-1 pt-screen">
         <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
-          {members.length} {members.length === 1 ? 'member' : 'members'}
+          {plural(members.length, {
+            none: dict.family.memberCount,
+            one: dict.family.memberOne,
+            many: dict.family.memberCount,
+          })}
         </div>
         <h1 className="mt-1 font-display text-[30px] font-black leading-[1.06] tracking-tight text-ink">
           {familyName}
@@ -63,7 +70,7 @@ export function FamilyContent({
         </svg>
       </header>
 
-      <SectionHeader>Everyone</SectionHeader>
+      <SectionHeader>{dict.family.everyone}</SectionHeader>
       <div className="grid grid-cols-2 gap-3 px-5">
         {members.map((member) => (
           <FamilyMemberCard
@@ -74,7 +81,7 @@ export function FamilyContent({
         ))}
       </div>
 
-      <SectionHeader>Fresh picks</SectionHeader>
+      <SectionHeader>{dict.family.freshAnswers}</SectionHeader>
       <div className="px-5">
         {recentPicks.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
@@ -85,10 +92,10 @@ export function FamilyContent({
         ) : (
           <div className="rounded-card border-card border-edge bg-card px-6 py-10 text-center backdrop-blur-card">
             <p className="font-display text-[17px] font-bold text-ink">
-              Quiet last 24 hours
+              {dict.family.quietTitle}
             </p>
             <p className="mt-1 text-[13px] font-medium text-ink-soft">
-              Share a favorite from your profile to get things going.
+              {dict.family.quietHint}
             </p>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Share2, Check, List, Calendar, Activity, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/components/i18n-provider'
 
 export type FeedFilter = 'all' | 'activities' | 'picks'
 
@@ -15,10 +16,10 @@ interface FeedHeaderProps {
   onFilterChange: (filter: FeedFilter) => void
 }
 
-const FILTERS: { id: FeedFilter; label: string; icon?: typeof Activity }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'activities', label: 'Activities', icon: Activity },
-  { id: 'picks', label: 'Picks', icon: Heart },
+const FILTERS: { id: FeedFilter; key: 'filterAll' | 'filterActivities' | 'filterAnswers'; icon?: typeof Activity }[] = [
+  { id: 'all', key: 'filterAll' },
+  { id: 'activities', key: 'filterActivities', icon: Activity },
+  { id: 'picks', key: 'filterAnswers', icon: Heart },
 ]
 
 export function FeedHeader({
@@ -30,6 +31,7 @@ export function FeedHeader({
   onFilterChange,
 }: FeedHeaderProps) {
   const [copied, setCopied] = useState(false)
+  const { dict } = useI18n()
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -108,12 +110,12 @@ export function FeedHeader({
           {copied ? (
             <>
               <Check className="h-3.5 w-3.5" />
-              Copied!
+              {dict.feed.copied}
             </>
           ) : (
             <>
               <Share2 className="h-3.5 w-3.5" />
-              Invite
+              {dict.feed.invite}
             </>
           )}
         </button>
@@ -138,7 +140,7 @@ export function FeedHeader({
               )}
             >
               <Icon className="h-3.5 w-3.5" />
-              {v}
+              {v === 'feed' ? dict.feed.viewFeed : dict.feed.viewCalendar}
             </button>
           )
         })}
@@ -147,7 +149,7 @@ export function FeedHeader({
       {/* filters, feed view only */}
       {view === 'feed' && (
         <div className="mt-2.5 flex gap-1.5">
-          {FILTERS.map(({ id, label, icon: Icon }) => {
+          {FILTERS.map(({ id, key, icon: Icon }) => {
             const active = filter === id
             return (
               <button
@@ -171,7 +173,7 @@ export function FeedHeader({
                 }
               >
                 {Icon ? <Icon className="h-3 w-3" /> : null}
-                {label}
+                {dict.feed[key]}
               </button>
             )
           })}

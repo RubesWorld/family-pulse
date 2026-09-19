@@ -21,6 +21,8 @@ import { ActivityCard } from '@/components/activity-card'
 import { SectionHeader } from '@/components/ui/surface'
 import { accentVar, personAccent } from '@/lib/person-color'
 import { cn } from '@/lib/utils'
+import { plural } from '@/lib/i18n'
+import { useI18n } from '@/components/i18n-provider'
 import type { ActivityWithUser } from '@/types/database'
 
 interface CalendarViewProps {
@@ -42,12 +44,11 @@ function groupActivitiesByDate(activities: ActivityWithUser[]) {
   return grouped
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
 export function CalendarView({ activities }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const router = useRouter()
+  const { dict, dateLocale } = useI18n()
 
   const activitiesByDate = useMemo(
     () => groupActivitiesByDate(activities),
@@ -76,18 +77,18 @@ export function CalendarView({ activities }: CalendarViewProps) {
           variant="ghost"
           size="sm"
           onClick={() => setCurrentMonth((prev) => subMonths(prev, 1))}
-          aria-label="Previous month"
+          aria-label={dict.calendar.previousMonth}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="font-display text-lg font-black text-ink">
-          {format(currentMonth, 'MMMM yyyy')}
+          {format(currentMonth, 'MMMM yyyy', { locale: dateLocale })}
         </h2>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCurrentMonth((prev) => addMonths(prev, 1))}
-          aria-label="Next month"
+          aria-label={dict.calendar.nextMonth}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -95,20 +96,25 @@ export function CalendarView({ activities }: CalendarViewProps) {
 
       {scheduledCount > 0 && (
         <p className="mb-3 text-center text-[12px] font-bold text-ink-soft">
-          {scheduledCount} scheduled{' '}
-          {scheduledCount === 1 ? 'activity' : 'activities'}
+          {plural(scheduledCount, {
+            none: dict.calendar.scheduledCount,
+            one: dict.calendar.scheduledOne,
+            many: dict.calendar.scheduledCount,
+          })}
         </p>
       )}
 
       {/* grid */}
       <div className="overflow-hidden rounded-card border-card border-edge bg-card shadow-card backdrop-blur-card">
         <div className="grid grid-cols-7 border-b border-edge">
-          {WEEKDAYS.map((day) => (
+          {/* Derived from the active locale rather than a hardcoded English
+              list, so Spanish reads D L M M J V S instead of S M T W T F S. */}
+          {calendarDays.slice(0, 7).map((day) => (
             <div
-              key={day}
+              key={day.toISOString()}
               className="py-2.5 text-center text-[10px] font-extrabold uppercase tracking-wider text-ink-faint"
             >
-              {day.slice(0, 1)}
+              {format(day, 'EEEEE', { locale: dateLocale })}
             </div>
           ))}
         </div>
@@ -126,7 +132,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
                 key={index}
                 type="button"
                 onClick={() => setSelectedDate(day)}
-                aria-label={format(day, 'EEEE, MMMM d')}
+                aria-label={format(day, 'EEEE, MMMM d', { locale: dateLocale })}
                 aria-pressed={!!isSelected}
                 className={cn(
                   'relative min-h-[58px] border-b border-r border-edge p-1.5 transition-colors',
@@ -184,16 +190,16 @@ export function CalendarView({ activities }: CalendarViewProps) {
                 }
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add
+                {dict.common.add}
               </Button>
             }
           >
-            {format(selectedDate, 'EEE, MMM d')}
+            {format(selectedDate, 'EEE, MMM d', { locale: dateLocale })}
           </SectionHeader>
 
           {selectedDayActivities.length === 0 ? (
             <p className="py-8 text-center text-[13px] font-semibold text-ink-soft">
-              Nothing scheduled for this day.
+              {dict.calendar.nothingThisDay}
             </p>
           ) : (
             <div className="flex flex-col gap-3.5">
@@ -211,7 +217,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
 
       {scheduledCount === 0 && !selectedDate && (
         <p className="mt-6 text-center text-[13px] font-semibold text-ink-soft">
-          Nothing scheduled yet. Tap a day to add something.
+          {dict.calendar.nothingScheduled}
         </p>
       )}
     </div>

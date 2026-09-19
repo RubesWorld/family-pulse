@@ -13,7 +13,7 @@ interface PickActivityCardProps {
 }
 
 export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
-  const { dict, locale } = useI18n()
+  const { dict, locale, dateLocale } = useI18n()
   const prompt = getPrompt(pick.category)
   const userName = pick.users?.name || 'Someone'
 
@@ -67,7 +67,10 @@ export function PickActivityCard({ pick, tilt }: PickActivityCardProps) {
           )}
 
           <p className="mt-2 text-[11px] font-bold text-ink-faint">
-            {formatDistanceToNow(new Date(pick.created_at), { addSuffix: true })}
+            {formatDistanceToNow(new Date(pick.created_at), {
+              addSuffix: true,
+              locale: dateLocale,
+            })}
           </p>
         </div>
       </div>
