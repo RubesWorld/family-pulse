@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile, getCurrentUser, getFamilyMemberIds } from '@/lib/supabase/queries'
 import { chooseOpenPrompt } from '@/lib/pick-prompts'
+import { getCurrentWeekNumber } from '@/lib/connect-utils'
+import type { QuestionWithAnswers } from '@/types/database'
 import { ActivityWithUser, PickWithUser } from '@/types/database'
 import { FeedContent } from './feed-content'
 
@@ -30,6 +32,8 @@ export default async function FeedPage() {
         recentPicks={[]}
         currentUserId={user?.id ?? ''}
         openPromptId={null}
+        weeklyQuestion={null}
+        familyMemberCount={0}
       />
     )
   }
@@ -46,6 +50,7 @@ export default async function FeedPage() {
     { data: recentPicks },
     { data: myInterests },
     { data: myPicks },
+    { data: weeklyQuestion },
   ] = await Promise.all([
     supabase
       .from('activities')
@@ -74,6 +79,20 @@ export default async function FeedPage() {
       .select('category, value')
       .eq('user_id', user?.id ?? '')
       .eq('is_current', true),
+
+    // The weekly question is an event too — it belongs in the feed, not only
+    // behind the Connect tab where nobody sees it.
+    supabase
+      .from('weekly_questions')
+      .select(
+        `*,
+         users!weekly_questions_assigned_user_id_fkey(id, name, avatar_url),
+         question_answers(*, users(id, name, avatar_url))`
+      )
+      .eq('family_id', familyId)
+      .eq('week_number', getCurrentWeekNumber())
+      .eq('is_current', true)
+      .maybeSingle(),
   ])
 
   const openPrompt = chooseOpenPrompt(
@@ -102,6 +121,8 @@ export default async function FeedPage() {
       recentPicks={typedPicks}
       currentUserId={user?.id ?? ''}
       openPromptId={openPrompt?.id ?? null}
+      weeklyQuestion={(weeklyQuestion as QuestionWithAnswers | null) ?? null}
+      familyMemberCount={familyMemberIds.length}
     />
   )
 }

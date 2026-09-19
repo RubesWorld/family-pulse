@@ -67,7 +67,8 @@ export default async function ConnectPage() {
       question_text,
       week_start_date,
       week_number,
-      users!weekly_questions_assigned_user_id_fkey(id, name, avatar_url)
+      users!weekly_questions_assigned_user_id_fkey(id, name, avatar_url),
+      question_answers(user_id, answer_text, is_current)
     `
       )
       .eq('family_id', familyId)

@@ -8,7 +8,20 @@ import { CalendarView } from '@/components/calendar-view'
 import { FeedHeader, FeedFilter } from './feed-header'
 import { SectionHeader } from '@/components/ui/surface'
 import { PromptCard } from '@/components/picks/prompt-card'
-import type { ActivityWithUser, PickWithUser } from '@/types/database'
+import {
+  WeeklyQuestionCard,
+  YourTurnToAskCard,
+} from '@/components/feed/weekly-question-card'
+import { QuestionAnswerCard } from '@/components/feed/question-answer-card'
+import { useI18n } from '@/components/i18n-provider'
+import type { Dictionary } from '@/lib/i18n'
+import type { Locale as DateFnsLocale } from 'date-fns'
+import type {
+  ActivityWithUser,
+  AnswerWithUser,
+  PickWithUser,
+  QuestionWithAnswers,
+} from '@/types/database'
 
 interface FeedContentProps {
   familyName: string
@@ -18,13 +31,22 @@ interface FeedContentProps {
   currentUserId: string
   /** One unanswered prompt, chosen server-side. Null when there are none left. */
   openPromptId: string | null
+  /** This week's question, so its answers can flow through the feed. */
+  weeklyQuestion: QuestionWithAnswers | null
+  familyMemberCount: number
 }
 
 type FeedItem =
   | { type: 'activity'; data: ActivityWithUser }
   | { type: 'pick'; data: PickWithUser }
+  | { type: 'answer'; data: AnswerWithUser; questionText: string }
 
-function groupFeedItemsByDate(activities: ActivityWithUser[], picks: PickWithUser[]) {
+function groupFeedItemsByDate(
+  activities: ActivityWithUser[],
+  picks: PickWithUser[],
+  answers: AnswerWithUser[],
+  questionText: string
+) {
   const grouped = new Map<string, FeedItem[]>()
 
   activities.forEach((activity) => {
@@ -37,6 +59,12 @@ function groupFeedItemsByDate(activities: ActivityWithUser[], picks: PickWithUse
     const dateKey = format(new Date(pick.created_at), 'yyyy-MM-dd')
     if (!grouped.has(dateKey)) grouped.set(dateKey, [])
     grouped.get(dateKey)!.push({ type: 'pick', data: pick })
+  })
+
+  answers.forEach((answer) => {
+    const dateKey = format(new Date(answer.created_at), 'yyyy-MM-dd')
+    if (!grouped.has(dateKey)) grouped.set(dateKey, [])
+    grouped.get(dateKey)!.push({ type: 'answer', data: answer, questionText })
   })
 
   return Array.from(grouped.entries())
@@ -52,10 +80,16 @@ function groupFeedItemsByDate(activities: ActivityWithUser[], picks: PickWithUse
     .sort((a, b) => b.date.getTime() - a.date.getTime())
 }
 
-function formatDateHeader(date: Date): string {
-  if (isToday(date)) return `Today · ${format(date, 'EEEE')}`
-  if (isYesterday(date)) return 'Yesterday'
-  return format(date, 'EEEE, MMMM d')
+function formatDateHeader(
+  date: Date,
+  dict: Dictionary,
+  dateLocale: DateFnsLocale
+): string {
+  if (isToday(date)) {
+    return `${dict.feed.today} · ${format(date, 'EEEE', { locale: dateLocale })}`
+  }
+  if (isYesterday(date)) return dict.feed.yesterday
+  return format(date, 'EEEE, MMMM d', { locale: dateLocale })
 }
 
 export function FeedContent({
@@ -65,13 +99,28 @@ export function FeedContent({
   recentPicks,
   currentUserId,
   openPromptId,
+  weeklyQuestion,
+  familyMemberCount,
 }: FeedContentProps) {
+  const { dict, dateLocale } = useI18n()
   const [view, setView] = useState<'feed' | 'calendar'>('feed')
   const [filter, setFilter] = useState<FeedFilter>('all')
 
+  const currentAnswers = useMemo(
+    () =>
+      (weeklyQuestion?.question_answers ?? []).filter((a) => a.is_current),
+    [weeklyQuestion]
+  )
+
   const groupedItems = useMemo(
-    () => groupFeedItemsByDate(activities, recentPicks),
-    [activities, recentPicks]
+    () =>
+      groupFeedItemsByDate(
+        activities,
+        recentPicks,
+        weeklyQuestion?.status === 'active' ? currentAnswers : [],
+        weeklyQuestion?.question_text ?? ''
+      ),
+    [activities, recentPicks, currentAnswers, weeklyQuestion]
   )
 
   const filteredGroupedItems = useMemo(() => {
@@ -83,42 +132,70 @@ export function FeedContent({
         items: group.items.filter((item) =>
           filter === 'activities'
             ? item.type === 'activity'
-            : item.type === 'pick'
+            : item.type !== 'activity'
         ),
       }))
       .filter((group) => group.items.length > 0)
   }, [groupedItems, filter])
 
-  const hasContent = activities.length > 0 || recentPicks.length > 0
+  const hasContent =
+    activities.length > 0 || recentPicks.length > 0 || currentAnswers.length > 0
   const hasFilteredContent = filteredGroupedItems.length > 0
 
   const emptyMessage = (() => {
     if (!hasContent) {
       return {
         emoji: '🌱',
-        title: 'Nothing here yet',
-        subtitle: "Be the first to share what you're up to.",
+        title: dict.feed.emptyTitle,
+        subtitle: dict.feed.emptyHint,
       }
     }
     if (filter === 'activities') {
       return {
         emoji: '📭',
-        title: 'No activities',
-        subtitle: 'Try switching to All, or add something you’re doing.',
+        title: dict.feed.emptyActivitiesTitle,
+        subtitle: dict.feed.emptyActivitiesHint,
       }
     }
     if (filter === 'picks') {
       return {
         emoji: '💭',
-        title: 'Nothing here',
-        subtitle: 'Try switching to All, or answer a question about yourself.',
+        title: dict.feed.emptyAnswersTitle,
+        subtitle: dict.feed.emptyAnswersHint,
       }
     }
     return {
       emoji: '🍂',
-      title: 'Nothing to show',
-      subtitle: 'Try a different filter.',
+      title: dict.feed.emptyTitle,
+      subtitle: dict.feed.emptyHint,
     }
+  })()
+
+  // Only ever one ask on screen. Choosing this week's question outranks
+  // answering it, which outranks an interest prompt.
+  const myAnswer = currentAnswers.find((a) => a.user_id === currentUserId)
+  const isMyTurnToAsk =
+    weeklyQuestion?.status === 'pending' &&
+    weeklyQuestion.assigned_user_id === currentUserId
+
+  const nudge = (() => {
+    if (isMyTurnToAsk) return <YourTurnToAskCard />
+    if (weeklyQuestion?.status === 'active' && !myAnswer) {
+      return (
+        <WeeklyQuestionCard
+          questionId={weeklyQuestion.id}
+          questionText={weeklyQuestion.question_text}
+          askedBy={weeklyQuestion.users ?? null}
+          userId={currentUserId}
+          answeredCount={currentAnswers.length}
+          totalMembers={familyMemberCount}
+        />
+      )
+    }
+    if (openPromptId) {
+      return <PromptCard userId={currentUserId} promptId={openPromptId} />
+    }
+    return null
   })()
 
   return (
@@ -132,10 +209,8 @@ export function FeedContent({
         onFilterChange={setFilter}
       />
 
-      {view === 'feed' && openPromptId && currentUserId && (
-        <div className="pt-4">
-          <PromptCard userId={currentUserId} promptId={openPromptId} />
-        </div>
+      {view === 'feed' && currentUserId && (
+        <div className="pt-4">{nudge}</div>
       )}
 
       {view === 'feed' ? (
@@ -152,7 +227,9 @@ export function FeedContent({
         ) : (
           filteredGroupedItems.map((group) => (
             <section key={group.dateKey}>
-              <SectionHeader>{formatDateHeader(group.date)}</SectionHeader>
+              <SectionHeader>
+                {formatDateHeader(group.date, dict, dateLocale)}
+              </SectionHeader>
               <div className="flex flex-col gap-3.5 px-5">
                 {group.items.map((item, i) =>
                   item.type === 'activity' ? (
@@ -161,10 +238,17 @@ export function FeedContent({
                       activity={item.data}
                       tilt={i % 2 === 0 ? 'a' : 'b'}
                     />
-                  ) : (
+                  ) : item.type === 'pick' ? (
                     <PickActivityCard
                       key={item.data.id}
                       pick={item.data}
+                      tilt={i % 2 === 0 ? 'a' : 'b'}
+                    />
+                  ) : (
+                    <QuestionAnswerCard
+                      key={item.data.id}
+                      answer={item.data}
+                      questionText={item.questionText}
                       tilt={i % 2 === 0 ? 'a' : 'b'}
                     />
                   )

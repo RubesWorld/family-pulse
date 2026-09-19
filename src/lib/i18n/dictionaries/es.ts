@@ -36,6 +36,36 @@ export const es: Dictionary = {
     postOne: '1 cosa reciente',
   },
 
+  feed: {
+    askedThisWeek: '{name} preguntó esta semana',
+    answeredQuestion: 'contestó',
+    yourTurnToAsk: 'Te toca preguntar',
+    yourTurnToAskHint: 'Escoge una pregunta para la familia esta semana.',
+    chooseQuestion: 'Escoger pregunta',
+    weeklyQuestion: 'Esta semana',
+    seeAllAnswers: 'Ver a todos',
+
+    today: 'Hoy',
+    yesterday: 'Ayer',
+
+    emptyTitle: 'Todavía no hay nada',
+    emptyHint: 'Sé el primero en contar qué estás haciendo.',
+    emptyActivitiesTitle: 'No hay actividades',
+    emptyActivitiesHint: 'Prueba Todas, o agrega algo que estés haciendo.',
+    emptyAnswersTitle: 'Todavía no hay respuestas',
+    emptyAnswersHint: 'Prueba Todas, o contesta una pregunta sobre ti.',
+  },
+
+  connect: {
+    title: 'Connect',
+    libraryHint: 'Todo lo que la familia ha contestado.',
+    weeklyBadge: 'Pregunta de la semana',
+    interestBadge: 'De tus intereses',
+    filterAll: 'Todas',
+    filterWeekly: 'De la semana',
+    filterInterests: 'De intereses',
+  },
+
   settings: {
     title: 'Ajustes',
     appearance: 'Apariencia',

@@ -36,6 +36,38 @@ export const en = {
     postOne: '1 recent post',
   },
 
+  feed: {
+    // Weekly-question events now flow through the feed rather than living
+    // only in Connect.
+    askedThisWeek: '{name} asked this week',
+    answeredQuestion: 'answered',
+    yourTurnToAsk: 'Your turn to ask',
+    yourTurnToAskHint: 'Pick a question for the family this week.',
+    chooseQuestion: 'Choose a question',
+    weeklyQuestion: 'This week',
+    seeAllAnswers: 'See everyone',
+
+    today: 'Today',
+    yesterday: 'Yesterday',
+
+    emptyTitle: 'Nothing here yet',
+    emptyHint: "Be the first to share what you're up to.",
+    emptyActivitiesTitle: 'No activities',
+    emptyActivitiesHint: 'Try All, or add something you are doing.',
+    emptyAnswersTitle: 'No answers yet',
+    emptyAnswersHint: 'Try All, or answer a question about yourself.',
+  },
+
+  connect: {
+    title: 'Connect',
+    libraryHint: 'Everything the family has answered.',
+    weeklyBadge: 'Weekly question',
+    interestBadge: 'From interests',
+    filterAll: 'All',
+    filterWeekly: 'Weekly',
+    filterInterests: 'Interests',
+  },
+
   settings: {
     title: 'Settings',
     appearance: 'Appearance',

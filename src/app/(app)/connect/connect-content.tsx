@@ -1,18 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { QuestionWithAnswers, User } from '@/types/database'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CurrentQuestionCard } from '@/components/connect/current-question-card'
-import { AnswerForm } from '@/components/connect/answer-form'
-import { AnswersList } from '@/components/connect/answers-list'
-import { QuestionSelector } from '@/components/connect/question-selector'
-import { FamilyPicksBrowser } from '@/components/picks/family-picks-browser'
-import { Button } from '@/components/ui/button'
-import { SectionHeader } from '@/components/ui/surface'
-import { useI18n } from '@/components/i18n-provider'
 import { History } from 'lucide-react'
+import { QuestionWithAnswers, User } from '@/types/database'
+import { QuestionSelector } from '@/components/connect/question-selector'
+import {
+  QuestionLibrary,
+  type LibraryEntry,
+} from '@/components/connect/question-library'
+import { Button } from '@/components/ui/button'
+import { useI18n } from '@/components/i18n-provider'
+import {
+  PICK_PROMPTS,
+  interestEmoji,
+  promptLabel,
+  resolvePromptId,
+} from '@/lib/pick-prompts'
 
 interface PastQuestion {
   id: string
@@ -20,6 +24,11 @@ interface PastQuestion {
   week_start_date: string
   week_number: number
   users?: Pick<User, 'id' | 'name' | 'avatar_url'>
+  question_answers?: {
+    user_id: string
+    answer_text: string
+    is_current: boolean
+  }[]
 }
 
 interface ConnectContentProps {
@@ -31,6 +40,17 @@ interface ConnectContentProps {
   familyPicks: Array<{ user_id: string; category: string; value: string }>
 }
 
+/**
+ * Connect is the library, not a second feed.
+ *
+ * Everything that happens — a question being asked, someone answering, a pick
+ * changing — is an event, and those now flow through the Feed. What is left
+ * here is the part with no time dimension: what the family has answered,
+ * browsable a question at a time.
+ *
+ * Weekly questions and interest prompts share one list because they are the
+ * same shape. Splitting them into tabs implied a difference that was not real.
+ */
 export function ConnectContent({
   currentUserId,
   familyMembers,
@@ -39,12 +59,12 @@ export function ConnectContent({
   familyPicks,
 }: ConnectContentProps) {
   const router = useRouter()
-  const { dict } = useI18n()
+  const { dict, locale } = useI18n()
   const [initializing, setInitializing] = useState(false)
 
-  const handleAnswerSubmit = () => {
-    // Placeholder for future optimistic updates
-  }
+  const isMyTurnToAsk =
+    currentQuestion?.status === 'pending' &&
+    currentQuestion.assigned_user_id === currentUserId
 
   const handleInitialize = async () => {
     setInitializing(true)
@@ -62,23 +82,63 @@ export function ConnectContent({
     }
   }
 
-  const currentUserAnswer = currentQuestion?.question_answers?.find(
-    (answer) => answer.user_id === currentUserId && answer.is_current
-  )
+  const entries = useMemo<LibraryEntry[]>(() => {
+    const out: LibraryEntry[] = []
 
-  const otherAnswers =
-    currentQuestion?.question_answers?.filter(
-      (answer) => answer.user_id !== currentUserId && answer.is_current
-    ) || []
+    // A pending question has no text worth showing yet, so only active ones
+    // join the library.
+    const weekly: PastQuestion[] = [
+      ...(currentQuestion && currentQuestion.status === 'active'
+        ? [currentQuestion as unknown as PastQuestion]
+        : []),
+      ...pastQuestions,
+    ]
+
+    for (const q of weekly) {
+      const answers: Record<string, string> = {}
+      for (const a of q.question_answers ?? []) {
+        if (a.is_current) answers[a.user_id] = a.answer_text
+      }
+      out.push({
+        id: `weekly:${q.id}`,
+        label: q.question_text,
+        emoji: '💬',
+        kind: 'weekly',
+        answers,
+      })
+    }
+
+    const byPrompt = new Map<string, Record<string, string>>()
+    for (const pick of familyPicks) {
+      if (!pick.value?.trim()) continue
+      const id = resolvePromptId(pick.category)
+      if (!byPrompt.has(id)) byPrompt.set(id, {})
+      byPrompt.get(id)![pick.user_id] = pick.value
+    }
+
+    for (const prompt of PICK_PROMPTS) {
+      const answers = byPrompt.get(prompt.id)
+      if (!answers) continue
+      out.push({
+        id: `interest:${prompt.id}`,
+        label: promptLabel(prompt, locale),
+        emoji: interestEmoji(prompt.interest),
+        kind: 'interest',
+        answers,
+      })
+    }
+
+    return out
+  }, [currentQuestion, pastQuestions, familyPicks, locale])
 
   return (
     <div className="mx-auto max-w-lg">
       <header className="px-5 pb-1 pt-14">
         <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-marigold/90">
-          This week
+          {dict.connect.libraryHint}
         </div>
         <h1 className="mt-1 font-display text-[30px] font-black leading-[1.06] tracking-tight text-ink">
-          Connect
+          {dict.connect.title}
         </h1>
         <svg
           aria-hidden
@@ -98,109 +158,50 @@ export function ConnectContent({
         </svg>
       </header>
 
-      <Tabs defaultValue="questions" className="mt-4 w-full">
-        <div className="px-5">
-          <TabsList className="w-full">
-            <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="picks">{dict.picks.familyTitle}</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="questions">
-          <div className="space-y-4 px-5">
-            {currentQuestion ? (
-              currentQuestion.status === 'pending' ? (
-                currentQuestion.assigned_user_id === currentUserId ? (
-                  <QuestionSelector
-                    question={currentQuestion}
-                    onQuestionActivated={handleAnswerSubmit}
-                  />
-                ) : (
-                  <div className="rounded-card border-card border-edge bg-card px-6 py-12 text-center backdrop-blur-card">
-                    <div className="text-3xl">⏳</div>
-                    <p className="mt-3 font-display text-lg font-bold text-ink">
-                      Waiting for {currentQuestion.users?.name}
-                    </p>
-                    <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
-                      They&apos;re picking this week&apos;s question. Everyone can
-                      answer once they do.
-                    </p>
-                  </div>
-                )
-              ) : (
-                <>
-                  <CurrentQuestionCard
-                    question={currentQuestion}
-                    familyMembers={familyMembers}
-                    totalAnswers={
-                      currentQuestion.question_answers?.filter(
-                        (a) => a.is_current
-                      ).length || 0
-                    }
-                  />
-
-                  <AnswerForm
-                    questionId={currentQuestion.id}
-                    userId={currentUserId}
-                    existingAnswer={currentUserAnswer}
-                    onSubmit={handleAnswerSubmit}
-                  />
-                </>
-              )
-            ) : (
-              <div className="rounded-card border-card border-edge bg-card px-6 py-12 text-center backdrop-blur-card">
-                <div className="text-3xl">🌱</div>
-                <p className="mt-3 font-display text-lg font-bold text-ink">
-                  No question yet
-                </p>
-                <p className="mt-1.5 text-[13px] font-medium text-ink-soft">
-                  Start the first one and the family can weigh in.
-                </p>
-                <Button
-                  onClick={handleInitialize}
-                  disabled={initializing}
-                  className="mt-5"
-                >
-                  {initializing ? 'Creating…' : 'Ask the first question'}
-                </Button>
-              </div>
-            )}
+      <div className="mt-5 space-y-4">
+        {/* Choosing this week's question is the one action still living here:
+            it is a decision, not a feed event. */}
+        {isMyTurnToAsk && currentQuestion && (
+          <div className="px-5">
+            <QuestionSelector question={currentQuestion} />
           </div>
+        )}
 
-          {currentQuestion?.status !== 'pending' && otherAnswers.length > 0 && (
-            <>
-              <SectionHeader>Family answers</SectionHeader>
-              <div className="px-5">
-                <AnswersList
-                  answers={otherAnswers}
-                  currentUserId={currentUserId}
-                />
-              </div>
-            </>
-          )}
+        {!currentQuestion && (
+          <div className="mx-5 rounded-card border-card border-edge bg-card px-6 py-10 text-center backdrop-blur-card">
+            <div className="text-3xl">🌱</div>
+            <p className="mt-3 font-display text-lg font-bold text-ink">
+              No question yet
+            </p>
+            <Button
+              onClick={handleInitialize}
+              disabled={initializing}
+              className="mt-4"
+            >
+              {initializing ? dict.common.saving : 'Ask the first question'}
+            </Button>
+          </div>
+        )}
 
-          {pastQuestions.length > 0 && (
-            <div className="px-5 pt-6">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => router.push('/connect/history')}
-              >
-                <History className="h-4 w-4" />
-                View past questions
-              </Button>
-            </div>
-          )}
-        </TabsContent>
+        <QuestionLibrary
+          members={familyMembers}
+          entries={entries}
+          currentUserId={currentUserId}
+        />
 
-        <TabsContent value="picks">
-          <FamilyPicksBrowser
-            members={familyMembers}
-            picks={familyPicks}
-            currentUserId={currentUserId}
-          />
-        </TabsContent>
-      </Tabs>
+        {pastQuestions.length > 0 && (
+          <div className="px-5 pt-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push('/connect/history')}
+            >
+              <History className="h-4 w-4" />
+              View past questions
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
