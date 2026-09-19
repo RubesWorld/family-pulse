@@ -92,7 +92,7 @@ function formatDateHeader(
     return `${dict.feed.today} · ${format(date, 'EEEE', { locale: dateLocale })}`
   }
   if (isYesterday(date)) return dict.feed.yesterday
-  return format(date, 'EEEE, MMMM d', { locale: dateLocale })
+  return format(date, dict.feed.dateFormatLong, { locale: dateLocale })
 }
 
 export function FeedContent({

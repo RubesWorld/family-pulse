@@ -29,7 +29,9 @@ function formatActivityTime(
   if (isTomorrow(d)) return t(dict.feed.tomorrowAt, { time })
   if (isYesterday(d)) return t(dict.feed.yesterdayAt, { time })
 
-  return format(d, 'EEE, MMM d', { locale: dateLocale }) + ' · ' + time
+  return (
+    format(d, dict.feed.dateFormatShort, { locale: dateLocale }) + ' · ' + time
+  )
 }
 
 export function ActivityCard({ activity, tilt }: ActivityCardProps) {
@@ -101,7 +103,9 @@ export function ActivityCard({ activity, tilt }: ActivityCardProps) {
               }}
             >
               <MessageCircle className="h-3.5 w-3.5" />
-              {dict.family.text} {activity.users.name.split(' ')[0]}
+              {t(dict.family.textPerson, {
+                name: activity.users.name.split(' ')[0],
+              })}
             </button>
           )}
         </div>

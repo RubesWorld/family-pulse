@@ -84,6 +84,7 @@ export const en = {
     quietHint: 'Share a favorite from your profile to get things going.',
     nothingShared: 'Nothing shared yet',
     nothingSharedHint: '{name} has not added interests or answers yet.',
+    textPerson: 'Text {name}',
     text: 'Text',
     memberOne: '1 member',
     memberCount: '{count} members',
@@ -139,6 +140,8 @@ export const en = {
     todayAt: 'Today at {time}',
     tomorrowAt: 'Tomorrow at {time}',
     yesterdayAt: 'Yesterday at {time}',
+    dateFormatLong: 'EEEE, MMMM d',
+    dateFormatShort: 'EEE, MMM d',
     today: 'Today',
     yesterday: 'Yesterday',
 

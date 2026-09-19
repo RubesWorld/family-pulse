@@ -194,7 +194,7 @@ export function CalendarView({ activities }: CalendarViewProps) {
               </Button>
             }
           >
-            {format(selectedDate, 'EEE, MMM d', { locale: dateLocale })}
+            {format(selectedDate, dict.feed.dateFormatShort, { locale: dateLocale })}
           </SectionHeader>
 
           {selectedDayActivities.length === 0 ? (

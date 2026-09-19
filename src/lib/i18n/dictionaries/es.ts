@@ -84,6 +84,7 @@ export const es: Dictionary = {
     quietHint: 'Comparte algo desde tu perfil para empezar.',
     nothingShared: 'Todavía no ha compartido nada',
     nothingSharedHint: '{name} todavía no agrega intereses ni respuestas.',
+    textPerson: 'Mensaje a {name}',
     text: 'Mensaje',
     memberOne: '1 persona',
     memberCount: '{count} personas',
@@ -137,6 +138,8 @@ export const es: Dictionary = {
     todayAt: 'Hoy a las {time}',
     tomorrowAt: 'Mañana a las {time}',
     yesterdayAt: 'Ayer a las {time}',
+    dateFormatLong: "EEEE, d 'de' MMMM",
+    dateFormatShort: "EEE d 'de' MMM",
     today: 'Hoy',
     yesterday: 'Ayer',
 
