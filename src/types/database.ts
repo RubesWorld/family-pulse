@@ -522,7 +522,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      // Added by 11a_rls_rpcs.sql. These are SECURITY DEFINER and are the only
+      // sanctioned way for a client to read a family it does not belong to yet,
+      // or to set its own users.family_id — 11b's policies refuse both directly.
+      family_by_invite_code: {
+        Args: { p_code: string }
+        // Set-returning, so PostgREST sends an array. It never returns
+        // invite_code back out.
+        Returns: { id: string; name: string }[]
+      }
+      join_family_by_invite_code: {
+        Args: { p_code: string }
+        Returns: string
+      }
+      create_family_with_owner: {
+        Args: { p_family_name: string; p_user_name?: string | null }
+        Returns: string
+      }
+      // Pre-existing, from 10_performance.sql. Used inside policies rather than
+      // called from the client, but declared so the shape is recorded in one
+      // place. 11b revokes EXECUTE on both from anon.
+      current_family_id: {
+        Args: Record<string, never>
+        Returns: string | null
+      }
+      current_family_member_ids: {
+        Args: Record<string, never>
+        Returns: string[]
+      }
     }
     Enums: {
       [_ in never]: never

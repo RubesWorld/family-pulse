@@ -34,6 +34,11 @@ yarn-error.log*
 # supabase cli scratch state (version cache, linked-project ref)
 supabase/.temp
 
+# generated policy dumps from scripts/rls_local_state.sh. A prod dump lands
+# here too, and it describes the live security model — keep it out of a public
+# repo.
+supabase/.rls-state/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

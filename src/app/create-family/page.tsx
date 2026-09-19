@@ -8,6 +8,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AuthShell, Swash } from '@/components/auth-shell'
 
+/**
+ * The RPC refuses with SQLSTATEs rather than prose; map the ones it raises and
+ * never show an unrecognised database error to a family member.
+ */
+function createFamilyErrorMessage(err: unknown): string {
+  const code = (err as { code?: string } | null)?.code
+
+  switch (code) {
+    case '23505':
+      return "You're already in a family."
+    case '22023':
+      return 'Please give your family a name.'
+    case '28000':
+      return 'Please log in again to create your family.'
+    default:
+      return "Something went wrong creating your family. Please try again."
+  }
+}
+
 export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState('')
   const [userName, setUserName] = useState('')
@@ -54,39 +73,23 @@ export default function CreateFamilyPage() {
     const supabase = createClient()
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      // One transactional RPC, replacing three separate statements: insert the
+      // profile, insert the family, then point the profile at it. Those were
+      // not atomic — a failure after the second left a family with nobody in
+      // it and the user in no family at all, with no way to retry into a good
+      // state. The function also creates the profile row if signup did not,
+      // which is the case `needsProfile` covers.
+      const { error: createError } = await supabase
+        .rpc('create_family_with_owner', {
+          p_family_name: familyName,
+          p_user_name: userName.trim() || null,
+        })
 
-      // Try to create profile (ignore if already exists)
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({ id: user.id, name: userName || 'User' })
-
-      // Ignore duplicate key error (profile already exists)
-      if (profileError && !profileError.message.includes('duplicate')) {
-        throw profileError
-      }
-
-      // Create the family
-      const { data: family, error: familyError } = await supabase
-        .from('families')
-        .insert({ name: familyName })
-        .select()
-        .single()
-
-      if (familyError) throw familyError
-
-      // Update user with family_id
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ family_id: family.id })
-        .eq('id', user.id)
-
-      if (updateError) throw updateError
+      if (createError) throw createError
 
       router.push('/feed')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(createFamilyErrorMessage(err))
     } finally {
       setLoading(false)
     }
